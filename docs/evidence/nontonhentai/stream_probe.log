@@ -1,0 +1,6 @@
+Source: NontonHentai (AnimeStream WordPress Theme)
+Status: 200 OK HTML reachable
+Player options: LocalStream_720p, LocalStream_480p, LocalStream_360p (Base64 encoded)
+Embed Host: hepidrive.com (developed-by: GDPlayer.top)
+Player Token: clear_cache.php requires dynamic session token and cookies
+Status: Partial / Requires Android WebView clearance for token negotiation

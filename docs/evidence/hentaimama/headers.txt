@@ -1,0 +1,22 @@
+=== HENTAIMAMA.IO HEADERS ===
+Date: Sun, 25 Oct 2026 14:51:37 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: close
+Server: cloudflare
+vary: Accept-Encoding
+content-security-policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+x-content-type-options: nosniff
+x-dt-cache: archive 86400
+Cache-Control: no-cache, max-age=0, must-revalidate
+link: <https://hentaimama.io/wp-json/>; rel="https://api.w.org/"
+x-fastcgi-cache: MISS
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ngdiTj4PwfqIa6rY26zYM4Z%2FbXiA8En5EngAyfPRgKMZOxDMdPTq5hefsPRUdZfznY81NDMscLWwj%2FyFMCOc3bLb5lrvvtfV0vfPOLe1tD3EqxyqktaQ1bqiFBDlqPs%3D"}]}
+last-modified: Sun, 25 Oct 2026 14:51:37 GMT
+cf-cache-status: EXPIRED
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Server-Timing: cfCacheStatus;desc="EXPIRED"
+CF-RAY: a5020a530e1d4ac3-CGK
+alt-svc: h3=":443"; ma=86400

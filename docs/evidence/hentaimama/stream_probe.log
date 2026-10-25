@@ -1,0 +1,6 @@
+Source: Hentaimama (WordPress DooPlay)
+Status: 200 OK HTML reachable
+Engine: DooPlay theme (dtGonza, dtCache, dtPl)
+Player gating: #playex container stripped of iframes for anonymous requests
+Anti-bot: Cloudflare Turnstile token (0x4AAAAAAEgPA0XMACJJhK8U) required for download/player
+Status: Partial / Downgraded to Unverified for headless execution

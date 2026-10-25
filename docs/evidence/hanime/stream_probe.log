@@ -1,0 +1,9 @@
+Engine: Astro SSR + Vue Client-side Islands
+Config from window.AppConfig in HTML:
+  guest_api_base_url: "https://guest.freeanimehentai.net"
+  search_hvs_url: "https://guest.freeanimehentai.net/api/v11/search_hvs"
+  turnstile_public_site_key: "0x4AAAAAABsjKGKilqEiCHWo"
+  csrf_token_url: "https://ct.hanime.tv/csrf-token"
+
+Streaming mechanism: Video player and m3u8 manifests require Turnstile token & CSRF validation.
+Status: Blocked / Partial for headless clients without Turnstile solver.

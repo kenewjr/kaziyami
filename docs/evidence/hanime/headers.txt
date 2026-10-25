@@ -1,0 +1,26 @@
+=== HANIME.TV RESPONSE HEADERS ===
+Date: Sun, 25 Oct 2026 14:51:55 GMT
+Content-Type: text/html
+Transfer-Encoding: chunked
+Connection: close
+Server: cloudflare
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Link: </_astro/DefaultLayout.B0xzMhFu.css>; rel=preload; as=style
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+cache-control: public, max-age=0
+cdn-cache-control: max-age=1800, stale-while-revalidate=86400
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://tpc.googlesyndication.com https://s0.2mdn.net https://pagead2.googlesyndication.com https://imasdk.googleapis.com https://hanime-cdn.com https://cdn.jsdelivr.net https://brunhild.challenges.cloudflare.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://vjs.zencdn.net 'wasm-unsafe-eval'; connect-src 'self' https:;; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; frame-src 'self' https: http://imasdk.googleapis.com; form-action 'self'; img-src 'self' https: data: blob:;; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data: https://hanime-cdn.com https://fonts.gstatic.com; media-src 'self' https: blob:; worker-src 'self' https: blob:
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=hsfaK%2F%2BBlm7lDYiW%2Bo%2FDRS%2BSrBbmE9ViBoBWwf7A3Wp9wyDHzs%2FSJuzqIRewQZ8wU4oz9MfKedyz0uSKZkOzVpoND%2F12%2BP8%2BR8hLSn0f66vFdYyUdeEZM2TEWEQ%3D"}]}
+vary: accept-encoding
+Age: 596
+last-modified: Sun, 25 Oct 2026 14:42:04 GMT
+cf-cache-status: HIT
+CF-RAY: a5020ac67f0802a6-CDG
+alt-svc: h3=":443"; ma=86400
+
+=== HHANIME.TV INVESTIGATION ===
+Host: hhanime.tv (5.79.75.200)
+HTTPS: schannel SEC_E_UNTRUSTED_ROOT (0x80090325)
+HTTP 80: HTTP/1.1 302 Found -> Location: http://ww80.hhanime.tv/?subid1=... (Domain Parking / Squatter)

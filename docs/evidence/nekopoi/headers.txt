@@ -1,0 +1,35 @@
+=== NEKOPOI.CARE HEADERS ===
+Date: Sun, 25 Oct 2026 14:50:46 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: close
+x-xss-protection: 1; mode=block
+Link: <https://nekopoi.care/wp-json/>; rel="https://api.w.org/"
+Last-Modified: Sun, 25 Oct 2026 13:58:38 GMT
+x-frame-options: SAMEORIGIN
+referrer-policy: same-origin
+Vary: Accept-Encoding
+Set-Cookie: sl-session=YCDqR8Zo32oEyrEQcjO1HA==; SameSite=None; Secure; Path=/; Max-Age=86400; HttpOnly
+cf-cache-status: DYNAMIC
+Strict-Transport-Security: max-age=2592000; preload
+x-content-type-options: nosniff
+Server-Timing: cfCacheStatus;desc="DYNAMIC"
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=5BtrlbRz7LbzunPZKWO8wKp%2FJ%2Bt1uSANvth0VbB1xAVh57nKgtO9Srv7Qq1nLGHiTpSjlmuOohg7e0s%2BvyHO0j%2BnJ%2BIae%2BRimZWkpNBeacYeSLckOXBqBiuZo1QX17U%3D"}]}
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+expect-ct: max-age=86400, enforce
+Server: cloudflare
+CF-RAY: a5020917b800c752-CDG
+
+=== STREAMPOI.COM HEADERS ===
+Date: Sun, 25 Oct 2026 14:50:48 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: close
+Server: cloudflare
+Expires: Sat, 24 Oct 2026 14:50:48 GMT
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=5VmkYPkjWkxptNZUkN6NKkGZgLMyLVvbC0tXG9IjdfOAm3uF%2BpdArWKTTFzSMhdZov%2Fk1%2B53Ot1EZ9bOdUOccVpJqbpRpA5XuRTHAxTyWgY%2BGQh1%2Bj8WDLEP2qBkx4rt"}]}
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+cf-cache-status: DYNAMIC
+Server-Timing: cfCacheStatus;desc="DYNAMIC"
+CF-RAY: a50209260afd0263-CDG
+alt-svc: h3=":443"; ma=86400
