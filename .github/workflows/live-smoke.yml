@@ -1,4 +1,4 @@
-name: Scheduled Live Smoke Tests
+name: Kaziyami Scheduled Live Smoke Tests
 
 on:
   schedule:
@@ -35,6 +35,6 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Weekly Live Smoke Test Failure: NSFW Sources Need Attention',
+              title: 'Weekly Live Smoke Test Failure: Kaziyami Sources Need Attention',
               body: 'Automated weekly live smoke test detected broken streams or unreachable domains. Please review recent workflow logs and update working mirrors in `docs/SOURCES.md` and source configs.'
             })

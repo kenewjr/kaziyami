@@ -1,10 +1,10 @@
-name: CI Build & Publish Repo Index
+name: Kaziyami CI Build & Verify
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
   build:
@@ -31,14 +31,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run Unit Tests and JaCoCo Coverage
-        run: ./gradlew test jacocoTestReport
+      - name: Run Build, Validation and Tests
+        run: ./gradlew check jacocoTestReport
 
-      - name: Generate Aniyomi Repo Index
+      - name: Generate Kaziyami Repo Index
         run: python tools/generate_repo_index.py
 
       - name: Deploy to repo branch
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: repo

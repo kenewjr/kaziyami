@@ -10,7 +10,7 @@ Clean, maintainable Aniyomi adult anime extension repository written in Kotlin &
 |---|---|---|---|---|
 | **Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | PlayMogo, StreamPoi, Mp4Upload, Pixeldrain |
 | **IndoHentai** | Indonesian (`id`) | Custom SSR Card Grid | `https://indohentai.net` | Loadvid, XXContent CDN |
-| **Kuronime** | Indonesian (`id`) | WordPress (AnimeStream) | `https://kuronime.sbs` | StreamWish, Filemoon, Doodstream |
+| **NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop, HepiDrive, GDPlayer, LocalStream |
 | **Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct 1080p/720p MP4, GDVid |
 | **JAVSubbed** | English (`en`) | WordPress (RetroTube) | `https://javsubbed.net` | Streamtape, VOE, Doodstream |
 | **Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (m3u8 1080p/720p) |
@@ -83,7 +83,7 @@ class MyAnimeStreamSite : AnimeStreamTheme(
 
 To introduce a new engine base:
 1. Create a module under `lib-multisrc/<theme-name>/`.
-2. Inherit from [GenericThemeSource](core/src/main/kotlin/eu/kanade/tachiyomi/multisrc/generic/GenericThemeSource.kt).
+2. Inherit from [GenericThemeSource](lib-multisrc/generic/src/main/kotlin/app/kaziyami/multisrc/generic/GenericThemeSource.kt).
 3. Override engine-specific logic (e.g. custom AJAX episode endpoints or proprietary video player decoders):
    ```kotlin
    open class NewTheme(config: SourceConfig) : GenericThemeSource(config) {
@@ -152,7 +152,7 @@ python tools/generate_repo_index.py
 ./gradlew generateRepoIndex
 ```
 
-Output schemas conform to the Aniyomi custom repository format validated by [IndexSchemaTest](core/src/test/kotlin/eu/kanade/tachiyomi/IndexSchemaTest.kt) and JSON Schema at [docs/schema/index.schema.json](docs/schema/index.schema.json).
+Output schemas conform to the Aniyomi custom repository format validated by [IndexSchemaTest](core/src/test/kotlin/app/kaziyami/schema/IndexSchemaTest.kt) and JSON Schema at [schemas/index.schema.json](schemas/index.schema.json).
 
 ---
 
@@ -164,22 +164,22 @@ Output schemas conform to the Aniyomi custom repository format validated by [Ind
 
 ### APK Signing Setup
 **Never commit keystore files or passwords.** Configure GitHub repository secrets:
-- `KEYSTORE_BASE64`: Base64 encoded release keystore file.
-- `KEY_ALIAS`: Alias of the signing key.
+- `SIGNING_KEY_BASE64`: Base64 encoded release keystore file (`kaziyami.keystore`).
+- `KEY_ALIAS`: Alias of the signing key (`kaziyami`).
 - `KEY_PASSWORD`: Password for the signing key.
-- `STORE_PASSWORD`: Password for the keystore.
+- `KEYSTORE_PASSWORD`: Password for the keystore.
 
 In Gradle release tasks:
 ```kotlin
 signingConfigs {
     create("release") {
-        val keystoreBase64 = System.getenv("KEYSTORE_BASE64")
+        val keystoreBase64 = System.getenv("SIGNING_KEY_BASE64")
         if (!keystoreBase64.isNullOrEmpty()) {
-            val keystoreFile = File(buildDir, "release.keystore")
+            val keystoreFile = File(buildDir, "kaziyami.keystore")
             keystoreFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreBase64))
             storeFile = keystoreFile
-            storePassword = System.getenv("STORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS") ?: "kaziyami"
             keyPassword = System.getenv("KEY_PASSWORD")
         }
     }

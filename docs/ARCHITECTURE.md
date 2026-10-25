@@ -9,21 +9,22 @@ Comprehensive architecture documentation for the Aniyomi extension repository.
 ```text
 kaziyami/
 ├── core/                                   # Shared foundational models, network, parsers, and utilities
-│   ├── src/main/kotlin/.../
-│   │   ├── animesource/                   # Aniyomi core interfaces & models (SAnime, SEpisode, Video)
-│   │   ├── filters/                       # Dynamic FilterSpec, DynamicSelect, TriState, and FilterBuilder
-│   │   ├── lib/core/                      # Utilities: UrlUtils, LazyImage, EpisodeNumberParser, DateParser,
-│   │   │                                  #   HtmlText, MirrorManager, SourceConfig, ExtractorRegistry
-│   │   │   └── extractors/                # Built-in host stream extractors (Direct, StreamTape, Dood, etc.)
-│   │   └── network/                       # BrowserHeaders, RateLimitInterceptor, RetryInterceptor,
+│   ├── src/main/kotlin/
+│   │   ├── eu/kanade/tachiyomi/animesource/ # Aniyomi core interfaces & models (SAnime, SEpisode, Video)
+│   │   └── app/kaziyami/
+│   │       ├── filters/                   # Dynamic FilterSpec, DynamicSelect, TriState, and FilterBuilder
+│   │       ├── core/                      # Utilities: UrlUtils, LazyImage, EpisodeNumberParser, DateParser,
+│   │       │                              #   HtmlText, MirrorManager, SourceConfig, ExtractorRegistry
+│   │       ├── extractors/                # Built-in host stream extractors (Direct, StreamTape, Dood, etc.)
+│   │       └── network/                   # BrowserHeaders, RateLimitInterceptor, RetryInterceptor,
 │   │                                      #   ChallengeDetector, CloudflareInterceptor, NetworkFactory
 │   └── src/test/kotlin/.../               # 80%+ coverage unit & integration tests with MockWebServer
 │
 ├── lib-multisrc/                          # Engine-specific base templates inheriting ParsedAnimeHttpSource
-│   ├── generic/                           # GenericThemeSource: selector-driven anime source
-│   ├── dooplay/                           # DooPlayTheme: WordPress DooPlay CMS base (AJAX player decoder)
-│   ├── animestream/                       # AnimeStreamTheme: ThemeNekoi/AnimeStream base (Base64 embed options)
-│   └── retrotube/                         # RetroTubeTheme: Tube-style multi-server base
+│   ├── generic/                           # app.kaziyami.multisrc.generic: GenericThemeSource
+│   ├── dooplay/                           # app.kaziyami.multisrc.dooplay: DooPlayTheme (AJAX player decoder)
+│   ├── animestream/                       # app.kaziyami.multisrc.animestream: AnimeStreamTheme (Base64 embed options)
+│   └── retrotube/                         # app.kaziyami.multisrc.retrotube: RetroTubeTheme (Tube-style multi-server base)
 │
 ├── src/                                   # Standalone runnable extension modules
 │   ├── id/                                # Indonesian extensions

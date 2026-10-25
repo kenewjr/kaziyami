@@ -21,3 +21,4 @@ Pinned build toolchain, language runtime, and library dependency versions aligne
 - **Code Formatting / Style**: `.editorconfig` (4-space indent for Kotlin, LF line endings, 140-char max line length).
 - **Test Harness**: JUnit 5 + OkHttp `MockWebServer` + Jsoup offline HTML fixtures.
 - **CI / Distribution**: GitHub Actions on Ubuntu latest (`Temurin 11`), Python 3.10 for repo index generation.
+- **Keystore & Signing**: `kaziyami.keystore` (alias: `kaziyami`, never committed to git; secrets injected via CI environment variables `SIGNING_KEY_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
