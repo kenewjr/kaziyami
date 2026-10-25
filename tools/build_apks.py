@@ -247,11 +247,17 @@ def compute_sha256(file_path):
 
 def main():
     check_icons()
+    debug_dir = None
+    if "--debug-dir" in sys.argv:
+        idx = sys.argv.index("--debug-dir")
+        if idx + 1 < len(sys.argv):
+            debug_dir = sys.argv[idx + 1]
+
     signing_cfg = get_signing_config()
     print(f"[+] Using signing keystore: {signing_cfg['path']} (release: {signing_cfg['is_release']})")
 
-    repo_apk_dir = os.path.join(ROOT_DIR, "repo", "apk")
-    os.makedirs(repo_apk_dir, exist_ok=True)
+    out_apk_dir = os.path.abspath(debug_dir) if debug_dir else os.path.join(ROOT_DIR, "repo", "apk")
+    os.makedirs(out_apk_dir, exist_ok=True)
 
     built_apks = []
     sha256_lines = []
@@ -259,7 +265,7 @@ def main():
     for ext in EXTENSIONS:
         meta = parse_extension_metadata(ext["dir"])
         apk_name = f"kaziyami-{ext['lang']}.{ext['name'].lower()}-v{meta['version']}.apk"
-        apk_path = os.path.join(repo_apk_dir, apk_name)
+        apk_path = os.path.join(out_apk_dir, apk_name)
 
         print(f"[+] Assembling APK: {apk_name} ...")
         create_apk(ext, meta, signing_cfg, apk_path)
@@ -268,6 +274,10 @@ def main():
         sha256_lines.append(f"{apk_hash}  {apk_name}")
         built_apks.append((ext, meta, apk_path, apk_hash))
         print(f"    -> SHA256: {apk_hash}")
+
+    if debug_dir:
+        print(f"[+] Debug APKs assembled in: {out_apk_dir}")
+        return
 
     # Write sha256sums.txt
     sha256_file = os.path.join(ROOT_DIR, "repo", "sha256sums.txt")

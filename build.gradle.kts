@@ -119,6 +119,13 @@ tasks.register<Exec>("assembleRelease") {
     commandLine("python", "tools/build_apks.py")
 }
 
+tasks.register<Exec>("assembleDebugAll") {
+    group = "build"
+    description = "Assembles debug APKs for all extensions into build/kaziyami-debug/."
+    dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "classes" } })
+    commandLine("python", "tools/build_apks.py", "--debug-dir", "build/kaziyami-debug")
+}
+
 tasks.register<Exec>("generateRepoIndex") {
     group = "distribution"
     description = "Generates Aniyomi repo index.json and index.min.json."

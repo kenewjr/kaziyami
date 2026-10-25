@@ -26,12 +26,18 @@
   - [x] 6.2 Device QA kit (`docs/QA_CHECKLIST.md`, `docs/QA_REPORT_TEMPLATE.md`).
   - [x] 6.3 Bug-fix loop (Issue templates for source broken, video playback, episodes, filters; `docs/MAINTENANCE.md`).
   - [x] 6.4 Source expansion pipeline (`scripts/new-source`, `scripts/new_source.py`, `docs/CANDIDATES.md`).
-- [x] **Final Verification Pass** (clean clone check, contract tests, header leak test, liveSmokeTest table, release index validation, leftover audit).
+- [x] **Phase 7: Pre-flight Gate**
+  - [x] 7.1 Local preflight script (`scripts/preflight.py`, `scripts/preflight.sh`, `scripts/preflight.ps1`, `tools/test_preflight.py`). Toolchain, DNS/ISP blocking detection, mirror HTTP/Cloudflare probing, parser counts, video stream verification, sanitized JSON report.
+  - [x] 7.2 Local debug install path (`assembleDebugAll` task generating `build/kaziyami-debug/*.apk`, `scripts/install_debug.py`, `scripts/install-debug.sh`, `scripts/install-debug.ps1`).
+  - [x] 7.3 Device setup guide (`docs/DEVICE_SETUP.md`: backup, WebView, untrusted extension flow, logcat dump, rollback).
+  - [x] 7.4 Test order & triage table (`docs/QA_CHECKLIST.md` updated with test sequence and first-run failure triage).
+  - [x] 7.5 Bug-report bundle (`scripts/collect_diagnostics.py`, wrappers, `tools/test_collect_diagnostics.py` verifying fake cookies, bearer tokens, signed URLs, and IP redaction).
+  - [x] 7.6 Acceptance & Verification pass (`assembleDebugAll` verified, `./gradlew test` green, secret scan 0 leaks, preflight & diagnostics unit tests green).
 
 ---
 
 ## Current Status
-- **Overall Status**: Complete end-to-end pipeline (Phase 0 through Phase 6) verified and hardened.
-- **Last Green Run**: `./gradlew clean build test` executed with all actionable tasks passing; `liveSmokeTest` verified all 6 sources reachable.
-- **Open Items**: None. All 6 adult source extensions fully implemented with zero identity leaks, permanent IDs locked, schema-valid repo index, and automated CI/CD workflows.
-- **Unverified Items**: None. All 6 candidate sources verified live in smoke test suite with HTTP 200 OK.
+- **Overall Status**: Complete end-to-end pipeline (Phase 0 through Phase 7) verified, hardened, and pre-flight tested.
+- **Last Green Run**: `./gradlew clean build test` executed with all tasks passing; `assembleDebugAll` and `build_apks.py` tested; secret leak scan 0 leaks; all unit tests passing.
+- **Open Items**: None. Repository ready for physical device test following `docs/QA_CHECKLIST.md`.
+- **Unverified Items**: Real device physical screen interaction (to be executed by user following `docs/DEVICE_SETUP.md` and `docs/QA_CHECKLIST.md`).
