@@ -1,0 +1,27 @@
+# Gradle & build
+.gradle/
+build/
+*/build/
+*/*/build/
+*/*/*/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.ipr
+*.iws
+
+# Android / Keystores
+*.keystore
+*.jks
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

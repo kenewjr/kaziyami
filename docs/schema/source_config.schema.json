@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SourceConfig",
+  "type": "object",
+  "required": ["name", "lang", "baseUrl"],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "lang": {
+      "type": "string",
+      "minLength": 2
+    },
+    "baseUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "mirrors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "isNsfw": {
+      "type": "boolean"
+    },
+    "popularPath": {
+      "type": "string"
+    },
+    "latestPath": {
+      "type": "string"
+    },
+    "searchPath": {
+      "type": "string"
+    },
+    "selectors": {
+      "type": "object",
+      "properties": {
+        "item": { "type": "string" },
+        "itemTitle": { "type": "string" },
+        "itemUrl": { "type": "string" },
+        "itemThumbnail": { "type": "string" },
+        "nextPage": { "type": "string" },
+        "detailsTitle": { "type": "string" },
+        "detailsThumbnail": { "type": "string" },
+        "detailsDescription": { "type": "string" },
+        "detailsGenre": { "type": "string" },
+        "detailsStatus": { "type": "string" },
+        "detailsAuthor": { "type": "string" },
+        "episodeList": { "type": "string" },
+        "episodeUrl": { "type": "string" },
+        "episodeName": { "type": "string" },
+        "episodeDate": { "type": "string" },
+        "playerIframes": { "type": "string" }
+      }
+    },
+    "quirks": {
+      "type": "object",
+      "properties": {
+        "episodesReversed": { "type": "boolean" },
+        "usesAjaxPlayer": { "type": "boolean" },
+        "ajaxPlayerEndpoint": { "type": "string" },
+        "dateFormat": { "type": "string" },
+        "customReferer": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# Candidate Sources Research & Verification (Phase 0)
+
+| Site | Mirrors | Engine / Theme | Lang | Cloudflare Level | Video Hosts | Pagination | Status | Selection & Rationale |
+|---|---|---|---|---|---|---|---|---|
+| **Nekopoi** | `https://nekopoi.care`, `https://nekopoi.app`, `https://nekopoi.link` | WordPress (ThemeNekopoi) | `id` | Low (Pass-through) | PlayMogo, StreamPoi, Mp4Upload, Pixeldrain | Query / Next link | **Works** | **Selected (Final 1/6)**: Required by specification; largest Indonesian adult/hentai catalog. |
+| **IndoHentai** | `https://indohentai.net` | Custom SSR (Card grid layout) | `id` | Low (Pass-through) | Loadvid, XXContent (CFD) | Query `/?page=N` | **Works** | **Selected (Final 2/6)**: Clean semantic HTML, fast response, daily updated Indonesian subbed hentai. |
+| **Kuronime** | `https://kuronime.sbs`, `https://kuronime.net`, `https://kuronime.moe` | WordPress (AnimeStream / `animenonton`) | `id` | Low-Medium | Streamwish, Filemoon, Doodstream | Path `/page/N/` | **Works** | **Selected (Final 3/6)**: AnimeStream multisrc theme with extensive Indonesian anime & ecchi catalog. |
+| **Hentaimama** | `https://hentaimama.io` | WordPress (DooPlay) | `en` | Low (Pass-through) | Direct MP4 (GDVid / Cloudflare CDN in 1080p, 720p, 480p) | Path `/page/N/` | **Works** | **Selected (Final 4/6)**: Textbook DooPlay engine, verified high-bitrate 1080p direct streams. |
+| **JAVSubbed** | `https://javsubbed.net` | WordPress (RetroTube) | `en` | Low (Pass-through) | Streamtape, VOE, Doodstream, Vidara | Path `/page/N/` | **Works** | **Selected (Final 5/6)**: Required JAV with English subs by specification, uses standard video hosts. |
+| **Hanime** | `https://hanime.tv`, `https://hhanime.tv`, `https://hanime1.me` | Astro / Vue SSR + FreeAnimeHentai API | `en` | Medium (CDN / Bot management) | Hanime CDN HLS (m3u8 1080p/720p) | Page param in API / URL | **Works** | **Selected (Final 6/6)**: Required by specification; high definition English hentai streaming. |
+| **Otakudesu** | `https://otakudesu.blog`, `https://otakudesu.lol` | WordPress (AnimeStream-variant) | `id` | Low-Medium | DesuStream, Mega, Mp4Upload | Path `/page/N/` | **Works** | **Backup**: Stable Indonesian anime source, non-exclusive NSFW. |
+| **Ohentai** | `https://ohentai.org` | Custom PHP/jQuery | `en` | Medium (Requires UA) | Internal player | Query `?page=N` | **Works** | **Backup**: Fast EN hentai streams without complex JS. |
+| **Samehadaku** | `https://samehadaku.care`, `https://v2.samehadaku.how` | Custom / Redis FPC | `id` | High (CF Clearance / 403) | Blogger, Filemoon | Path `/page/N/` | **Partial** | **Backup**: Requires full browser clearance for v2 sub-domain. |
+| **HentaiHaven** | `https://hentaihaven.xxx`, `https://hentaihaven.red` | Next.js App Router | `en` | High (Turnstile / CF challenge) | Internal CDN / Octopus | Infinite scroll | **Partial** | **Backup**: Heavy dynamic hydration and Cloudflare challenge token. |
+| **Jable.tv** | `https://jable.tv` | Custom | `en`/`zh` | High (403 on curl) | M3U8 CDN | Query `?mode=async` | **Unverified** | **Excluded**: Requires full WebView clearance. |
+| **MissAV** | `https://missav.ai`, `https://missav.ws` | Custom SPA | `en`/`multi` | High (403 block) | Sixav HLS | Query | **Unverified** | **Excluded**: Aggressive IP & header filtering. |

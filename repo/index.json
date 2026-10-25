@@ -1,0 +1,116 @@
+[
+  {
+    "name": "Nekopoi",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.nekopoi",
+    "apk": "aniyomi-id-nekopoi-v1.0.0.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Nekopoi",
+        "lang": "id",
+        "id": "7073589375897212735",
+        "baseUrl": "https://nekopoi.care"
+      }
+    ]
+  },
+  {
+    "name": "IndoHentai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.indohentai",
+    "apk": "aniyomi-id-indohentai-v1.0.0.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "IndoHentai",
+        "lang": "id",
+        "id": "7369497329911250289",
+        "baseUrl": "https://indohentai.net"
+      }
+    ]
+  },
+  {
+    "name": "Kuronime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
+    "apk": "aniyomi-id-kuronime-v1.0.0.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Kuronime",
+        "lang": "id",
+        "id": "2083695115646974607",
+        "baseUrl": "https://kuronime.sbs"
+      }
+    ]
+  },
+  {
+    "name": "Hentaimama",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
+    "apk": "aniyomi-en-hentaimama-v1.0.0.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Hentaimama",
+        "lang": "en",
+        "id": "8058423919997530503",
+        "baseUrl": "https://hentaimama.io"
+      }
+    ]
+  },
+  {
+    "name": "JAVSubbed",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.javsubbed",
+    "apk": "aniyomi-en-javsubbed-v1.0.0.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "JAVSubbed",
+        "lang": "en",
+        "id": "9192959167101688940",
+        "baseUrl": "https://javsubbed.net"
+      }
+    ]
+  },
+  {
+    "name": "Hanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
+    "apk": "aniyomi-en-hanime-v1.0.0.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.0",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Hanime",
+        "lang": "en",
+        "id": "2150907185602526076",
+        "baseUrl": "https://hanime.tv"
+      }
+    ]
+  }
+]
