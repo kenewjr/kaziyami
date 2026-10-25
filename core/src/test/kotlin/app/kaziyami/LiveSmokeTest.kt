@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi
+package app.kaziyami
 
 import app.kaziyami.network.BrowserHeaders
 import okhttp3.OkHttpClient
@@ -18,12 +18,12 @@ class LiveSmokeTest {
         .build()
 
     private val targets = listOf(
-        Target("Nekopoi", "https://nekopoi.care", listOf("https://nekopoi.app", "https://nekopoi.me")),
-        Target("IndoHentai", "https://indohentai.net", listOf("https://indohentai.site", "https://indohentai.org")),
-        Target("Kuronime", "https://kuronime.sbs", listOf("https://kuronime.org", "https://kuronime.moe")),
-        Target("Hentaimama", "https://hentaimama.io", listOf("https://hentaimama.tv")),
-        Target("JAVSubbed", "https://javsubbed.net", listOf("https://javsubbed.com")),
-        Target("Hanime", "https://hanime.tv", listOf("https://hhanime.tv"))
+        Target("Nekopoi", "https://nekopoi.care", listOf("https://nekopoi.app", "https://nekopoi.link")),
+        Target("IndoHentai", "https://indohentai.net", emptyList()),
+        Target("NontonHentai", "https://nontonhentai.net", emptyList()),
+        Target("Hentaimama", "https://hentaimama.io", emptyList()),
+        Target("JAVSubbed", "https://javsubbed.net", emptyList()),
+        Target("Hanime", "https://hanime.tv", listOf("https://guest.freeanimehentai.net"))
     )
 
     data class Target(val name: String, val primary: String, val mirrors: List<String>)
@@ -68,8 +68,7 @@ class LiveSmokeTest {
                             results.add(Result(target.name, url, code, "WARN", "HTTP $code returned"))
                         }
                     }
-                } catch (e: IOException) {
-                    // Try next mirror
+                } catch (_: IOException) {
                     continue
                 }
                 if (passed) break
