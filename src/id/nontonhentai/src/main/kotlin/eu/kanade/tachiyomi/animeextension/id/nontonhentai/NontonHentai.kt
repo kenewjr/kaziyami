@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.id.kuronime
+package eu.kanade.tachiyomi.animeextension.id.nontonhentai
 
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
@@ -7,18 +7,18 @@ import app.kaziyami.multisrc.animestream.AnimeStreamTheme
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 
-class Kuronime(
+class NontonHentai(
     preferences: SourcePreferences = InMemorySourcePreferences()
 ) : AnimeStreamTheme(
-    name = "Kuronime",
+    name = "NontonHentai",
     lang = "id",
-    baseUrl = "https://kuronime.sbs",
-    mirrors = listOf("https://kuronime.org", "https://kuronime.moe"),
-    popularPath = "/anime/?status=&type=&order=popular&page=%d",
-    latestPath = "/anime/?status=&type=&order=update&page=%d",
-    searchPath = "/?s=%s&page=%d",
+    baseUrl = "https://nontonhentai.net",
+    mirrors = listOf("https://nontonhentai.net"),
+    popularPath = "/page/%d/",
+    latestPath = "/page/%d/",
+    searchPath = "/?s=%s",
     customSelectors = SelectorsConfig(
-        item = ".animposx, .listupd article, div.bsx",
+        item = "div.listupd article.bs, .animposx, .listupd article, div.bsx",
         itemTitle = ".title, h4, h2, a[title]",
         itemThumbnail = "img",
         nextPage = ".pagination .next, a.next, .hpage .r",
@@ -29,7 +29,7 @@ class Kuronime(
         playerIframes = ".player-embed iframe, iframe[src]"
     ),
     customQuirks = QuirksConfig(
-        customReferer = "https://kuronime.sbs/"
+        customReferer = "https://nontonhentai.net/"
     ),
     preferences = preferences
 )

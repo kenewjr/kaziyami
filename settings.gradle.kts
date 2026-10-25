@@ -9,7 +9,7 @@ include(":lib-multisrc:generic")
 
 include(":src:id:nekopoi")
 include(":src:id:indohentai")
-include(":src:id:kuronime")
+include(":src:id:nontonhentai")
 
 include(":src:en:hentaimama")
 include(":src:en:javsubbed")

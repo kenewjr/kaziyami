@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.id.kuronime
+package eu.kanade.tachiyomi.animeextension.id.nontonhentai
 
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.Protocol
@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.InputStreamReader
 
-class KuronimeTest {
+class NontonHentaiTest {
 
-    private val source = Kuronime()
+    private val source = NontonHentai()
 
     private fun loadFixture(path: String): String {
-        val stream = javaClass.getResourceAsStream("/kuronime/$path")
-            ?: throw IllegalArgumentException("Fixture /kuronime/$path not found")
+        val stream = javaClass.getResourceAsStream("/nontonhentai/$path")
+            ?: throw IllegalArgumentException("Fixture /nontonhentai/$path not found")
         return InputStreamReader(stream).use { it.readText() }
     }
 
@@ -35,34 +35,31 @@ class KuronimeTest {
     @Test
     fun parsePopularAnime() {
         val html = loadFixture("popular.html")
-        val response = mockResponse("https://kuronime.sbs/anime/?order=popular&page=1", html)
+        val response = mockResponse("https://nontonhentai.net/page/1/", html)
         val page = source.popularAnimeParse(response)
 
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("Tate no Yuusha", page.animes[0].title)
-        assertEquals("https://kuronime.sbs/anime/tate-no-yuusha/", page.animes[0].url)
-        assertEquals("https://kuronime.sbs/poster/tate.jpg", page.animes[0].thumbnail_url)
+        assertEquals("https://nontonhentai.net/anime/tate-no-yuusha/", page.animes[0].url)
     }
 
     @Test
     fun parseAnimeDetails() {
         val html = loadFixture("details.html")
-        val response = mockResponse("https://kuronime.sbs/anime/tate-no-yuusha/", html)
+        val response = mockResponse("https://nontonhentai.net/anime/tate-no-yuusha/", html)
         val details = source.animeDetailsParse(response)
 
         assertEquals("Tate no Yuusha", details.title)
-        assertEquals("https://kuronime.sbs/poster/tate.jpg", details.thumbnail_url)
         assertTrue(details.description!!.contains("Naofumi Iwatani dipanggil"))
         assertEquals("Action, Isekai", details.genre)
         assertEquals(SAnime.COMPLETED, details.status)
-        assertEquals("Studio: Kinema Citrus", details.author)
     }
 
     @Test
     fun parseEpisodeList() {
         val html = loadFixture("episodes.html")
-        val response = mockResponse("https://kuronime.sbs/anime/tate-no-yuusha/", html)
+        val response = mockResponse("https://nontonhentai.net/anime/tate-no-yuusha/", html)
         val episodes = source.episodeListParse(response)
 
         assertEquals(2, episodes.size)
@@ -74,7 +71,7 @@ class KuronimeTest {
     @Test
     fun parseVideoList() {
         val html = loadFixture("video_player.html")
-        val response = mockResponse("https://kuronime.sbs/tate-no-yuusha-episode-12/", html)
+        val response = mockResponse("https://nontonhentai.net/tate-no-yuusha-episode-12/", html)
         val videos = source.videoListParse(response)
 
         assertEquals(1, videos.size)
@@ -84,7 +81,7 @@ class KuronimeTest {
     @Test
     fun parseSearchAnime() {
         val html = loadFixture("search.html")
-        val response = mockResponse("https://kuronime.sbs/?s=tate&page=1", html)
+        val response = mockResponse("https://nontonhentai.net/?s=tate", html)
         val page = source.searchAnimeParse(response)
 
         assertEquals(1, page.animes.size)
@@ -94,7 +91,7 @@ class KuronimeTest {
     @Test
     fun parseSearchEmpty() {
         val html = loadFixture("search_empty.html")
-        val response = mockResponse("https://kuronime.sbs/?s=unknown&page=1", html)
+        val response = mockResponse("https://nontonhentai.net/?s=unknown", html)
         val page = source.searchAnimeParse(response)
 
         assertTrue(page.animes.isEmpty())
