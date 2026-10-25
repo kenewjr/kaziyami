@@ -5,6 +5,9 @@ plugins {
 }
 
 allprojects {
+    group = "app.kaziyami"
+    version = "1.0.0"
+
     repositories {
         mavenCentral()
         google()
