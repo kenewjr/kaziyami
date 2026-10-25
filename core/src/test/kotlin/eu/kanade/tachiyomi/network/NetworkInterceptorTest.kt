@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.network
 
+import eu.kanade.tachiyomi.lib.core.MirrorManager
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -51,6 +52,16 @@ class NetworkInterceptorTest {
         assertEquals(BrowserHeaders.DEFAULT_USER_AGENT, recorded!!.getHeader("User-Agent"))
         assertEquals("en-US,en;q=0.9,id;q=0.8", recorded.getHeader("Accept-Language"))
         assertEquals("https://ref.example.com", recorded.getHeader("Referer"))
+    }
+
+    @Test
+    fun browserHeadersSpecializedTypes() {
+        val xhrHeaders = BrowserHeaders.headersFor("https://example.com/api", type = BrowserHeaders.HeaderType.XHR)
+        assertEquals("XMLHttpRequest", xhrHeaders["X-Requested-With"])
+        assertEquals("cors", xhrHeaders["Sec-Fetch-Mode"])
+
+        val imgHeaders = BrowserHeaders.headersFor("https://example.com/img.jpg", type = BrowserHeaders.HeaderType.IMAGE)
+        assertEquals("image", imgHeaders["Sec-Fetch-Dest"])
     }
 
     @Test
@@ -110,7 +121,7 @@ class NetworkInterceptorTest {
         )
 
         val client = OkHttpClient.Builder()
-            .addInterceptor(RetryAfterInterceptor(maxRetries = 2))
+            .addInterceptor(RetryInterceptor(maxRetries = 2))
             .build()
 
         val request = Request.Builder().url(server.url("/rate-limit")).build()
@@ -139,5 +150,58 @@ class NetworkInterceptorTest {
         assertEquals(1, loaded.size)
         assertEquals("cf_clearance", loaded[0].name)
         assertEquals("token123", loaded[0].value)
+    }
+
+    @Test
+    fun mirrorFailoverBetweenMockServers() {
+        val serverA = MockWebServer()
+        val serverB = MockWebServer()
+        serverA.start()
+        serverB.start()
+
+        try {
+            // serverA returns 500 error, serverB returns 200
+            serverA.enqueue(MockResponse().setResponseCode(500))
+            serverB.enqueue(MockResponse().setResponseCode(200).setBody("Mirror B OK"))
+
+            val urlA = serverA.url("/").toString().removeSuffix("/")
+            val urlB = serverB.url("/").toString().removeSuffix("/")
+
+            val manager = MirrorManager(defaultBaseUrl = urlA, mirrors = listOf(urlB))
+            assertEquals(urlA, manager.currentBase())
+
+            val client = OkHttpClient()
+
+            // When current fails, failover chooses serverB
+            val current = manager.currentBase()
+            val requestA = Request.Builder().url(current).build()
+            client.newCall(requestA).execute().use { resp ->
+                if (resp.code >= 500) {
+                    manager.markFailed(current)
+                    manager.failover(current)
+                }
+            }
+
+            assertEquals(urlB, manager.currentBase())
+
+            // Request serverB
+            val requestB = Request.Builder().url(manager.currentBase()).build()
+            client.newCall(requestB).execute().use { resp ->
+                assertEquals(200, resp.code)
+            }
+        } finally {
+            serverA.shutdown()
+            serverB.shutdown()
+        }
+    }
+
+    @Test
+    fun networkFactoryBuildsWorkingClient() {
+        val client = NetworkFactory.createClient()
+        assertNotNull(client)
+        assertNotNull(client.cookieJar)
+        assertTrue(client.interceptors.any { it is RateLimitInterceptor })
+        assertTrue(client.interceptors.any { it is BrowserHeaderInterceptor })
+        assertTrue(client.interceptors.any { it is CloudflareInterceptor })
     }
 }

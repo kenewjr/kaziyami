@@ -37,4 +37,19 @@ class HtmlTextTest {
         assertEquals("", HtmlText.clean(null))
         assertEquals("", HtmlText.clean("   "))
     }
+
+    @Test
+    fun stripBoilerplateRemovesIndonesianAndEnglishSuffixes() {
+        val title1 = "Overflow Episode 01 Subtitle Indonesia - Nonton Anime"
+        assertEquals("Overflow Episode 01", HtmlText.stripBoilerplate(title1))
+
+        val title2 = "Kanojo x Kanojo x Kanojo Sub Indo"
+        assertEquals("Kanojo x Kanojo x Kanojo", HtmlText.stripBoilerplate(title2))
+
+        val title3 = "Itadaki Seieki [English Sub] - Nonton"
+        assertEquals("Itadaki Seieki", HtmlText.stripBoilerplate(title3))
+
+        val title4 = "Normal Title Without Suffix"
+        assertEquals("Normal Title Without Suffix", HtmlText.stripBoilerplate(title4))
+    }
 }

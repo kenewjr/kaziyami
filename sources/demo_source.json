@@ -1,0 +1,33 @@
+{
+  "name": "DemoAnime",
+  "lang": "en",
+  "baseUrl": "https://demoanime.org",
+  "mirrors": ["https://demoanime.org", "https://mirror.demoanime.org"],
+  "isNsfw": true,
+  "popularPath": "/popular/page/%d/",
+  "latestPath": "/latest/page/%d/",
+  "searchPath": "/?s=%s&page=%d",
+  "selectors": {
+    "item": ".anime-card",
+    "itemTitle": ".title a",
+    "itemUrl": ".title a",
+    "itemThumbnail": "img.poster",
+    "nextPage": ".pagination a.next",
+    "detailsTitle": "h1.title",
+    "detailsThumbnail": ".cover img",
+    "detailsDescription": ".synopsis",
+    "detailsGenre": ".genre a",
+    "detailsStatus": ".status",
+    "detailsAuthor": ".studio",
+    "episodeList": ".episodes li",
+    "episodeUrl": "a",
+    "episodeName": ".ep-title",
+    "episodeDate": ".ep-date",
+    "playerIframes": "iframe.player"
+  },
+  "quirks": {
+    "episodesReversed": false,
+    "usesAjaxPlayer": false,
+    "stripTitleBoilerplate": true
+  }
+}

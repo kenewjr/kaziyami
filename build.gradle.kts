@@ -49,6 +49,24 @@ subprojects {
     }
 }
 
+val validateSourceConfigs by tasks.registering {
+    group = "verification"
+    description = "Validates source JSON configuration files in sources/ directory"
+    doLast {
+        val sourcesDir = file("sources")
+        if (sourcesDir.exists()) {
+            val jsonFiles = sourcesDir.listFiles { _, name -> name.endsWith(".json") } ?: emptyArray()
+            for (f in jsonFiles) {
+                println("[+] Validating source config: ${f.name}")
+                val text = f.readText()
+                require(text.contains("\"name\"")) { "Validation error in ${f.name}: missing 'name'" }
+                require(text.contains("\"lang\"")) { "Validation error in ${f.name}: missing 'lang'" }
+                require(text.contains("\"baseUrl\"")) { "Validation error in ${f.name}: missing 'baseUrl'" }
+            }
+        }
+    }
+}
+
 tasks.register<Test>("liveSmokeTest") {
     group = "verification"
     description = "Runs live integration tests against real sites."
@@ -65,4 +83,11 @@ tasks.register<Exec>("generateRepoIndex") {
     group = "distribution"
     description = "Generates Aniyomi repo index.json and index.min.json."
     commandLine("python", "tools/generate_repo_index.py")
+}
+
+tasks.register("check") {
+    group = "verification"
+    description = "Runs all verification tasks across root and subprojects."
+    dependsOn(validateSourceConfigs)
+    dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

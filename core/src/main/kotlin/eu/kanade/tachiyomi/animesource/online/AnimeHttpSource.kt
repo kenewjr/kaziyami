@@ -46,8 +46,19 @@ abstract class AnimeHttpSource : AnimeSource {
     abstract fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request
     abstract fun searchAnimeParse(response: Response): AnimesPage
 
+    open fun animeDetailsRequest(anime: SAnime): Request =
+        GET(if (anime.url.startsWith("http")) anime.url else "$baseUrl${anime.url}")
+
     abstract fun animeDetailsParse(response: Response): SAnime
+
+    open fun episodeListRequest(anime: SAnime): Request =
+        GET(if (anime.url.startsWith("http")) anime.url else "$baseUrl${anime.url}")
+
     abstract fun episodeListParse(response: Response): List<SEpisode>
+
+    open fun videoListRequest(episode: SEpisode): Request =
+        GET(if (episode.url.startsWith("http")) episode.url else "$baseUrl${episode.url}")
+
     abstract fun videoListParse(response: Response): List<Video>
 
     override suspend fun getPopularAnime(page: Int): AnimesPage {
@@ -72,30 +83,21 @@ abstract class AnimeHttpSource : AnimeSource {
     }
 
     override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        val request = Request.Builder()
-            .url(if (anime.url.startsWith("http")) anime.url else "$baseUrl${anime.url}")
-            .headers(headers)
-            .build()
+        val request = animeDetailsRequest(anime)
         return client.newCall(request).execute().use { response ->
             animeDetailsParse(response).apply { initialized = true }
         }
     }
 
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
-        val request = Request.Builder()
-            .url(if (anime.url.startsWith("http")) anime.url else "$baseUrl${anime.url}")
-            .headers(headers)
-            .build()
+        val request = episodeListRequest(anime)
         return client.newCall(request).execute().use { response ->
             episodeListParse(response)
         }
     }
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val request = Request.Builder()
-            .url(if (episode.url.startsWith("http")) episode.url else "$baseUrl${episode.url}")
-            .headers(headers)
-            .build()
+        val request = videoListRequest(episode)
         return client.newCall(request).execute().use { response ->
             videoListParse(response)
         }

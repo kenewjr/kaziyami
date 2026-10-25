@@ -52,7 +52,7 @@ class StreamTapeExtractor : VideoExtractor {
             return emptyList()
         }
 
-        // Match Streamtape token concatenation: e.g. document.getElementById('videolink').innerHTML = "..." + "..."
+        // Match Streamtape token concatenation
         val pattern = Pattern.compile("id=['\"]videolink['\"][^>]*>.*?</", Pattern.DOTALL)
         val matcher = pattern.matcher(html)
         var streamUrl: String? = null
@@ -68,6 +68,13 @@ class StreamTapeExtractor : VideoExtractor {
             val altMatch = altPattern.matcher(html)
             if (altMatch.find()) {
                 streamUrl = "https:" + altMatch.group(1) + altMatch.group(2)
+            }
+        }
+        if (streamUrl == null) {
+            val directMatch = Pattern.compile("id=['\"]robotlink['\"][^>]*>([^<]+)<").matcher(html)
+            if (directMatch.find()) {
+                streamUrl = directMatch.group(1).trim()
+                if (streamUrl.startsWith("//")) streamUrl = "https:$streamUrl"
             }
         }
 
@@ -92,10 +99,11 @@ class DoodExtractor : VideoExtractor {
             return emptyList()
         }
 
-        val passPattern = Pattern.compile("/pass_md5/[^']*")
+        val passPattern = Pattern.compile("/pass_md5/[^'\"\\s<]*")
         val passMatcher = passPattern.matcher(html)
         if (!passMatcher.find()) return emptyList()
-        val passUrl = "https://" + req.url.host + passMatcher.group(0)
+        val passRel = passMatcher.group(0)
+        val passUrl = req.url.resolve(passRel)?.toString() ?: "https://${req.url.host}$passRel"
 
         val passReq = Request.Builder().url(passUrl).header("Referer", embedUrl).build()
         val passBody = try {
@@ -125,13 +133,14 @@ class VoeExtractor : VideoExtractor {
             return emptyList()
         }
 
-        val hlsRegex = Pattern.compile("['\"]hls['\"]\\s*:\\s*['\"]([^'\"]+)['\"]")
-        val matcher = hlsRegex.matcher(html)
+        val pattern = Pattern.compile("'hls':\\s*'([^']+)'")
+        val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val hlsUrl = matcher.group(1)
             val headers = Headers.Builder().set("Referer", url).build()
-            return listOf(Video(url, "VOE HD", hlsUrl, headers))
+            return listOf(Video(url, "VOE 720p", hlsUrl, headers))
         }
+
         return emptyList()
     }
 }
@@ -143,10 +152,12 @@ class Mp4UploadExtractor : VideoExtractor {
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
     override fun extract(url: String, client: OkHttpClient): List<Video> {
-        val embedUrl = if (!url.contains("/embed-")) {
+        val embedUrl = if (!url.contains("embed-")) {
             val id = url.substringAfterLast("/").substringBefore(".")
             "https://www.mp4upload.com/embed-$id.html"
-        } else url
+        } else {
+            url
+        }
 
         val req = Request.Builder().url(embedUrl).build()
         val html = try {
@@ -180,7 +191,7 @@ class StreamWishExtractor : VideoExtractor {
             return emptyList()
         }
 
-        val pattern = Pattern.compile("sources:\\s*\\[\\{file:['\"]([^'\"]+)['\"]")
+        val pattern = Pattern.compile("sources:\\s*\\[\\{['\"]?file['\"]?:\\s*['\"]([^'\"]+)['\"]")
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val videoUrl = matcher.group(1)
@@ -205,7 +216,7 @@ class FilemoonExtractor : VideoExtractor {
             return emptyList()
         }
 
-        val pattern = Pattern.compile("sources:\\s*\\[\\{file:['\"]([^'\"]+)['\"]")
+        val pattern = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]")
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val videoUrl = matcher.group(1)

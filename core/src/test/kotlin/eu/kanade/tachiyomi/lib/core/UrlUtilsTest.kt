@@ -38,4 +38,21 @@ class UrlUtilsTest {
         val unified = UrlUtils.unifyMirror(url, "https://nekopoi.app")
         assertThat(unified).isEqualTo("https://nekopoi.app/hentai/test-series/?page=1")
     }
+
+    @Test
+    fun `getPath extracts relative path and query for bookmark storage`() {
+        assertThat(UrlUtils.getPath("https://nekopoi.care/hentai/episode-1/")).isEqualTo("/hentai/episode-1/")
+        assertThat(UrlUtils.getPath("https://nekopoi.care/search?q=test")).isEqualTo("/search?q=test")
+        assertThat(UrlUtils.getPath("/relative/path")).isEqualTo("/relative/path")
+    }
+
+    @Test
+    fun `sameResource matches urls across mirrors and ignores tracking params`() {
+        val urlA = "https://nekopoi.care/hentai/series-1/?utm_source=feed"
+        val urlB = "https://nekopoi.app/hentai/series-1/?fbclid=12345"
+        val urlDifferent = "https://nekopoi.app/hentai/series-2/"
+
+        assertThat(UrlUtils.sameResource(urlA, urlB)).isTrue
+        assertThat(UrlUtils.sameResource(urlA, urlDifferent)).isFalse
+    }
 }

@@ -8,3 +8,16 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.assertj:assertj-core:3.25.3")
 }
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "**/*\$\$serializer*",
+                    "**/*\$Companion*"
+                )
+            }
+        })
+    )
+}

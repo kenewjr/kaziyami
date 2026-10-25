@@ -13,34 +13,76 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
+/**
+ * Exception raised when an anti-bot challenge (Cloudflare Turnstile, JavaScript challenge, etc.) is detected.
+ */
 class CloudflareChallengeException(message: String) : IOException(message)
 
+/**
+ * Standard HTTP header sets mirroring real browser behavior to avoid automated bot fingerprinting.
+ */
 object BrowserHeaders {
     const val DEFAULT_USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
-    fun defaultHeaders(referer: String? = null): Headers {
+    enum class HeaderType {
+        NAVIGATE,
+        XHR,
+        IMAGE
+    }
+
+    /**
+     * Generates a realistic header set for navigations, API calls, or media requests.
+     */
+    fun headersFor(url: String, referer: String? = null, type: HeaderType = HeaderType.NAVIGATE): Headers {
         val builder = Headers.Builder()
             .set("User-Agent", DEFAULT_USER_AGENT)
-            .set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
             .set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
             .set("Accept-Encoding", "gzip, deflate, br")
             .set("Sec-Ch-Ua", "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"")
             .set("Sec-Ch-Ua-Mobile", "?0")
             .set("Sec-Ch-Ua-Platform", "\"Windows\"")
-            .set("Sec-Fetch-Dest", "document")
-            .set("Sec-Fetch-Mode", "navigate")
-            .set("Sec-Fetch-Site", if (referer != null) "same-origin" else "none")
-            .set("Sec-Fetch-User", "?1")
-            .set("Upgrade-Insecure-Requests", "1")
+
+        when (type) {
+            HeaderType.NAVIGATE -> {
+                builder.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                builder.set("Sec-Fetch-Dest", "document")
+                builder.set("Sec-Fetch-Mode", "navigate")
+                builder.set("Sec-Fetch-Site", if (referer != null) "same-origin" else "none")
+                builder.set("Sec-Fetch-User", "?1")
+                builder.set("Upgrade-Insecure-Requests", "1")
+            }
+            HeaderType.XHR -> {
+                builder.set("Accept", "application/json, text/javascript, */*; q=0.01")
+                builder.set("Sec-Fetch-Dest", "empty")
+                builder.set("Sec-Fetch-Mode", "cors")
+                builder.set("Sec-Fetch-Site", "same-origin")
+                builder.set("X-Requested-With", "XMLHttpRequest")
+            }
+            HeaderType.IMAGE -> {
+                builder.set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                builder.set("Sec-Fetch-Dest", "image")
+                builder.set("Sec-Fetch-Mode", "no-cors")
+                builder.set("Sec-Fetch-Site", "cross-site")
+            }
+        }
 
         if (referer != null) {
             builder.set("Referer", referer)
         }
+
         return builder.build()
     }
+
+    /**
+     * Backward-compatible default headers generator.
+     */
+    fun defaultHeaders(referer: String? = null): Headers = headersFor("", referer, HeaderType.NAVIGATE)
 }
 
+/**
+ * Interceptor that injects standard browser headers into requests if omitted.
+ */
 class BrowserHeaderInterceptor(
     private val defaultRefererProvider: (() -> String)? = null
 ) : Interceptor {
@@ -48,7 +90,10 @@ class BrowserHeaderInterceptor(
         val original = chain.request()
         val builder = original.newBuilder()
 
-        val defaultHeaders = BrowserHeaders.defaultHeaders(defaultRefererProvider?.invoke())
+        val defaultHeaders = BrowserHeaders.headersFor(
+            url = original.url.toString(),
+            referer = defaultRefererProvider?.invoke()
+        )
         for (i in 0 until defaultHeaders.size) {
             val name = defaultHeaders.name(i)
             if (original.header(name) == null) {
@@ -60,12 +105,46 @@ class BrowserHeaderInterceptor(
     }
 }
 
+/**
+ * Detects Cloudflare interstitials, Turnstile challenges, and block responses.
+ */
+object ChallengeDetector {
+    fun isChallenge(response: Response): Boolean {
+        if (response.header("cf-mitigated") == "challenge") {
+            return true
+        }
+        val code = response.code
+        if (code == 403 || code == 503) {
+            val server = response.header("Server") ?: ""
+            val peekBody = try {
+                response.peekBody(4096).string()
+            } catch (_: Exception) {
+                ""
+            }
+
+            if (server.contains("cloudflare", ignoreCase = true) ||
+                peekBody.contains("Just a moment...", ignoreCase = true) ||
+                peekBody.contains("Attention Required", ignoreCase = true) ||
+                peekBody.contains("cf-turnstile", ignoreCase = true) ||
+                peekBody.contains("challenge-platform", ignoreCase = true) ||
+                peekBody.contains("Checking your browser", ignoreCase = true)
+            ) {
+                return true
+            }
+        }
+        return false
+    }
+}
+
+/**
+ * Interceptor that monitors incoming HTTP responses for challenge/block pages.
+ */
 class CloudflareInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
 
-        if (isChallenge(response)) {
+        if (ChallengeDetector.isChallenge(response)) {
             val url = request.url.toString()
             response.close()
             throw CloudflareChallengeException(
@@ -75,33 +154,11 @@ class CloudflareInterceptor : Interceptor {
 
         return response
     }
-
-    private fun isChallenge(response: Response): Boolean {
-        if (response.header("cf-mitigated") == "challenge") {
-            return true
-        }
-        val code = response.code
-        if (code == 403 || code == 503) {
-            val server = response.header("Server") ?: ""
-            if (server.contains("cloudflare", ignoreCase = true)) {
-                val peekBody = try {
-                    response.peekBody(4096).string()
-                } catch (_: Exception) {
-                    ""
-                }
-                if (peekBody.contains("Just a moment...", ignoreCase = true) ||
-                    peekBody.contains("Attention Required", ignoreCase = true) ||
-                    peekBody.contains("cf-turnstile", ignoreCase = true) ||
-                    peekBody.contains("challenge-platform", ignoreCase = true)
-                ) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
 }
 
+/**
+ * Rate-limiting interceptor that enforces minimum intervals with randomized jitter between requests to a single host.
+ */
 class RateLimitInterceptor(
     private val permitsPerSecond: Double = 3.0
 ) : Interceptor {
@@ -129,11 +186,14 @@ class RateLimitInterceptor(
     }
 }
 
-class RetryAfterInterceptor(
+/**
+ * Handles HTTP 429 and 503 responses with exponential backoff and respects 'Retry-After' response headers.
+ */
+class RetryInterceptor(
     private val maxRetries: Int = 3
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        var request = chain.request()
+        val request = chain.request()
         var response = chain.proceed(request)
         var tryCount = 0
 
@@ -161,6 +221,11 @@ class RetryAfterInterceptor(
     }
 }
 
+typealias RetryAfterInterceptor = RetryInterceptor
+
+/**
+ * In-memory thread-safe cookie storage shared across calls.
+ */
 class SimpleCookieJar : CookieJar {
     private val store = ConcurrentHashMap<String, MutableList<Cookie>>()
 
@@ -184,16 +249,30 @@ class SimpleCookieJar : CookieJar {
     }
 }
 
+/**
+ * Builds compliant OkHttpClient instances configured with realistic headers, rate limits, and challenge detection.
+ */
+object NetworkFactory {
+    fun createClient(
+        baseClient: OkHttpClient = OkHttpClient(),
+        permitsPerSecond: Double = 3.0,
+        maxRetries: Int = 3,
+        cookieJar: CookieJar = SimpleCookieJar()
+    ): OkHttpClient {
+        return baseClient.newBuilder()
+            .cookieJar(cookieJar)
+            .addInterceptor(RateLimitInterceptor(permitsPerSecond))
+            .addInterceptor(RetryInterceptor(maxRetries))
+            .addInterceptor(BrowserHeaderInterceptor())
+            .addInterceptor(CloudflareInterceptor())
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .build()
+    }
+}
+
 class NetworkHelper(
-    val client: OkHttpClient = OkHttpClient.Builder()
-        .cookieJar(SimpleCookieJar())
-        .addInterceptor(RateLimitInterceptor(4.0))
-        .addInterceptor(RetryAfterInterceptor(2))
-        .addInterceptor(BrowserHeaderInterceptor())
-        .addInterceptor(CloudflareInterceptor())
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .build()
+    val client: OkHttpClient = NetworkFactory.createClient()
 ) {
     val cloudflareClient: OkHttpClient = client
 }

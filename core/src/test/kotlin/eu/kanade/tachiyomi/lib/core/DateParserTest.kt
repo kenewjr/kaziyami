@@ -52,7 +52,7 @@ class DateParserTest {
 
     @Test
     fun parseRelativeIndonesianDates() {
-        val parsedHari = DateParser.parse("2 hari lalu")
+        val parsedHari = DateParser.parse("2 hari yang lalu")
         val parsedJam = DateParser.parse("3 jam lalu")
         val parsedMenit = DateParser.parse("10 menit lalu")
         val now = System.currentTimeMillis()
@@ -60,6 +60,16 @@ class DateParserTest {
         assertTrue(parsedHari in (now - 3 * 86400_000L)..(now - 1 * 86400_000L))
         assertTrue(parsedJam in (now - 4 * 3600_000L)..(now - 2 * 3600_000L))
         assertTrue(parsedMenit in (now - 15 * 60_000L)..(now - 5 * 60_000L))
+    }
+
+    @Test
+    fun parseIsoTimestampStrings() {
+        val parsedIso = DateParser.parse("2024-05-10T12:00:00Z")
+        assertTrue(parsedIso > 0L)
+        val cal = Calendar.getInstance().apply { timeInMillis = parsedIso }
+        assertEquals(2024, cal.get(Calendar.YEAR))
+        assertEquals(Calendar.MAY, cal.get(Calendar.MONTH))
+        assertEquals(10, cal.get(Calendar.DAY_OF_MONTH))
     }
 
     @Test

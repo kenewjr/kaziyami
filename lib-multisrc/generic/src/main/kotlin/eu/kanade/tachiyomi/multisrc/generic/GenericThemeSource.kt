@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.generic
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -19,6 +20,11 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URLEncoder
 
+/**
+ * Universal declarative base class for anime extension sources.
+ * Automates URL normalization, selector drift detection, relative path storage,
+ * episode deduplication, and mirror failover.
+ */
 open class GenericThemeSource(
     val config: SourceConfig,
     val preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
@@ -77,6 +83,28 @@ open class GenericThemeSource(
 
     override fun popularAnimeSelector(): String = config.selectors.item
 
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val elements = document.select(popularAnimeSelector())
+
+        if (elements.isEmpty()) {
+            if (isEmptyState(document)) {
+                return AnimesPage(emptyList(), false)
+            }
+            throw IllegalStateException(
+                "Selector drift detected on ${response.request.url}: " +
+                    "main item selector '${popularAnimeSelector()}' returned 0 elements."
+            )
+        }
+
+        val animeList = elements.map { popularAnimeFromElement(it) }
+        val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
+            document.selectFirst(selector) != null
+        } ?: false
+
+        return AnimesPage(animeList, hasNextPage)
+    }
+
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         val titleEl = element.selectFirst(config.selectors.itemTitle)
@@ -86,7 +114,11 @@ open class GenericThemeSource(
             ?: element.selectFirst("img")?.attr("alt")
             ?: ""
 
-        anime.title = HtmlText.clean(title)
+        anime.title = if (config.quirks.stripTitleBoilerplate) {
+            HtmlText.stripBoilerplate(title)
+        } else {
+            HtmlText.clean(title)
+        }
 
         val linkEl = element.selectFirst(config.selectors.itemUrl) ?: element.selectFirst("a[href]")
         val href = linkEl?.attr("href") ?: ""
@@ -109,6 +141,28 @@ open class GenericThemeSource(
 
     override fun latestUpdatesSelector(): String = config.selectors.item
 
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val elements = document.select(latestUpdatesSelector())
+
+        if (elements.isEmpty()) {
+            if (isEmptyState(document)) {
+                return AnimesPage(emptyList(), false)
+            }
+            throw IllegalStateException(
+                "Selector drift detected on ${response.request.url}: " +
+                    "latest updates selector '${latestUpdatesSelector()}' returned 0 elements."
+            )
+        }
+
+        val animeList = elements.map { latestUpdatesFromElement(it) }
+        val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
+            document.selectFirst(selector) != null
+        } ?: false
+
+        return AnimesPage(animeList, hasNextPage)
+    }
+
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     override fun latestUpdatesNextPageSelector(): String? = config.selectors.nextPage
@@ -124,16 +178,47 @@ open class GenericThemeSource(
 
     override fun searchAnimeSelector(): String = config.selectors.item
 
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val elements = document.select(searchAnimeSelector())
+
+        if (elements.isEmpty()) {
+            if (isEmptyState(document)) {
+                return AnimesPage(emptyList(), false)
+            }
+            throw IllegalStateException(
+                "Selector drift detected on ${response.request.url}: " +
+                    "search selector '${searchAnimeSelector()}' returned 0 elements."
+            )
+        }
+
+        val animeList = elements.map { searchAnimeFromElement(it) }
+        val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
+            document.selectFirst(selector) != null
+        } ?: false
+
+        return AnimesPage(animeList, hasNextPage)
+    }
+
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String? = config.selectors.nextPage
 
     // ============================= Anime Details =============================
 
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        return GET(UrlUtils.resolve(baseUrl, anime.url))
+    }
+
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val titleEl = document.selectFirst(config.selectors.detailsTitle)
-        anime.title = HtmlText.clean(titleEl?.text())
+        val title = titleEl?.text() ?: ""
+        anime.title = if (config.quirks.stripTitleBoilerplate) {
+            HtmlText.stripBoilerplate(title)
+        } else {
+            HtmlText.clean(title)
+        }
 
         val thumbEl = document.selectFirst(config.selectors.detailsThumbnail)
         anime.thumbnail_url = LazyImage.extractUrl(thumbEl, baseUrl)
@@ -162,6 +247,10 @@ open class GenericThemeSource(
 
     // ============================= Episode List =============================
 
+    override fun episodeListRequest(anime: SAnime): Request {
+        return GET(UrlUtils.resolve(baseUrl, anime.url))
+    }
+
     override fun episodeListSelector(): String = config.selectors.episodeList
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -185,14 +274,22 @@ open class GenericThemeSource(
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = super.episodeListParse(response)
-        return if (config.quirks.episodesReversed) {
-            episodes.reversed()
+        // Deduplicate episodes by URL
+        val deduped = episodes.distinctBy { it.url }
+        val ordered = if (config.quirks.episodesReversed) {
+            deduped.reversed()
         } else {
-            episodes
+            deduped
         }
+        // Stable sort newest first (descending by episode number)
+        return ordered.sortedByDescending { it.episode_number }
     }
 
     // ============================= Video List =============================
+
+    override fun videoListRequest(episode: SEpisode): Request {
+        return GET(UrlUtils.resolve(baseUrl, episode.url))
+    }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -203,7 +300,10 @@ open class GenericThemeSource(
             }
             .map { UrlUtils.resolve(baseUrl, it) }
 
-        return ExtractorRegistry.extractAll(iframeUrls, client)
+        val preferredQuality = preferences.getString("preferred_quality", "1080p")
+        return ExtractorRegistry.resolveAll(iframeUrls, client = client).let {
+            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality)
+        }
     }
 
     override fun videoFromElement(element: Element): Video {
@@ -232,4 +332,22 @@ open class GenericThemeSource(
         values: Array<String> = arrayOf("Default", "Popular", "Latest", "A-Z", "Rating"),
         state: Int = 0
     ) : AnimeFilter.Select<String>(name, values, state)
+
+    /**
+     * Checks if a document contains explicit empty-state indicators rather than selector drift.
+     */
+    open fun isEmptyState(document: Document): Boolean {
+        val body = document.body() ?: return true
+        val bodyText = body.text().lowercase().trim()
+        if (bodyText.isEmpty()) return true
+        return bodyText.contains("no results") ||
+            bodyText.contains("no videos") ||
+            bodyText.contains("no anime") ||
+            bodyText.contains("nothing found") ||
+            bodyText.contains("not found") ||
+            bodyText.contains("tidak ada") ||
+            bodyText.contains("ditemukan") ||
+            bodyText.contains("0 results") ||
+            document.selectFirst(".empty, .not-found, .notfound, .no-results, .error-404, .search-empty") != null
+    }
 }

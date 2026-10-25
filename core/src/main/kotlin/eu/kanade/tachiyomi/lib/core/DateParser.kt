@@ -5,7 +5,13 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.regex.Pattern
 
+/**
+ * Multilingual date parser supporting Indonesian locale dates, relative time expressions,
+ * standard date formats, and ISO-8601 timestamp strings.
+ * Guarantees safe parsing that returns 0L on unresolvable input without throwing exceptions.
+ */
 object DateParser {
+
     private val INDONESIAN_MONTHS = mapOf(
         "januari" to "01", "jan" to "01",
         "februari" to "02", "feb" to "02",
@@ -22,20 +28,42 @@ object DateParser {
     )
 
     private val RELATIVE_PATTERNS = listOf(
-        Pattern.compile("(\\d+)\\s*(?:detik|seconds?|secs?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.SECOND,
-        Pattern.compile("(\\d+)\\s*(?:menit|minutes?|mins?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.MINUTE,
-        Pattern.compile("(\\d+)\\s*(?:jam|hours?|hrs?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.HOUR_OF_DAY,
-        Pattern.compile("(\\d+)\\s*(?:hari|days?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.DAY_OF_YEAR,
-        Pattern.compile("(\\d+)\\s*(?:minggu|weeks?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.WEEK_OF_YEAR,
-        Pattern.compile("(\\d+)\\s*(?:bulan|months?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.MONTH,
-        Pattern.compile("(\\d+)\\s*(?:tahun|years?)\\s*(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.YEAR
+        Pattern.compile("(\\d+)\\s*(?:detik|seconds?|secs?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.SECOND,
+        Pattern.compile("(\\d+)\\s*(?:menit|minutes?|mins?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.MINUTE,
+        Pattern.compile("(\\d+)\\s*(?:jam|hours?|hrs?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.HOUR_OF_DAY,
+        Pattern.compile("(\\d+)\\s*(?:hari|days?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.DAY_OF_YEAR,
+        Pattern.compile("(\\d+)\\s*(?:minggu|weeks?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.WEEK_OF_YEAR,
+        Pattern.compile("(\\d+)\\s*(?:bulan|months?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.MONTH,
+        Pattern.compile("(\\d+)\\s*(?:tahun|years?)\\s*(?:yang\\s*)?(?:lalu|ago)", Pattern.CASE_INSENSITIVE) to Calendar.YEAR
     )
 
+    private val STANDARD_FORMATS = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "yyyy/MM/dd",
+        "dd-MM-yyyy",
+        "dd/MM/yyyy",
+        "MMMM d, yyyy",
+        "MMM d, yyyy",
+        "d MMMM yyyy",
+        "d MMM yyyy"
+    )
+
+    /**
+     * Parses a date string into Unix epoch milliseconds.
+     *
+     * @param dateStr Raw date text from HTML or JSON.
+     * @return Epoch millisecond timestamp, or 0L if parsing failed.
+     */
     fun parse(dateStr: String?): Long {
         if (dateStr.isNullOrBlank()) return 0L
         val clean = dateStr.trim().lowercase()
 
-        // Check relative
+        // Relative shortcuts
         if (clean == "hari ini" || clean == "today") {
             return Calendar.getInstance().timeInMillis
         }
@@ -45,6 +73,7 @@ object DateParser {
             return cal.timeInMillis
         }
 
+        // Relative delta expressions
         for ((pattern, field) in RELATIVE_PATTERNS) {
             val matcher = pattern.matcher(clean)
             if (matcher.find()) {
@@ -55,28 +84,18 @@ object DateParser {
             }
         }
 
-        // Try standard format patterns
-        val formats = listOf(
-            "yyyy-MM-dd",
-            "yyyy/MM/dd",
-            "dd-MM-yyyy",
-            "dd/MM/yyyy",
-            "MMMM d, yyyy",
-            "MMM d, yyyy",
-            "d MMMM yyyy",
-            "d MMM yyyy"
-        )
-
-        for (fmt in formats) {
+        // ISO & standard formats
+        for (fmt in STANDARD_FORMATS) {
             try {
                 val sdf = SimpleDateFormat(fmt, Locale.US)
                 sdf.isLenient = false
-                return sdf.parse(clean)?.time ?: continue
+                val parsed = sdf.parse(clean)
+                if (parsed != null) return parsed.time
             } catch (_: Exception) {
             }
         }
 
-        // Try parsing Indonesian text e.g. "Minggu, 25 Oktober 2026" or "25 Oktober 2026"
+        // Indonesian natural date e.g. "Minggu, 25 Oktober 2026" or "12 Oktober 2026"
         val idRegex = Pattern.compile("(\\d{1,2})\\s+([a-zA-Z]+)\\s+(\\d{4})")
         val idMatch = idRegex.matcher(clean)
         if (idMatch.find()) {

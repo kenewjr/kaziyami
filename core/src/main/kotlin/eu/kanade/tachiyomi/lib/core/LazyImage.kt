@@ -3,38 +3,49 @@ package eu.kanade.tachiyomi.lib.core
 import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
+/**
+ * Robust image extractor that resolves lazy-loaded thumbnails across varied CMS engines and themes.
+ * Inspects standard data attributes, srcset, noscript blocks, and CSS background-image declarations,
+ * while rejecting 1x1 transparent GIFs and placeholder images.
+ */
 object LazyImage {
     private val BG_IMG_PATTERN = Pattern.compile("url\\(['\"]?(.*?)['\"]?\\)", Pattern.CASE_INSENSITIVE)
 
+    private val CANDIDATE_ATTRIBUTES = listOf(
+        "data-src",
+        "data-lazy-src",
+        "data-original",
+        "data-lazy",
+        "data-url",
+        "data-cfsrc",
+        "data-src-webp",
+        "content",
+        "src"
+    )
+
+    /**
+     * Extracts an absolute thumbnail URL from an HTML element or its descendants.
+     */
     fun extractUrl(element: Element?, baseUrl: String = ""): String = extract(element, baseUrl)
 
+    /**
+     * Extracts an absolute thumbnail URL from an HTML element.
+     */
     fun extract(element: Element?, baseUrl: String = ""): String {
         if (element == null) return ""
 
-        val candidates = listOf(
-            "data-src",
-            "data-lazy-src",
-            "data-original",
-            "data-lazy",
-            "data-url",
-            "data-cfsrc",
-            "data-src-webp",
-            "content",
-            "src"
-        )
-
-        for (attr in candidates) {
+        for (attr in CANDIDATE_ATTRIBUTES) {
             val value = element.attr(attr).trim()
             if (value.isNotEmpty() && !isPlaceholder(value)) {
                 return UrlUtils.resolve(baseUrl, value)
             }
         }
 
-        // Check srcset
+        // Check srcset or data-srcset (select largest resolution)
         val srcset = element.attr("srcset").ifEmpty { element.attr("data-srcset") }
         if (srcset.isNotEmpty()) {
-            val parsedSrcset = parseSrcset(srcset)
-            if (parsedSrcset.isNotEmpty()) {
+            val parsedSrcset = parseLargestFromSrcset(srcset)
+            if (parsedSrcset.isNotEmpty() && !isPlaceholder(parsedSrcset)) {
                 return UrlUtils.resolve(baseUrl, parsedSrcset)
             }
         }
@@ -51,7 +62,7 @@ object LazyImage {
             }
         }
 
-        // Check noscript tag child
+        // Check noscript fallback tag
         val noscript = element.selectFirst("noscript")
         if (noscript != null) {
             val noscriptImg = noscript.selectFirst("img")
@@ -63,7 +74,7 @@ object LazyImage {
             }
         }
 
-        // Check child img
+        // Check child img tag if current element is a container (e.g. <a> or <div>)
         val childImg = element.selectFirst("img")
         if (childImg != null && childImg != element) {
             val childUrl = extract(childImg, baseUrl)
@@ -75,20 +86,48 @@ object LazyImage {
         return ""
     }
 
-    private fun isPlaceholder(url: String): Boolean {
-        return url.startsWith("data:image/svg+xml") ||
-            url.startsWith("data:image/gif") ||
-            url.contains("data:image/png;base64,R0lGOD") ||
-            url.contains("blank.gif") ||
-            url.contains("default-thumb") ||
-            url.contains("spacer.png")
+    /**
+     * Identifies placeholder images, 1x1 transparent tracking pixels, and empty data URIs.
+     */
+    fun isPlaceholder(url: String): Boolean {
+        val lower = url.lowercase().trim()
+        if (lower.isEmpty()) return true
+        if (lower.startsWith("data:image/svg+xml")) return true
+        if (lower.startsWith("data:image/gif") && (lower.contains("r0lgodlhaqaba") || lower.length < 100)) return true
+        if (lower.contains("data:image/png;base64,r0lgod")) return true
+        if (lower.endsWith("blank.gif") || lower.endsWith("spacer.png") || lower.endsWith("pixel.gif") || lower.endsWith("1x1.png")) return true
+        if (lower.contains("default-thumb") || lower.contains("no-image.jpg") || lower.contains("placeholder")) return true
+        return false
     }
 
-    private fun parseSrcset(srcset: String): String {
-        // e.g. "https://example.com/img-175.webp 175w, https://example.com/img-500.webp 500w"
+    /**
+     * Parses srcset values (e.g. "image-300.jpg 300w, image-600.jpg 600w") and selects the candidate with the highest resolution.
+     */
+    fun parseLargestFromSrcset(srcset: String): String {
         val entries = srcset.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         if (entries.isEmpty()) return ""
-        val last = entries.last().split("\\s+".toRegex())
-        return if (last.isNotEmpty()) last[0].trim() else ""
+
+        var bestUrl = ""
+        var maxScore = -1.0
+
+        for (entry in entries) {
+            val parts = entry.split("\\s+".toRegex()).map { it.trim() }.filter { it.isNotEmpty() }
+            if (parts.isEmpty()) continue
+            val candidateUrl = parts[0]
+            val descriptor = if (parts.size > 1) parts[1].lowercase() else ""
+
+            val score = when {
+                descriptor.endsWith("w") -> descriptor.removeSuffix("w").toDoubleOrNull() ?: 0.0
+                descriptor.endsWith("x") -> (descriptor.removeSuffix("x").toDoubleOrNull() ?: 1.0) * 1000.0
+                else -> 0.0
+            }
+
+            if (score >= maxScore) {
+                maxScore = score
+                bestUrl = candidateUrl
+            }
+        }
+
+        return bestUrl.ifEmpty { entries.last().split("\\s+".toRegex()).firstOrNull() ?: "" }
     }
 }

@@ -2,24 +2,44 @@ package eu.kanade.tachiyomi.lib.core
 
 import java.util.regex.Pattern
 
+/**
+ * Universal episode number parser capable of extracting normalized numeric representations
+ * from multilingual anime titles, including Indonesian formatting, abbreviations, specials, and ranges.
+ */
 object EpisodeNumberParser {
+
     private val EP_PATTERNS = listOf(
-        // Episode 3 or Ep. 3 or Ep 03.5
-        Pattern.compile("(?:episode|ep\\.?)\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE),
-        // Range 1-12 or 1 - 12 (takes first number or end? Usually 1.0 or entire)
-        Pattern.compile("(?:episode|ep\\.?)\\s*(\\d+)\\s*-\\s*\\d+", Pattern.CASE_INSENSITIVE),
-        // Standalone numbers at end of title e.g. "Pure x Holic - 02"
-        Pattern.compile("(?:[-_\\s#]|^)(\\d+(?:\\.\\d+)?)\\s*(?:(?:sub|vostfr|raw|end|\\[|\\().*|\$)", Pattern.CASE_INSENSITIVE),
+        // Indonesian forms: "Episode 03 Subtitle Indonesia", "Eps. 03 Sub Indo", "Ep 03"
+        Pattern.compile("(?:episode|eps?\\.?|ep\\.?)\\s*(\\d+(?:\\.\\d+)?)\\s*(?:subtitle\\s+indonesia|sub\\s*indo)?", Pattern.CASE_INSENSITIVE),
+        // E03 or #03
+        Pattern.compile("(?:\\b[eE]|#)\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE),
+        // Ranges: "Episode 1-2" or "Ep 1 - 2" or "1-2"
+        Pattern.compile("(?:episode|ep\\.?|eps?\\.?)?\\s*(\\d+)\\s*-\\s*\\d+", Pattern.CASE_INSENSITIVE),
+        // Standalone numbers before qualifiers e.g. "Title - 02 [1080p]", "Title - 03 (Sub Indo)"
+        Pattern.compile("(?:[-_\\s#]|^)(\\d+(?:\\.\\d+)?)\\s*(?:(?:sub|vostfr|raw|end|subtitle|\\[|\\().*|\$)", Pattern.CASE_INSENSITIVE),
+        // Decimal numbers anywhere: "3.5"
+        Pattern.compile("(\\d+\\.\\d+)"),
         // Any leading/trailing digit
-        Pattern.compile("(\\d+(?:\\.\\d+)?)")
+        Pattern.compile("(\\d+)")
     )
 
-    fun parse(episodeName: String): Float {
+    /**
+     * Parses the episode number from an episode name or title string.
+     *
+     * @param episodeName The title or text representing the episode.
+     * @param fallbackPosition Deterministic fallback value (e.g. index position) if no pattern matches.
+     * @return The parsed episode number as a Float.
+     */
+    fun parse(episodeName: String, fallbackPosition: Float = 0.0f): Float {
         val lower = episodeName.lowercase().trim()
 
-        if (lower.contains("ova") || lower.contains("special") || lower.contains("sp")) {
-            // Check if there is a number after OVA / SP
-            val spMatch = Pattern.compile("(?:ova|special|sp)\\s*(\\d+)", Pattern.CASE_INSENSITIVE).matcher(lower)
+        // Handle specials, OVA, ONA, Movies
+        if (lower.contains("movie") || lower.contains("gekijouban")) {
+            return 1.0f
+        }
+
+        if (lower.contains("ova") || lower.contains("special") || lower.contains("sp") || lower.contains("ona")) {
+            val spMatch = Pattern.compile("(?:ova|special|sp|ona)\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE).matcher(lower)
             if (spMatch.find()) {
                 val num = spMatch.group(1).toFloatOrNull()
                 if (num != null) return num
@@ -37,6 +57,6 @@ object EpisodeNumberParser {
             }
         }
 
-        return 0.0f
+        return fallbackPosition
     }
 }
