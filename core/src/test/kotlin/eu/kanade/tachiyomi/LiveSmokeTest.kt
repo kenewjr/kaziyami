@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi
 
-import eu.kanade.tachiyomi.network.BrowserHeaders
+import app.kaziyami.network.BrowserHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.jupiter.api.Tag

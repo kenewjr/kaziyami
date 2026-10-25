@@ -124,9 +124,9 @@ By inheriting [GenericThemeSource](file:///e:/project/kaziyami/lib-multisrc/gene
 ```kotlin
 package eu.kanade.tachiyomi.animeextension.en.demosite
 
-import eu.kanade.tachiyomi.lib.core.SelectorsConfig
-import eu.kanade.tachiyomi.lib.core.SourceConfig
-import eu.kanade.tachiyomi.multisrc.generic.GenericThemeSource
+import app.kaziyami.core.SelectorsConfig
+import app.kaziyami.core.SourceConfig
+import app.kaziyami.multisrc.generic.GenericThemeSource
 
 class DemoSite : GenericThemeSource(
     SourceConfig(

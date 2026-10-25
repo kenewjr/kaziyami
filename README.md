@@ -58,8 +58,8 @@ Adding a new website that uses an existing engine requires declaring a `SourceCo
 ```kotlin
 package eu.kanade.tachiyomi.animeextension.id.mysite
 
-import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamTheme
-import eu.kanade.tachiyomi.multisrc.generic.SourceConfig
+import app.kaziyami.multisrc.animestream.AnimeStreamTheme
+import app.kaziyami.multisrc.generic.SourceConfig
 
 class MyAnimeStreamSite : AnimeStreamTheme(
     SourceConfig(

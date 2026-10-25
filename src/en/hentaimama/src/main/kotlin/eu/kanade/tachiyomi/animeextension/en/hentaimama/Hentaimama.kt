@@ -3,9 +3,9 @@ package eu.kanade.tachiyomi.animeextension.en.hentaimama
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
 import eu.kanade.tachiyomi.animesource.SourcePreferences
-import eu.kanade.tachiyomi.multisrc.dooplay.DooPlayTheme
-import eu.kanade.tachiyomi.multisrc.generic.QuirksConfig
-import eu.kanade.tachiyomi.multisrc.generic.SelectorsConfig
+import app.kaziyami.multisrc.dooplay.DooPlayTheme
+import app.kaziyami.multisrc.generic.QuirksConfig
+import app.kaziyami.multisrc.generic.SelectorsConfig
 
 class Hentaimama(
     preferences: SourcePreferences = InMemorySourcePreferences()

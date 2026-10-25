@@ -5,10 +5,10 @@ import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
 import eu.kanade.tachiyomi.animesource.SourcePreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.multisrc.generic.GenericThemeSource
-import eu.kanade.tachiyomi.multisrc.generic.QuirksConfig
-import eu.kanade.tachiyomi.multisrc.generic.SelectorsConfig
-import eu.kanade.tachiyomi.multisrc.generic.SourceConfig
+import app.kaziyami.multisrc.generic.GenericThemeSource
+import app.kaziyami.multisrc.generic.QuirksConfig
+import app.kaziyami.multisrc.generic.SelectorsConfig
+import app.kaziyami.multisrc.generic.SourceConfig
 
 class IndoHentai(
     preferences: SourcePreferences = InMemorySourcePreferences()

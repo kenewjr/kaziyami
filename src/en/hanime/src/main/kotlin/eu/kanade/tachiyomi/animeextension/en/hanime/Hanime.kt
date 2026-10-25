@@ -7,14 +7,14 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.core.DateParser
-import eu.kanade.tachiyomi.lib.core.ExtractorRegistry
-import eu.kanade.tachiyomi.lib.core.HtmlText
-import eu.kanade.tachiyomi.lib.core.UrlUtils
-import eu.kanade.tachiyomi.multisrc.generic.GenericThemeSource
-import eu.kanade.tachiyomi.multisrc.generic.QuirksConfig
-import eu.kanade.tachiyomi.multisrc.generic.SelectorsConfig
-import eu.kanade.tachiyomi.multisrc.generic.SourceConfig
+import app.kaziyami.core.DateParser
+import app.kaziyami.core.ExtractorRegistry
+import app.kaziyami.core.HtmlText
+import app.kaziyami.core.UrlUtils
+import app.kaziyami.multisrc.generic.GenericThemeSource
+import app.kaziyami.multisrc.generic.QuirksConfig
+import app.kaziyami.multisrc.generic.SelectorsConfig
+import app.kaziyami.multisrc.generic.SourceConfig
 import okhttp3.Response
 import java.util.regex.Pattern
 

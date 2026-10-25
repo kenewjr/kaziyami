@@ -3,9 +3,9 @@ package eu.kanade.tachiyomi.animeextension.id.kuronime
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
 import eu.kanade.tachiyomi.animesource.SourcePreferences
-import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamTheme
-import eu.kanade.tachiyomi.multisrc.generic.QuirksConfig
-import eu.kanade.tachiyomi.multisrc.generic.SelectorsConfig
+import app.kaziyami.multisrc.animestream.AnimeStreamTheme
+import app.kaziyami.multisrc.generic.QuirksConfig
+import app.kaziyami.multisrc.generic.SelectorsConfig
 
 class Kuronime(
     preferences: SourcePreferences = InMemorySourcePreferences()

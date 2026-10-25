@@ -3,9 +3,9 @@ package eu.kanade.tachiyomi.animeextension.en.javsubbed
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
 import eu.kanade.tachiyomi.animesource.SourcePreferences
-import eu.kanade.tachiyomi.multisrc.generic.QuirksConfig
-import eu.kanade.tachiyomi.multisrc.generic.SelectorsConfig
-import eu.kanade.tachiyomi.multisrc.retrotube.RetroTubeTheme
+import app.kaziyami.multisrc.generic.QuirksConfig
+import app.kaziyami.multisrc.generic.SelectorsConfig
+import app.kaziyami.multisrc.retrotube.RetroTubeTheme
 
 class JAVSubbed(
     preferences: SourcePreferences = InMemorySourcePreferences()
