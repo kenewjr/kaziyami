@@ -41,7 +41,7 @@ class IndoHentaiTest {
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("Overflow Episode 1 Sub Indo", page.animes[0].title)
-        assertEquals("https://indohentai.net/hentai/overflow-episode-1-sub-indo/", page.animes[0].url)
+        assertEquals("/hentai/overflow-episode-1-sub-indo/", page.animes[0].url)
         assertEquals("https://indohentai.net/covers/overflow.jpg", page.animes[0].thumbnail_url)
     }
 

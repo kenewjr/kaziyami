@@ -1,0 +1,32 @@
+name: Filter Problem
+description: A filter returns empty results, wrong results, or crashes.
+title: "[Filters]: Filter malfunction on <Source Name>"
+labels: ["bug", "filters"]
+body:
+  - type: dropdown
+    id: source
+    attributes:
+      label: Affected Source
+      options:
+        - "Kaziyami: Nekopoi (id)"
+        - "Kaziyami: IndoHentai (id)"
+        - "Kaziyami: NontonHentai (id)"
+        - "Kaziyami: Hentaimama (en)"
+        - "Kaziyami: JAVSubbed (en)"
+        - "Kaziyami: Hanime (en)"
+    validations:
+      required: true
+  - type: input
+    id: filter_applied
+    attributes:
+      label: Filter Selection
+      placeholder: "e.g. Genre: Harem + Sort: Latest"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Malfunction Description
+      placeholder: "Filter yields 0 results even though matching anime exist on site."
+    validations:
+      required: true

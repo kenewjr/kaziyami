@@ -44,22 +44,36 @@ data class SourceConfig(
 @Serializable
 data class SelectorsConfig(
     val item: String = "article",
+    val itemAlternates: List<String> = emptyList(),
     val itemTitle: String = "h2, .title, a[title]",
+    val itemTitleAlternates: List<String> = emptyList(),
     val itemUrl: String = "a[href]",
     val itemThumbnail: String = "img",
     val nextPage: String = ".pagination .next, a.next, .nav-links .next",
     val detailsTitle: String = "h1.entry-title, .data h1, .infox h1, h1",
+    val detailsTitleAlternates: List<String> = emptyList(),
     val detailsThumbnail: String = ".poster img, .thumb img, .entry-content img, .cover img",
     val detailsDescription: String = ".entry-content p, .synopsis, .desc, .entry-content",
     val detailsGenre: String = ".genres a, .genre a, a[rel=category], .tag-links a",
     val detailsStatus: String = ".status, span:contains(Status)",
     val detailsAuthor: String = ".author, .studio",
     val episodeList: String = ".episodelist ul li, ul.episodes li, .eplister ul li, .episode-list li",
+    val episodeListAlternates: List<String> = emptyList(),
     val episodeUrl: String = "a[href]",
     val episodeName: String = ".epl-num, .ep-title, a",
     val episodeDate: String = ".epl-date, .date, .time",
-    val playerIframes: String = "iframe[src], .player-embed iframe, .player iframe"
-)
+    val playerIframes: String = "iframe[src], .player-embed iframe, .player iframe",
+    val playerIframesAlternates: List<String> = emptyList()
+) {
+    fun getCandidateList(primary: String, alternates: List<String>): List<String> {
+        return (listOf(primary) + alternates).filter { it.isNotBlank() }.distinct()
+    }
+
+    val itemCandidates: List<String> get() = getCandidateList(item, itemAlternates)
+    val detailsTitleCandidates: List<String> get() = getCandidateList(detailsTitle, detailsTitleAlternates)
+    val episodeListCandidates: List<String> get() = getCandidateList(episodeList, episodeListAlternates)
+    val playerIframesCandidates: List<String> get() = getCandidateList(playerIframes, playerIframesAlternates)
+}
 
 /**
  * Behavioral quirk flags for edge-case engine handling.

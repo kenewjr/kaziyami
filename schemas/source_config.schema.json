@@ -38,21 +38,26 @@
       "type": "object",
       "properties": {
         "item": { "type": "string" },
+        "itemAlternates": { "type": "array", "items": { "type": "string" } },
         "itemTitle": { "type": "string" },
+        "itemTitleAlternates": { "type": "array", "items": { "type": "string" } },
         "itemUrl": { "type": "string" },
         "itemThumbnail": { "type": "string" },
         "nextPage": { "type": "string" },
         "detailsTitle": { "type": "string" },
+        "detailsTitleAlternates": { "type": "array", "items": { "type": "string" } },
         "detailsThumbnail": { "type": "string" },
         "detailsDescription": { "type": "string" },
         "detailsGenre": { "type": "string" },
         "detailsStatus": { "type": "string" },
         "detailsAuthor": { "type": "string" },
         "episodeList": { "type": "string" },
+        "episodeListAlternates": { "type": "array", "items": { "type": "string" } },
         "episodeUrl": { "type": "string" },
         "episodeName": { "type": "string" },
         "episodeDate": { "type": "string" },
-        "playerIframes": { "type": "string" }
+        "playerIframes": { "type": "string" },
+        "playerIframesAlternates": { "type": "array", "items": { "type": "string" } }
       }
     },
     "quirks": {

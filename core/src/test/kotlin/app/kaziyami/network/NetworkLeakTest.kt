@@ -1,5 +1,6 @@
 package app.kaziyami.network
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
@@ -43,6 +44,48 @@ class NetworkLeakTest {
             assertFalse(
                 ua.contains(forbidden),
                 "Default User-Agent '$ua' leaks prohibited substring '$forbidden'"
+            )
+        }
+    }
+
+    @Test
+    fun testExtractorHeadersAndCookieJarDoNotLeakIdentity() {
+        val cookieJar = SimpleCookieJar()
+        val httpUrl = "https://example.com/stream/".toHttpUrlOrNull() ?: return
+        val cookie = okhttp3.Cookie.Builder()
+            .domain("example.com")
+            .name("session")
+            .value("standard_anon_session_token_12345")
+            .build()
+        cookieJar.saveFromResponse(httpUrl, listOf(cookie))
+
+        val loaded = cookieJar.loadForRequest(httpUrl)
+        for (c in loaded) {
+            val fullCookie = "${c.name}=${c.value}".lowercase()
+            for (forbidden in forbiddenSubstrings) {
+                assertFalse(
+                    fullCookie.contains(forbidden),
+                    "Cookie data '$fullCookie' leaks prohibited substring '$forbidden'"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testOutgoingRequestBodyDoesNotLeakIdentity() {
+        val formBody = okhttp3.FormBody.Builder()
+            .add("action", "get_player")
+            .add("post_id", "42")
+            .build()
+
+        val buffer = okio.Buffer()
+        formBody.writeTo(buffer)
+        val bodyContent = buffer.readUtf8().lowercase()
+
+        for (forbidden in forbiddenSubstrings) {
+            assertFalse(
+                bodyContent.contains(forbidden),
+                "Request body '$bodyContent' leaks prohibited substring '$forbidden'"
             )
         }
     }

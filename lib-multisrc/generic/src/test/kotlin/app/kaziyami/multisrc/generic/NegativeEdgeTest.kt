@@ -52,7 +52,7 @@ class NegativeEdgeTest {
 
         assertEquals(1, page.animes.size)
         assertEquals("Broken Title", page.animes[0].title)
-        assertEquals("https://edge.example.com/watch/1", page.animes[0].url)
+        assertEquals("/watch/1", page.animes[0].url)
     }
 
     @Test

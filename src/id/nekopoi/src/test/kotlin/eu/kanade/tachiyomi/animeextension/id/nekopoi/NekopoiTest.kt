@@ -45,7 +45,7 @@ class NekopoiTest {
 
         val first = page.animes[0]
         assertEquals("Kanojo x Kanojo Episode 1", first.title)
-        assertEquals("https://nekopoi.care/hentai/kanojo-x-kanojo-episode-1/", first.url)
+        assertEquals("/hentai/kanojo-x-kanojo-episode-1/", first.url)
         assertEquals("https://nekopoi.care/thumbs/kanojo1.jpg", first.thumbnail_url)
     }
 

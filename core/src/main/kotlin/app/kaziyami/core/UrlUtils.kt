@@ -106,4 +106,22 @@ object UrlUtils {
         val pathB = removeTrailingSlash(getPath(stripTrackingParams(urlB)))
         return pathA.equals(pathB, ignoreCase = true)
     }
+
+    /**
+     * Normalizes a saved SAnime.url or SEpisode.url on read, ensuring entries saved under
+     * legacy full URLs, protocol variants, or tracking parameters migrate seamlessly to the active mirror.
+     */
+    fun normalizeStoredPath(urlOrPath: String): String {
+        val clean = stripTrackingParams(urlOrPath.trim())
+        val pathWithQuery = getPath(clean)
+        val queryIdx = pathWithQuery.indexOf('?')
+        val (path, query) = if (queryIdx >= 0) {
+            pathWithQuery.substring(0, queryIdx) to pathWithQuery.substring(queryIdx)
+        } else {
+            pathWithQuery to ""
+        }
+        val cleanPath = path.removeSuffix("/")
+        val finalPath = if (cleanPath.isEmpty()) "/" else "$cleanPath/"
+        return "$finalPath$query"
+    }
 }

@@ -13,12 +13,15 @@ import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
 import app.kaziyami.core.LazyImage
 import app.kaziyami.core.MirrorManager
+import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Universal declarative base class for anime extension sources.
@@ -43,7 +46,11 @@ open class GenericThemeSource(
     override val baseUrl: String
         get() = mirrorManager.getBaseUrl()
 
+    private val matchedSelectorCache = ConcurrentHashMap<String, String>()
+
     open fun getDomainPreference(): String? {
+        val custom = preferences.getString("custom_domain_override", "").trim()
+        if (custom.isNotBlank()) return custom
         return preferences.getString("preferred_domain", "").takeIf { it.isNotBlank() }
     }
 
@@ -56,6 +63,12 @@ open class GenericThemeSource(
             entries = mirrorsList,
             entryValues = mirrorsList,
             defaultValue = config.baseUrl
+        )
+        screen.addEditTextPreference(
+            key = "custom_domain_override",
+            title = "Custom domain override",
+            summary = "Enter custom domain or mirror URL (leave blank to use defaults)",
+            defaultValue = ""
         )
         screen.addListPreference(
             key = "preferred_quality",
@@ -71,6 +84,32 @@ open class GenericThemeSource(
             summary = "Keep original untranslated titles when available",
             defaultValue = false
         )
+        screen.addSwitchPreference(
+            key = "enable_remote_mirrors",
+            title = "Auto-update mirror list",
+            summary = "Fetch verified mirror updates from repo branch (no tracking, disabled by default)",
+            defaultValue = false
+        )
+    }
+
+    /**
+     * Tries an ordered list of candidate selectors (primary + alternates), remembers which one
+     * succeeded in the active session, and returns the matched elements.
+     */
+    fun selectFirstMatching(document: Element, selectorKey: String, candidates: List<String>): Pair<String, Elements> {
+        val cached = matchedSelectorCache[selectorKey]
+        if (cached != null) {
+            val els = document.select(cached)
+            if (els.isNotEmpty()) return Pair(cached, els)
+        }
+        for (candidate in candidates) {
+            val els = document.select(candidate)
+            if (els.isNotEmpty()) {
+                matchedSelectorCache[selectorKey] = candidate
+                return Pair(candidate, els)
+            }
+        }
+        return Pair("", Elements())
     }
 
     // ============================= Popular Anime =============================
@@ -85,15 +124,17 @@ open class GenericThemeSource(
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val elements = document.select(popularAnimeSelector())
+        val (_, elements) = selectFirstMatching(document, "popular_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
-            throw IllegalStateException(
-                "Selector drift detected on ${response.request.url}: " +
-                    "main item selector '${popularAnimeSelector()}' returned 0 elements."
+            throw SourceParseException(
+                source = name,
+                pageType = "popular anime list",
+                selectorName = config.selectors.item,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
             )
         }
 
@@ -122,7 +163,8 @@ open class GenericThemeSource(
 
         val linkEl = element.selectFirst(config.selectors.itemUrl) ?: element.selectFirst("a[href]")
         val href = linkEl?.attr("href") ?: ""
-        anime.url = UrlUtils.resolve(baseUrl, href)
+        // Library safety: store clean relative path
+        anime.url = UrlUtils.getPath(href)
 
         val imgEl = element.selectFirst(config.selectors.itemThumbnail)
         anime.thumbnail_url = LazyImage.extractUrl(imgEl, baseUrl)
@@ -143,15 +185,17 @@ open class GenericThemeSource(
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val elements = document.select(latestUpdatesSelector())
+        val (_, elements) = selectFirstMatching(document, "latest_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
-            throw IllegalStateException(
-                "Selector drift detected on ${response.request.url}: " +
-                    "latest updates selector '${latestUpdatesSelector()}' returned 0 elements."
+            throw SourceParseException(
+                source = name,
+                pageType = "latest updates list",
+                selectorName = config.selectors.item,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
             )
         }
 
@@ -180,15 +224,17 @@ open class GenericThemeSource(
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val elements = document.select(searchAnimeSelector())
+        val (_, elements) = selectFirstMatching(document, "search_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
-            throw IllegalStateException(
-                "Selector drift detected on ${response.request.url}: " +
-                    "search selector '${searchAnimeSelector()}' returned 0 elements."
+            throw SourceParseException(
+                source = name,
+                pageType = "search results",
+                selectorName = config.selectors.item,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
             )
         }
 
@@ -212,7 +258,9 @@ open class GenericThemeSource(
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val titleEl = document.selectFirst(config.selectors.detailsTitle)
+        val titleEl = config.selectors.detailsTitleCandidates.asSequence()
+            .mapNotNull { document.selectFirst(it) }
+            .firstOrNull()
         val title = titleEl?.text() ?: ""
         anime.title = if (config.quirks.stripTitleBoilerplate) {
             HtmlText.stripBoilerplate(title)
@@ -257,7 +305,8 @@ open class GenericThemeSource(
         val ep = SEpisode.create()
         val linkEl = element.selectFirst(config.selectors.episodeUrl) ?: element.selectFirst("a[href]")
         val href = linkEl?.attr("href") ?: ""
-        ep.url = UrlUtils.resolve(baseUrl, href)
+        // Library safety: store clean relative path
+        ep.url = UrlUtils.getPath(href)
 
         val nameEl = element.selectFirst(config.selectors.episodeName) ?: linkEl
         val rawName = nameEl?.text()?.takeIf { it.isNotBlank() } ?: "Episode"
@@ -273,15 +322,28 @@ open class GenericThemeSource(
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = super.episodeListParse(response)
-        // Deduplicate episodes by URL
+        val document = response.asJsoup()
+        val (_, elements) = selectFirstMatching(document, "episode_list", config.selectors.episodeListCandidates)
+
+        if (elements.isEmpty()) {
+            if (isEmptyState(document)) {
+                return emptyList()
+            }
+            throw SourceParseException(
+                source = name,
+                pageType = "episode list",
+                selectorName = config.selectors.episodeList,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+
+        val episodes = elements.map { episodeFromElement(it) }
         val deduped = episodes.distinctBy { it.url }
         val ordered = if (config.quirks.episodesReversed) {
             deduped.reversed()
         } else {
             deduped
         }
-        // Stable sort newest first (descending by episode number)
         return ordered.sortedByDescending { it.episode_number }
     }
 
@@ -293,12 +355,12 @@ open class GenericThemeSource(
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframeUrls = document.select(config.selectors.playerIframes)
-            .mapNotNull { element: Element ->
+        val iframeUrls = config.selectors.playerIframesCandidates.flatMap { selector ->
+            document.select(selector).mapNotNull { element: Element ->
                 val src = element.attr("src")
                 if (src.isNotBlank()) src else null
             }
-            .map { UrlUtils.resolve(baseUrl, it) }
+        }.distinct().map { UrlUtils.resolve(baseUrl, it) }
 
         val preferredQuality = preferences.getString("preferred_quality", "1080p")
         return ExtractorRegistry.resolveAll(iframeUrls, client = client).let {

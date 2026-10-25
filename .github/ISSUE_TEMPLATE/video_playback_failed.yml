@@ -1,0 +1,44 @@
+name: Video Won't Play
+description: Video stream fails to resolve, crashes player, or yields black screen.
+title: "[Video]: Playback failed on <Source Name>"
+labels: ["bug", "video-playback"]
+body:
+  - type: dropdown
+    id: source
+    attributes:
+      label: Affected Source
+      options:
+        - "Kaziyami: Nekopoi (id)"
+        - "Kaziyami: IndoHentai (id)"
+        - "Kaziyami: NontonHentai (id)"
+        - "Kaziyami: Hentaimama (en)"
+        - "Kaziyami: JAVSubbed (en)"
+        - "Kaziyami: Hanime (en)"
+    validations:
+      required: true
+  - type: input
+    id: episode_url
+    attributes:
+      label: Episode URL / Title
+      placeholder: "e.g. /anime/title-episode-1/"
+    validations:
+      required: true
+  - type: input
+    id: server_quality
+    attributes:
+      label: Selected Server or Quality
+      placeholder: "e.g. StreamPoi 1080p / DoodStream / MP4"
+    validations:
+      required: true
+  - type: textarea
+    id: error_behavior
+    attributes:
+      label: Error Behavior
+      placeholder: "e.g. Infinite loading spinner, HTTP 403 error, player crash"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted Logcat Output
+      render: text

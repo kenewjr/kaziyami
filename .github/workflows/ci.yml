@@ -58,3 +58,6 @@ jobs:
 
       - name: Verify Zero Network Identity Leaks
         run: ./gradlew :core:test --tests "app.kaziyami.network.NetworkLeakTest"
+
+      - name: Scan Repository for Secrets and Tokens
+        run: python tools/scan_secrets.py

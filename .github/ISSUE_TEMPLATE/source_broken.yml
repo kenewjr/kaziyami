@@ -1,0 +1,61 @@
+name: Source Broken
+description: A source extension is failing to load catalog, details, or chapters.
+title: "[Bug]: <Source Name> broken"
+labels: ["bug", "source-broken"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue with Kaziyami extensions.
+  - type: dropdown
+    id: source
+    attributes:
+      label: Affected Source
+      options:
+        - "Kaziyami: Nekopoi (id)"
+        - "Kaziyami: IndoHentai (id)"
+        - "Kaziyami: NontonHentai (id)"
+        - "Kaziyami: Hentaimama (en)"
+        - "Kaziyami: JAVSubbed (en)"
+        - "Kaziyami: Hanime (en)"
+    validations:
+      required: true
+  - type: input
+    id: ext_version
+    attributes:
+      label: Extension Version
+      placeholder: "e.g. 1.4.1"
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: App & Version
+      placeholder: "e.g. Aniyomi Preview r7250 / Aniyomi Stable 0.15.3"
+    validations:
+      required: true
+  - type: input
+    id: mirror_used
+    attributes:
+      label: Active Domain / Mirror
+      placeholder: "e.g. https://nekopoi.care"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open source
+        2. Browse Latest
+        3. Error message appears
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted Logcat Output
+      description: "Paste sanitized logs here. DO NOT include cookies, passwords, or personal IPs."
+      render: text
+    validations:
+      required: false

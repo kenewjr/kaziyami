@@ -91,7 +91,7 @@ class SourceContractTest {
         for (anime in page.animes) {
             assertTrue(anime.title.isNotBlank(), "Title must not be blank")
             assertFalse(anime.title.contains("&amp;"), "HTML entities should be decoded")
-            assertTrue(anime.url.startsWith("http://") || anime.url.startsWith("https://"), "URL must be absolute: ${anime.url}")
+            assertTrue(anime.url.startsWith("/") || !anime.url.contains("://"), "URL must be stored relative for library safety: ${anime.url}")
             assertTrue(anime.thumbnail_url?.startsWith("http://") == true || anime.thumbnail_url?.startsWith("https://") == true, "Thumbnail must be absolute")
             assertFalse(seenUrls.contains(anime.url), "Must not produce duplicate anime URLs: ${anime.url}")
             seenUrls.add(anime.url)
@@ -123,7 +123,7 @@ class SourceContractTest {
 
         for (ep in episodes) {
             assertTrue(ep.name.isNotBlank(), "Episode name must not be blank")
-            assertTrue(ep.url.startsWith("http://") || ep.url.startsWith("https://"), "Episode URL must be absolute")
+            assertTrue(ep.url.startsWith("/") || !ep.url.contains("://"), "Episode URL must be stored relative for library safety: ${ep.url}")
             assertTrue(ep.episode_number >= 0f, "Episode number must be non-negative")
         }
 

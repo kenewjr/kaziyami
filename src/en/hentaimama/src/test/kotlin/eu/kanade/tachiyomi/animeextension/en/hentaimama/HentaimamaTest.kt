@@ -41,7 +41,7 @@ class HentaimamaTest {
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("Itadaki Seieki Episode 1", page.animes[0].title)
-        assertEquals("https://hentaimama.io/episodes/itadaki-seieki-episode-1/", page.animes[0].url)
+        assertEquals("/episodes/itadaki-seieki-episode-1/", page.animes[0].url)
         assertEquals("https://hentaimama.io/thumbs/itadaki.jpg", page.animes[0].thumbnail_url)
     }
 

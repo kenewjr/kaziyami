@@ -40,7 +40,7 @@ class HanimeTest {
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("Shoujo Ramune Episode 1", page.animes[0].title)
-        assertEquals("https://hanime.tv/hentai/video/shoujo-ramune-1", page.animes[0].url)
+        assertEquals("/hentai/video/shoujo-ramune-1", page.animes[0].url)
         assertEquals("https://hanime.tv/thumbs/shoujo-1.jpg", page.animes[0].thumbnail_url)
     }
 

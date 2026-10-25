@@ -40,7 +40,7 @@ class JAVSubbedTest {
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("STARS-123 Beautiful Actress English Sub", page.animes[0].title)
-        assertEquals("https://javsubbed.net/video/stars-123-subbed/", page.animes[0].url)
+        assertEquals("/video/stars-123-subbed/", page.animes[0].url)
         assertEquals("https://javsubbed.net/thumbs/stars-123.jpg", page.animes[0].thumbnail_url)
     }
 

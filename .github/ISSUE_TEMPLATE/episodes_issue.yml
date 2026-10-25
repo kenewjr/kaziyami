@@ -1,0 +1,32 @@
+name: Wrong or Missing Episodes
+description: Episode numbering is incorrect, reversed, or episodes are missing from list.
+title: "[Episodes]: Episode issue on <Source Name>"
+labels: ["bug", "episodes"]
+body:
+  - type: dropdown
+    id: source
+    attributes:
+      label: Affected Source
+      options:
+        - "Kaziyami: Nekopoi (id)"
+        - "Kaziyami: IndoHentai (id)"
+        - "Kaziyami: NontonHentai (id)"
+        - "Kaziyami: Hentaimama (en)"
+        - "Kaziyami: JAVSubbed (en)"
+        - "Kaziyami: Hanime (en)"
+    validations:
+      required: true
+  - type: input
+    id: anime_title
+    attributes:
+      label: Anime Title / URL
+      placeholder: "e.g. Overflow"
+    validations:
+      required: true
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior
+      placeholder: "Expected 12 episodes descending; got Episode 1 repeated or only 2 episodes."
+    validations:
+      required: true

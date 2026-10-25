@@ -41,7 +41,7 @@ class NontonHentaiTest {
         assertEquals(2, page.animes.size)
         assertTrue(page.hasNextPage)
         assertEquals("Tate no Yuusha", page.animes[0].title)
-        assertEquals("https://nontonhentai.net/anime/tate-no-yuusha/", page.animes[0].url)
+        assertEquals("/anime/tate-no-yuusha/", page.animes[0].url)
     }
 
     @Test
