@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generates index.json and index.min.json conforming to Aniyomi custom extension repository schema.
+Generates index.json, index.min.json, and repo.json conforming to Kaziyami Aniyomi-compatible repository schema.
 """
 
 import json
@@ -27,13 +27,13 @@ EXTENSIONS = [
         "baseUrl": "https://indohentai.net"
     },
     {
-        "name": "Kuronime",
-        "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
+        "name": "NontonHentai",
+        "pkg": "eu.kanade.tachiyomi.animeextension.id.nontonhentai",
         "lang": "id",
         "version": "1.0.0",
         "code": 1,
         "nsfw": 1,
-        "baseUrl": "https://kuronime.sbs"
+        "baseUrl": "https://nontonhentai.net"
     },
     {
         "name": "Hentaimama",
@@ -77,10 +77,10 @@ def build_index():
 
     for ext in EXTENSIONS:
         source_id = generate_source_id(ext["name"], ext["lang"])
-        apk_filename = f"aniyomi-{ext['lang']}-{ext['name'].lower()}-v{ext['version']}.apk"
+        apk_filename = f"kaziyami-{ext['lang']}-{ext['name'].lower()}-v{ext['version']}.apk"
 
         entry = {
-            "name": ext["name"],
+            "name": f"Kaziyami: {ext['name']}",
             "pkg": ext["pkg"],
             "apk": apk_filename,
             "lang": ext["lang"],
@@ -100,18 +100,31 @@ def build_index():
         }
         repo_entries.append(entry)
 
-    index_json_path = os.path.join(output_dir, "index.json")
-    index_min_path = os.path.join(output_dir, "index.min.json")
-
-    with open(index_json_path, "w", encoding="utf-8") as f:
+    # 1. Pretty index.json
+    index_path = os.path.join(output_dir, "index.json")
+    with open(index_path, "w", encoding="utf-8") as f:
         json.dump(repo_entries, f, indent=2)
+    print(f"[+] Wrote {index_path} ({len(repo_entries)} entries)")
 
-    with open(index_min_path, "w", encoding="utf-8") as f:
+    # 2. Minified index.min.json
+    min_index_path = os.path.join(output_dir, "index.min.json")
+    with open(min_index_path, "w", encoding="utf-8") as f:
         json.dump(repo_entries, f, separators=(",", ":"))
+    print(f"[+] Wrote {min_index_path}")
 
-    print(f"[+] Successfully generated repository indexes:")
-    print(f"    - {index_json_path}")
-    print(f"    - {index_min_path}")
+    # 3. repo.json metadata block
+    repo_meta = {
+        "meta": {
+            "name": "Kaziyami",
+            "shortName": "kaziyami",
+            "website": "https://github.com/kaziyami/kaziyami-extensions",
+            "signingKeyFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+    }
+    repo_meta_path = os.path.join(output_dir, "repo.json")
+    with open(repo_meta_path, "w", encoding="utf-8") as f:
+        json.dump(repo_meta, f, indent=2)
+    print(f"[+] Wrote {repo_meta_path}")
 
 if __name__ == "__main__":
     build_index()

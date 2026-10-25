@@ -1,8 +1,8 @@
 [
   {
-    "name": "Nekopoi",
+    "name": "Kaziyami: Nekopoi",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.nekopoi",
-    "apk": "aniyomi-id-nekopoi-v1.0.0.apk",
+    "apk": "kaziyami-id-nekopoi-v1.0.0.apk",
     "lang": "id",
     "code": 1,
     "version": "1.0.0",
@@ -19,9 +19,9 @@
     ]
   },
   {
-    "name": "IndoHentai",
+    "name": "Kaziyami: IndoHentai",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.indohentai",
-    "apk": "aniyomi-id-indohentai-v1.0.0.apk",
+    "apk": "kaziyami-id-indohentai-v1.0.0.apk",
     "lang": "id",
     "code": 1,
     "version": "1.0.0",
@@ -38,9 +38,9 @@
     ]
   },
   {
-    "name": "Kuronime",
-    "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
-    "apk": "aniyomi-id-kuronime-v1.0.0.apk",
+    "name": "Kaziyami: NontonHentai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.nontonhentai",
+    "apk": "kaziyami-id-nontonhentai-v1.0.0.apk",
     "lang": "id",
     "code": 1,
     "version": "1.0.0",
@@ -49,17 +49,17 @@
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Kuronime",
+        "name": "NontonHentai",
         "lang": "id",
-        "id": "2083695115646974607",
-        "baseUrl": "https://kuronime.sbs"
+        "id": "7400791378172011716",
+        "baseUrl": "https://nontonhentai.net"
       }
     ]
   },
   {
-    "name": "Hentaimama",
+    "name": "Kaziyami: Hentaimama",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
-    "apk": "aniyomi-en-hentaimama-v1.0.0.apk",
+    "apk": "kaziyami-en-hentaimama-v1.0.0.apk",
     "lang": "en",
     "code": 1,
     "version": "1.0.0",
@@ -76,9 +76,9 @@
     ]
   },
   {
-    "name": "JAVSubbed",
+    "name": "Kaziyami: JAVSubbed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.javsubbed",
-    "apk": "aniyomi-en-javsubbed-v1.0.0.apk",
+    "apk": "kaziyami-en-javsubbed-v1.0.0.apk",
     "lang": "en",
     "code": 1,
     "version": "1.0.0",
@@ -95,9 +95,9 @@
     ]
   },
   {
-    "name": "Hanime",
+    "name": "Kaziyami: Hanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
-    "apk": "aniyomi-en-hanime-v1.0.0.apk",
+    "apk": "kaziyami-en-hanime-v1.0.0.apk",
     "lang": "en",
     "code": 1,
     "version": "1.0.0",

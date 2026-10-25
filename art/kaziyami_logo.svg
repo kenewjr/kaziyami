@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="kz_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9333EA" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+    <radialGradient id="kz_bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </radialGradient>
+  </defs>
+  <!-- Background Disc -->
+  <rect width="512" height="512" rx="128" fill="url(#kz_bg)" />
+  <!-- Crescent & Blade Motif -->
+  <path d="M 160 120 C 280 120 380 220 380 340 C 380 380 370 410 350 430 C 400 390 430 320 430 250 C 430 140 340 50 230 50 C 190 50 160 70 140 90 Z" fill="url(#kz_grad)" opacity="0.4" />
+  <!-- Stylized Geometric 'K' -->
+  <path d="M 160 120 L 210 120 L 210 392 L 160 392 Z" fill="#FFFFFF" />
+  <path d="M 200 256 L 310 120 L 375 120 L 245 275 Z" fill="url(#kz_grad)" />
+  <path d="M 235 250 L 375 392 L 310 392 L 195 275 Z" fill="url(#kz_grad)" />
+</svg>

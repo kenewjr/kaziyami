@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi
+package app.kaziyami.schema
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -30,7 +30,7 @@ class IndexSchemaTest {
         val expectedPkgs = setOf(
             "eu.kanade.tachiyomi.animeextension.id.nekopoi",
             "eu.kanade.tachiyomi.animeextension.id.indohentai",
-            "eu.kanade.tachiyomi.animeextension.id.kuronime",
+            "eu.kanade.tachiyomi.animeextension.id.nontonhentai",
             "eu.kanade.tachiyomi.animeextension.en.hentaimama",
             "eu.kanade.tachiyomi.animeextension.en.javsubbed",
             "eu.kanade.tachiyomi.animeextension.en.hanime"
@@ -51,8 +51,10 @@ class IndexSchemaTest {
             val sources = obj["sources"]?.jsonArray
 
             assertNotNull(name)
+            assertTrue(name!!.startsWith("Kaziyami: "), "Display name must follow Kaziyami family naming convention: $name")
             assertNotNull(pkg)
             assertNotNull(apk)
+            assertTrue(apk!!.startsWith("kaziyami-"), "APK must follow kaziyami naming: $apk")
             assertNotNull(lang)
             assertNotNull(code)
             assertNotNull(version)
@@ -88,5 +90,19 @@ class IndexSchemaTest {
         assertFalse(content.contains("\n"), "index.min.json must be minified")
         val array = json.parseToJsonElement(content).jsonArray
         assertEquals(6, array.size)
+    }
+
+    @Test
+    fun validateRepoJsonMetaBlock() {
+        val repoFile = requireNotNull(listOf(File("repo/repo.json"), File("../repo/repo.json")).firstOrNull { it.exists() }) {
+            "repo/repo.json must exist"
+        }
+        val obj = json.parseToJsonElement(repoFile.readText()).jsonObject
+        val meta = obj["meta"]?.jsonObject
+        assertNotNull(meta)
+        assertEquals("Kaziyami", meta!!["name"]?.jsonPrimitive?.content)
+        assertEquals("kaziyami", meta["shortName"]?.jsonPrimitive?.content)
+        assertTrue(meta["website"]?.jsonPrimitive?.content?.contains("kaziyami") == true)
+        assertNotNull(meta["signingKeyFingerprint"]?.jsonPrimitive?.content)
     }
 }
