@@ -70,16 +70,10 @@ val validateSourceConfigs by tasks.registering {
     }
 }
 
-tasks.register<Test>("liveSmokeTest") {
+tasks.register("liveSmokeTest") {
     group = "verification"
     description = "Runs live integration tests against real sites."
-    useJUnitPlatform {
-        includeTags("live")
-    }
-    testLogging {
-        events("passed", "skipped", "failed")
-        showStandardStreams = true
-    }
+    dependsOn(":core:liveSmokeTest")
 }
 
 val checkExtensionIcons by tasks.registering {

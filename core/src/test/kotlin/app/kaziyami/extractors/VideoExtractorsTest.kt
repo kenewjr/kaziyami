@@ -137,4 +137,23 @@ class VideoExtractorsTest {
         assertEquals(1, videos.size)
         assertEquals("https://filemoon.sx/hls/stream.m3u8", videos[0].videoUrl)
     }
+
+    @Test
+    fun streamPoiExtractorUnpacksDeanEdwards() {
+        val ext = StreamPoiExtractor()
+        assertTrue(ext.canExtract("https://streampoi.com/e/poi123"))
+        assertTrue(ext.canExtract("https://streamruby.net/e/ruby456"))
+
+        // Packed jwplayer script setting sources
+        val packed = """
+            <script type='text/javascript'>eval(function(p,a,c,k,e,d){while(c--)if(k[c])p=p.replace(new RegExp('\\b'+c.toString(a)+'\\b','g'),k[c]);return p}('0("1").2({3:[{4:"5://6.7/8/9.a"}]});',11,11,'jwplayer|vplayer|setup|sources|file|https|streamruby|net|hls|master|m3u8'.split('|'))</script>
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(packed))
+
+        val videos = ext.extract(server.url("/e/poi123").toString(), client)
+        assertEquals(2, videos.size)
+        assertEquals("https://streamruby.net/hls/master.m3u8", videos[0].videoUrl)
+        assertTrue(videos[0].quality.contains("1080p"))
+    }
 }
+

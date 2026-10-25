@@ -226,3 +226,60 @@ class FilemoonExtractor : VideoExtractor {
         return emptyList()
     }
 }
+
+class StreamPoiExtractor : VideoExtractor {
+    override val name = "StreamPoi"
+    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)", Pattern.CASE_INSENSITIVE)
+
+    override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
+
+    override fun extract(url: String, client: OkHttpClient): List<Video> {
+        val req = Request.Builder().url(url).header("Referer", "https://nekopoi.care/").build()
+        val html = try {
+            client.newCall(req).execute().use { it.body?.string() ?: "" }
+        } catch (_: Exception) {
+            return emptyList()
+        }
+
+        val unpacked = unpack(html)
+        val fileMatch = Pattern.compile("sources:\\s*\\[\\{file:\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
+        if (fileMatch.find()) {
+            val masterUrl = fileMatch.group(1)
+            val headers = Headers.Builder().set("Referer", url).build()
+            return listOf(
+                Video(url, "StreamPoi 1080p (HLS)", masterUrl, headers),
+                Video(url, "StreamPoi 720p (HLS)", masterUrl, headers)
+            )
+        }
+        val directMatch = Pattern.compile("file:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
+        if (directMatch.find()) {
+            val masterUrl = directMatch.group(1)
+            val headers = Headers.Builder().set("Referer", url).build()
+            return listOf(Video(url, "StreamPoi HD (HLS)", masterUrl, headers))
+        }
+
+        return emptyList()
+    }
+
+    fun unpack(script: String): String {
+        val regex = Pattern.compile(
+            "eval\\(function\\(p,a,c,k,e,d\\)\\{.*?return p\\}\\('(.*?)',(\\d+),(\\d+),'(.*?)'\\.split\\('\\|'\\)",
+            Pattern.DOTALL
+        )
+        val matcher = regex.matcher(script)
+        if (!matcher.find()) return script
+        var payload = matcher.group(1)
+        val radix = matcher.group(2).toInt()
+        val count = matcher.group(3).toInt()
+        val symTab = matcher.group(4).split("|")
+        for (i in count - 1 downTo 0) {
+            val word = if (i < symTab.size && symTab[i].isNotEmpty()) symTab[i] else null
+            if (word != null) {
+                val key = i.toString(radix)
+                payload = payload.replace("\\b$key\\b".toRegex(), word)
+            }
+        }
+        return payload
+    }
+}
+

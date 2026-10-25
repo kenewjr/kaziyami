@@ -75,7 +75,7 @@ class NontonHentaiTest {
         val videos = source.videoListParse(response)
 
         assertEquals(1, videos.size)
-        assertEquals("https://kuronime.sbs/stream/tate-12.mp4", videos[0].videoUrl)
+        assertEquals("https://nontonhentai.net/stream/tate-12.mp4", videos[0].videoUrl)
     }
 
     @Test

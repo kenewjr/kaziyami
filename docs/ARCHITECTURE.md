@@ -30,7 +30,7 @@ kaziyami/
 │   ├── id/                                # Indonesian extensions
 │   │   ├── nekopoi/                       # Custom ThemeNekopoi / WordPress source
 │   │   ├── indohentai/                    # Custom SSR card grid source
-│   │   └── kuronime/                      # AnimeStream engine source
+│   │   └── nontonhentai/                  # AnimeStream engine source
 │   └── en/                                # English / Multi-language extensions
 │       ├── hentaimama/                    # DooPlay engine source
 │       ├── javsubbed/                     # RetroTube engine source

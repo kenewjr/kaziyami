@@ -25,7 +25,8 @@ object ExtractorRegistry {
         VoeExtractor(),
         Mp4UploadExtractor(),
         StreamWishExtractor(),
-        FilemoonExtractor()
+        FilemoonExtractor(),
+        app.kaziyami.extractors.StreamPoiExtractor()
     )
 
     /**

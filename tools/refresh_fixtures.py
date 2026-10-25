@@ -28,14 +28,14 @@ SOURCES = {
         "episodes": "https://indohentai.net/hentai/overflow-episode-1-sub-indo/",
         "video_player": "https://indohentai.net/hentai/overflow-episode-1-sub-indo/"
     },
-    "kuronime": {
-        "popular": "https://kuronime.sbs/anime/?order=popular&page=1",
-        "latest": "https://kuronime.sbs/anime/?order=update&page=1",
-        "search": "https://kuronime.sbs/?s=tate&page=1",
-        "search_empty": "https://kuronime.sbs/?s=zzzzz_not_found&page=1",
-        "details": "https://kuronime.sbs/anime/tate-no-yuusha-no-nariagari/",
-        "episodes": "https://kuronime.sbs/anime/tate-no-yuusha-no-nariagari/",
-        "video_player": "https://kuronime.sbs/tate-no-yuusha-no-nariagari-episode-1/"
+    "nontonhentai": {
+        "popular": "https://nontonhentai.net/anime/?order=popular&page=1",
+        "latest": "https://nontonhentai.net/anime/?order=update&page=1",
+        "search": "https://nontonhentai.net/?s=overflow&page=1",
+        "search_empty": "https://nontonhentai.net/?s=zzzzz_not_found&page=1",
+        "details": "https://nontonhentai.net/anime/overflow/",
+        "episodes": "https://nontonhentai.net/anime/overflow/",
+        "video_player": "https://nontonhentai.net/overflow-episode-1/"
     },
     "hentaimama": {
         "popular": "https://hentaimama.io/tvshows/page/1/",
@@ -79,7 +79,7 @@ def clean_html(html: str) -> str:
     return html.strip()
 
 def refresh_source(name: str, endpoints: dict):
-    base_dir = os.path.join("src", "id" if name in ["nekopoi", "indohentai", "kuronime"] else "en", name, "src", "test", "resources", name)
+    base_dir = os.path.join("src", "id" if name in ["nekopoi", "indohentai", "nontonhentai"] else "en", name, "src", "test", "resources", name)
     os.makedirs(base_dir, exist_ok=True)
 
     print(f"[*] Refreshing fixtures for {name} -> {base_dir}")
