@@ -1,8 +1,6 @@
 package app.kaziyami.schema
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -12,16 +10,32 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.zip.ZipFile
 
 class IndexSchemaTest {
 
     private val json = Json { ignoreUnknownKeys = false }
 
+    private val expectedSourceIds = mapOf(
+        "Nekopoi" to "7073589375897212735",
+        "IndoHentai" to "7369497329911250289",
+        "NontonHentai" to "7400791378172011716",
+        "Hentaimama" to "8058423919997530503",
+        "JAVSubbed" to "9192959167101688940",
+        "Hanime" to "2150907185602526076"
+    )
+
+    private fun getRepoDir(): File {
+        return requireNotNull(listOf(File("repo"), File("../repo")).firstOrNull { it.exists() }) {
+            "repo directory must exist"
+        }
+    }
+
     @Test
     fun validateIndexJsonStructure() {
-        val indexFile = requireNotNull(listOf(File("repo/index.json"), File("../repo/index.json")).firstOrNull { it.exists() }) {
-            "repo/index.json must exist"
-        }
+        val repoDir = getRepoDir()
+        val indexFile = File(repoDir, "index.json")
+        assertTrue(indexFile.exists(), "repo/index.json must exist")
 
         val content = indexFile.readText()
         val array = json.parseToJsonElement(content).jsonArray
@@ -63,18 +77,38 @@ class IndexSchemaTest {
             assertFalse(sources!!.isEmpty())
 
             assertTrue(pkg!!.matches("^eu\\.kanade\\.tachiyomi\\.animeextension\\.[a-z]{2}\\.[a-z0-9]+$".toRegex()))
+            assertFalse(seenPkgs.contains(pkg), "Duplicate package name detected in index: $pkg")
             seenPkgs.add(pkg)
 
             val sourceObj = sources[0].jsonObject
+            val sourceName = sourceObj["name"]?.jsonPrimitive?.content
             val id = sourceObj["id"]?.jsonPrimitive?.content
             val baseUrl = sourceObj["baseUrl"]?.jsonPrimitive?.content
 
+            assertNotNull(sourceName)
+            assertFalse(sourceName!!.startsWith("Kaziyami:"), "Source name must remain unbranded in sources block: $sourceName")
             assertNotNull(id)
             assertNotNull(baseUrl)
-            assertTrue(id!!.isNotBlank())
-            assertTrue(baseUrl!!.startsWith("http://") || baseUrl.startsWith("https://"))
+
+            // Verify source ID matches SOURCE_IDS.md
+            val expectedId = expectedSourceIds[sourceName]
+            assertNotNull(expectedId, "Source $sourceName not found in expected source IDs")
+            assertEquals(expectedId, id, "Source ID for $sourceName must match SOURCE_IDS.md permanent contract")
+
             assertFalse(seenIds.contains(id), "Duplicate source ID: $id")
-            seenIds.add(id)
+            seenIds.add(id!!)
+
+            // Verify APK exists in repo/apk/ if APKs are built
+            val apkFile = File(repoDir, "apk/$apk")
+            if (apkFile.exists()) {
+                ZipFile(apkFile).use { zf ->
+                    val manifestEntry = zf.getEntry("AndroidManifest.xml")
+                    assertNotNull(manifestEntry, "AndroidManifest.xml missing from $apk")
+                    val manifestText = zf.getInputStream(manifestEntry).bufferedReader().readText()
+                    assertTrue(manifestText.contains("versionName=\"$version\""), "Version in index must equal version in APK manifest for $apk")
+                    assertTrue(manifestText.contains("versionCode=\"$code\""), "VersionCode in index must equal versionCode in APK manifest for $apk")
+                }
+            }
         }
 
         assertEquals(expectedPkgs, seenPkgs)
@@ -82,9 +116,9 @@ class IndexSchemaTest {
 
     @Test
     fun validateIndexMinJsonMatches() {
-        val minFile = requireNotNull(listOf(File("repo/index.min.json"), File("../repo/index.min.json")).firstOrNull { it.exists() }) {
-            "repo/index.min.json must exist"
-        }
+        val repoDir = getRepoDir()
+        val minFile = File(repoDir, "index.min.json")
+        assertTrue(minFile.exists(), "repo/index.min.json must exist")
 
         val content = minFile.readText()
         assertFalse(content.contains("\n"), "index.min.json must be minified")
@@ -94,15 +128,18 @@ class IndexSchemaTest {
 
     @Test
     fun validateRepoJsonMetaBlock() {
-        val repoFile = requireNotNull(listOf(File("repo/repo.json"), File("../repo/repo.json")).firstOrNull { it.exists() }) {
-            "repo/repo.json must exist"
-        }
+        val repoDir = getRepoDir()
+        val repoFile = File(repoDir, "repo.json")
+        assertTrue(repoFile.exists(), "repo/repo.json must exist")
+
         val obj = json.parseToJsonElement(repoFile.readText()).jsonObject
         val meta = obj["meta"]?.jsonObject
         assertNotNull(meta)
         assertEquals("Kaziyami", meta!!["name"]?.jsonPrimitive?.content)
         assertEquals("kaziyami", meta["shortName"]?.jsonPrimitive?.content)
         assertTrue(meta["website"]?.jsonPrimitive?.content?.contains("kaziyami") == true)
-        assertNotNull(meta["signingKeyFingerprint"]?.jsonPrimitive?.content)
+        val fp = meta["signingKeyFingerprint"]?.jsonPrimitive?.content
+        assertNotNull(fp)
+        assertEquals(64, fp!!.length, "Signing fingerprint must be 64-char hex string: $fp")
     }
 }

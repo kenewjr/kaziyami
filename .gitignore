@@ -20,6 +20,8 @@ bin/
 *.keystore
 *.jks
 local.properties
+keystore.properties
+repo/apk/
 
 # OS
 .DS_Store

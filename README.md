@@ -1,187 +1,118 @@
-# Kaziyami: NSFW Anime Extension Repository for Aniyomi
+# Kaziyami: Adult Anime Extension Repository
 
-Clean, maintainable Aniyomi adult anime extension repository written in Kotlin & Gradle. Implements a shared multisrc engine architecture, anti-bot browser-level networking, offline unit & contract tests, and automated repository indexing.
+[![Kaziyami CI](https://github.com/kenewjr/kaziyami-extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/kenewjr/kaziyami-extensions/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+
+**Kaziyami** is a curated, high-performance NSFW adult anime extension repository engineered for [Aniyomi](https://aniyomi.org/) and compatible Android video clients. Built with modular Kotlin DSL, shared multisrc themes, anti-bot browser-level networking, and fully automated repository indexing.
 
 ---
 
-## 1. Catalog of Sources
+> [!CAUTION]
+> ### 18+ Mandatory Disclaimer
+> - **Adult Content Only (18+)**: This repository contains adult, hentai, and uncensored video extensions intended exclusively for mature audiences of legal age in their jurisdiction.
+> - **No Hosting / Public Indexer Only**: Kaziyami hosts no media, streams, videos, or files on its servers. Extensions function strictly as lightweight scrapers that parse publicly accessible third-party HTML/APIs.
+> - **No Affiliation & Volatility**: Kaziyami is not affiliated with any indexed websites or stream hosts. Third-party video hosts and mirror domains may change, break, or disappear without warning.
+> - **Legal Compliance**: Users are solely responsible for ensuring their consumption and use complies with all applicable local, regional, and national laws.
 
-| Source | Language | CMS / Engine | Primary Base URL | Video Stream Extractor |
-|---|---|---|---|---|
-| **Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | PlayMogo, StreamPoi, Mp4Upload, Pixeldrain |
-| **IndoHentai** | Indonesian (`id`) | Custom SSR Card Grid | `https://indohentai.net` | Loadvid, XXContent CDN |
-| **NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop, HepiDrive, GDPlayer, LocalStream |
-| **Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct 1080p/720p MP4, GDVid |
-| **JAVSubbed** | English (`en`) | WordPress (RetroTube) | `https://javsubbed.net` | Streamtape, VOE, Doodstream |
-| **Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (m3u8 1080p/720p) |
+---
 
-Full research, mirror list, and Cloudflare evaluation available in [docs/SOURCES.md](docs/SOURCES.md).
+## 1. Supported Applications
+
+| Client Application | Support Status | Verification Notes |
+|---|---|---|
+| **Aniyomi (Stable & Preview)** | **Supported** | Full compatibility with standard `AnimeExtensionLoader` APK contract. |
+| **Kuukiyomi** | **Supported** | Verified upstream fork sharing identical APK loader and DEX runtime. |
+| **Kototoro** | *Unsupported* | Incompatible architecture. Kototoro uses in-app compiled scrapers rather than Android APK extensions (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
 
 ---
 
 ## 2. Installation in Aniyomi
 
-To install extensions from this repository directly in Aniyomi:
-1. Open **Aniyomi Settings** -> **Browse** -> **Anime extension repos**.
-2. Tap **Add repository**.
-3. Enter the raw repository URL:
+To add Kaziyami directly to Aniyomi:
+
+1. Open **Aniyomi** on your Android device.
+2. Navigate to **More** -> **Settings** -> **Browse** -> **Anime extension repos**.
+3. Tap **Add repository** (+).
+4. Enter the raw repository URL:
    ```text
-   https://raw.githubusercontent.com/<user>/kaziyami/repo/index.min.json
+   https://raw.githubusercontent.com/kenewjr/kaziyami-extensions/repo/index.min.json
    ```
-4. Return to the **Extensions** tab and pull down to refresh. All 6 adult extensions will appear under the Adult (18+) filter.
+5. Return to the **Browse** -> **Extensions** tab and pull down to refresh.
+6. The extensions will appear under the **Kaziyami** family label (e.g., `Kaziyami: Nekopoi`). Ensure the **18+** filter toggle is enabled in your extension list settings.
 
----
+### Trusting the Signing Key
 
-## 3. Architecture & Multisrc Engine
-
-Extensions share core networking, anti-bot safeguards, and selector parsers through modular libraries:
+When prompted by Android or Aniyomi to verify the extension repository signing certificate, verify that the SHA-256 fingerprint matches the release certificate:
 
 ```text
-kaziyami/
-├── core/                  # Models (SAnime, SEpisode, Video), Network stack, Parsers, Extractors
-├── lib-multisrc/
-│   ├── generic/          # SourceConfig, GenericThemeSource (declarative selector parser)
-│   ├── dooplay/          # DooPlayTheme (AJAX player decoder, /tvshows/, /episodes/)
-│   ├── animestream/      # AnimeStreamTheme (Base64 option server decoder)
-│   └── retrotube/        # RetroTubeTheme (Sourcetabs & single-video fallback)
-├── src/
-│   ├── id/               # Indonesian extensions (nekopoi, indohentai, kuronime)
-│   └── en/               # English extensions (hentaimama, javsubbed, hanime)
-├── tools/                # Fixture refresh script & index.json generator
-└── repo/                 # index.json & index.min.json Aniyomi repo index
+SHA-256: bedd5a8fc5096e76dc0b4acea77d57376cca29c087c6dacab508a0c689c3e44e
 ```
 
-### Adding a New Site in ~15 Lines
-
-Adding a new website that uses an existing engine requires declaring a `SourceConfig`:
-
-```kotlin
-package eu.kanade.tachiyomi.animeextension.id.mysite
-
-import app.kaziyami.multisrc.animestream.AnimeStreamTheme
-import app.kaziyami.multisrc.generic.SourceConfig
-
-class MyAnimeStreamSite : AnimeStreamTheme(
-    SourceConfig(
-        name = "MyAnimeStreamSite",
-        lang = "id",
-        baseUrl = "https://myanimestreamsite.com",
-        mirrors = listOf("https://myanimestreamsite.com", "https://mirror.myanimestreamsite.org"),
-        itemSelector = ".listupd .bsx",
-        itemTitle = ".tt",
-        itemThumbnail = "img",
-        itemUrl = "a",
-        nextPageSelector = ".pagination .next",
-        popularUrl = "/anime/?order=popular&page=%d",
-        latestUrl = "/anime/?order=update&page=%d",
-        searchUrl = "/?s=%s&page=%d"
-    )
-)
-```
-
-### Adding a New Engine Base
-
-To introduce a new engine base:
-1. Create a module under `lib-multisrc/<theme-name>/`.
-2. Inherit from [GenericThemeSource](lib-multisrc/generic/src/main/kotlin/app/kaziyami/multisrc/generic/GenericThemeSource.kt).
-3. Override engine-specific logic (e.g. custom AJAX episode endpoints or proprietary video player decoders):
-   ```kotlin
-   open class NewTheme(config: SourceConfig) : GenericThemeSource(config) {
-       override fun videoListParse(response: Response): List<Video> {
-           val document = response.asJsoup()
-           val iframeUrl = document.selectFirst("iframe.custom-player")?.attr("abs:src")
-           return iframeUrl?.let { ExtractorRegistry.extract(it) } ?: emptyList()
-       }
-   }
-   ```
+*(If building with your own private release key, verify the fingerprint produced by `python tools/get_apk_fingerprint.py <built_apk>` as described in [docs/SIGNING.md](docs/SIGNING.md)).*
 
 ---
 
-## 4. Networking & Anti-Bot Protection
+## 3. Catalog of Sources
 
-This repository strictly employs legitimate browser-level networking practices:
-- **Consistent Fingerprinting**: Uses standard Chromium `User-Agent` identical across OkHttp and Android WebView.
-- **Header Order & Coherence**: Sends legitimate Sec-Fetch (`sec-fetch-dest`, `sec-fetch-mode`, `sec-fetch-site`), `Accept-Language`, and context-accurate `Referer`/`Origin` headers.
-- **Automatic Rate Limiting**: Interceptor throttles outgoing requests per host to prevent traffic bursts (`RateLimitInterceptor`).
-- **Exponential Backoff**: Respects HTTP `429 Too Many Requests` and `503 Service Unavailable`, honoring server `Retry-After` headers.
-- **Cloudflare Challenge Interception**: Detects `cf-mitigated: challenge` and Cloudflare Turnstile/Interstitial HTML markers. Automatically dispatches the request to the WebView engine to solve clearance cookies before proceeding.
-- **Failover Mirror Manager**: Remembers healthy mirror domains and seamlessly fails over on connection/DNS timeouts.
+All 6 adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
 
-### Anti-Bot Limitations
-- Client-side techniques cannot bypass servers enforcing strict IP reputation bans, datacenter ASN blocking, or invasive fingerprinting scripts that require active user pointer interaction.
-- If a Cloudflare challenge cannot be solved automatically, an exception is thrown prompting the user to solve the challenge once via the built-in WebView.
+| Source Label | Language | Engine / CMS | Base URL | Primary Stream Providers |
+|---|---|---|---|---|
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo, Mp4Upload |
+| **Kaziyami: IndoHentai** | Indonesian (`id`) | Custom SSR Card Grid | `https://indohentai.net` | Loadvid, XXContent CDN |
+| **Kaziyami: NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop, HepiDrive, GDPlayer, LocalStream |
+| **Kaziyami: Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct 1080p/720p MP4, GDVid |
+| **Kaziyami: JAVSubbed** | English (`en`) | WordPress (RetroTube) | `https://javsubbed.net` | Streamtape, VOE, Doodstream |
+| **Kaziyami: Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p) |
 
 ---
 
-## 5. Development & Testing
+## 4. Frequently Asked Questions (FAQ)
 
-### Running Offline Unit & Contract Tests
-All unit and contract tests run completely offline using deterministic HTML fixtures under `src/test/resources/<source>/`:
+### Cloudflare "Open in WebView"
+- **Why do I see a challenge error?** Adult sites frequently use Cloudflare Managed Challenges or Turnstile to prevent automated scraping.
+- **How to resolve**: Tap the overflow menu (⋮) on the anime details screen and select **Open in WebView**. Complete the Cloudflare verification checkbox once. Aniyomi stores the clearance cookie (`cf_clearance`), and future requests will play automatically.
+
+### Mirror & Domain Override
+- If an internet service provider blocks a default domain, navigate to **Settings** -> **Browse** -> **Extensions** -> tap the extension -> **Custom Base URL**. Enter any operational mirror listed in [docs/SOURCES.md](docs/SOURCES.md).
+
+### Quality & Video Host Preferences
+- Each extension provides configurable preferences for preferred server hosts (e.g. prioritize StreamPoi or Streamtape) and default video resolution (1080p, 720p, 480p).
+
+---
+
+## 5. Development & Verification
+
+### Running Offline Tests & Code Coverage
+All tests run 100% offline using deterministic HTML fixtures under `src/<lang>/<source>/src/test/resources/`:
 
 ```bash
-# Run all tests across all modules
-./gradlew test
-
-# Generate JaCoCo coverage report
-./gradlew jacocoTestReport
+# Run all unit tests and generate JaCoCo coverage
+./gradlew check jacocoTestReport
 ```
 
-### Refreshing HTML Fixtures
-When target site selectors change or upstream updates markup, run the automated fixture downloader:
-
+### Assembling & Signing Release APKs
 ```bash
-python tools/refresh_fixtures.py
+./gradlew assembleRelease
 ```
+Outputs signed APKs to `repo/apk/`, generates `repo/sha256sums.txt`, and builds `repo/index.json` / `repo/index.min.json` / `repo/repo.json`.
 
-### Live Smoke Integration Tests
-Live tests hit target sites directly and verify `popular -> details -> episodes -> video stream 200/206`. They are tagged `@Tag("live")` and excluded from regular test runs:
-
+### Version Bumps
 ```bash
-./gradlew liveSmokeTest
+# Automatically bump affected extensions based on git diff
+./gradlew bumpChanged
+
+# CI check to ensure version codes were incremented
+./gradlew checkBump
 ```
 
 ---
 
-## 6. Repository Index Generation & Schema Validation
+## 6. Architecture & Contributing
 
-To build `index.json` and `index.min.json` for Aniyomi repository hosting:
-
-```bash
-python tools/generate_repo_index.py
-# Or via Gradle:
-./gradlew generateRepoIndex
-```
-
-Output schemas conform to the Aniyomi custom repository format validated by [IndexSchemaTest](core/src/test/kotlin/app/kaziyami/schema/IndexSchemaTest.kt) and JSON Schema at [schemas/index.schema.json](schemas/index.schema.json).
-
----
-
-## 7. CI/CD & APK Signing Setup
-
-### GitHub Actions Workflows
-- **`.github/workflows/build.yml`**: Runs `./gradlew test jacocoTestReport`, generates `index.json`, and deploys repo assets to the `repo` branch upon merge to `main`.
-- **`.github/workflows/live-smoke.yml`**: Runs scheduled weekly live smoke tests (`./gradlew liveSmokeTest`) every Sunday at 04:00 UTC and automatically opens a GitHub issue if any stream fails.
-
-### APK Signing Setup
-**Never commit keystore files or passwords.** Configure GitHub repository secrets:
-- `SIGNING_KEY_BASE64`: Base64 encoded release keystore file (`kaziyami.keystore`).
-- `KEY_ALIAS`: Alias of the signing key (`kaziyami`).
-- `KEY_PASSWORD`: Password for the signing key.
-- `KEYSTORE_PASSWORD`: Password for the keystore.
-
-In Gradle release tasks:
-```kotlin
-signingConfigs {
-    create("release") {
-        val keystoreBase64 = System.getenv("SIGNING_KEY_BASE64")
-        if (!keystoreBase64.isNullOrEmpty()) {
-            val keystoreFile = File(buildDir, "kaziyami.keystore")
-            keystoreFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreBase64))
-            storeFile = keystoreFile
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS") ?: "kaziyami"
-            keyPassword = System.getenv("KEY_PASSWORD")
-        }
-    }
-}
-```
+- System design details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Technology versions: [docs/STACK.md](docs/STACK.md)
+- Keystore setup & CI secrets: [docs/SIGNING.md](docs/SIGNING.md)
+- Release procedures: [docs/RELEASING.md](docs/RELEASING.md)
+- Troubleshooting & issue reporting: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- Contributing guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)

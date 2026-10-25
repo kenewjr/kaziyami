@@ -1,0 +1,108 @@
+name: Kaziyami Live Smoke Tests
+
+on:
+  schedule:
+    - cron: '0 4 * * 0' # Every Sunday at 04:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: smoke-tests
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant Execute Permission
+        run: chmod +x gradlew
+
+      - name: Run Live Smoke Suite
+        id: smoke
+        continue-on-error: true
+        run: ./gradlew liveSmokeTest
+
+      - name: Manage Health Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const passed = "${{ steps.smoke.outcome }}" === "success";
+            const issueTitle = "Weekly Live Smoke Test: Broken Video Stream Detected";
+
+            // Find existing issues with the title
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['source-broken']
+            });
+
+            const existingIssue = issues.data.find(i => i.title.includes("Live Smoke Test"));
+
+            if (!passed) {
+              const body = `### Automated Weekly Live Smoke Test Failure
+
+Automated testing detected that one or more video streams failed to return HTTP 200/206 status codes.
+
+> [!WARNING]
+> **Cloudflare Datacenter Blocking Notice**:
+> GitHub-hosted runners execute from Microsoft Azure datacenter IP ranges (AS8075). Many adult video CDNs and Cloudflare endpoints automatically block datacenter ASN traffic with HTTP 403 or managed challenges, **even when the site is fully functional on residential mobile phones**.
+>
+> A failure in this workflow does NOT immediately mean the extension is broken. **You must confirm the failure on a real physical device before modifying code.**
+
+### Verification Checklist on Physical Device:
+- [ ] Connect mobile phone to cellular data (4G/5G) or residential home Wi-Fi (do NOT use datacenter VPN).
+- [ ] Open the target website URL in the phone's mobile browser (Chrome/Brave).
+- [ ] Verify if Cloudflare Turnstile or CAPTCHA interstitial appears.
+- [ ] If challenge appears, open the source in Aniyomi and tap **Open in WebView** to solve and store clearance cookies.
+- [ ] Verify if video stream begins playback in Aniyomi.
+- [ ] If video still fails to play on phone, inspect network traffic for dead mirror domains or changed player embed parameters.
+`;
+
+              if (existingIssue) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: `Live smoke test failed again on ${new Date().toISOString()}.\n\n` + body
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: body,
+                  labels: ['source-broken']
+                });
+              }
+            } else if (existingIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `Live smoke test passed on ${new Date().toISOString()}. Closing issue automatically.`
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: 'closed'
+              });
+            }
