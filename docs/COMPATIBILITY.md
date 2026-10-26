@@ -15,6 +15,7 @@ This document enumerates the immutable interfaces, package naming conventions, a
 | `tachiyomi.animeextension.hasReadme` | AndroidManifest meta-data | Aniyomi UI flag indicating embedded README documentation. |
 | `tachiyomi.animeextension.hasChangelog` | AndroidManifest meta-data | Aniyomi UI flag indicating changelog presence. |
 | `tachiyomi.animeextension.nsfw` | AndroidManifest meta-data | Aniyomi content filter flag (set to `1` for adult/18+ extensions). |
+| `tachiyomi.extensionLib` | AndroidManifest meta-data | Library version string (e.g. `14`). Kototoro loader requires range `12.0`..`16.0`. |
 
 ---
 
@@ -38,4 +39,4 @@ This document enumerates the immutable interfaces, package naming conventions, a
 | **Aniyomi (Stable & Preview)** | **Supported** | Primary reference implementation. Verified against Aniyomi bytecode contract (`AnimeExtensionLoader` / `AnimeHttpSource`). |
 | **Kuukiyomi** | *Untested* | Downstream fork sharing Aniyomi extension architecture. Not tested on physical device with Kaziyami APKs. |
 | **Dantotsu** | *Untested* | Anime/Manga tracker client supporting extension APIs. Not directly verified in test harness. |
-| **Kototoro** | **Supported** | Multi-media reader/player (v2.3+). Natively loads Aniyomi anime extensions via its embedded `source-host` runtime and `dex-convert` bridge (see [docs/KOTOTORO.md](KOTOTORO.md)). |
+| **Kototoro** | **Supported** | Multi-media reader/player (v2.3.2 verified). Natively ingests Aniyomi anime extension repositories (`index.min.json` / `repo.json`) and APKs via `AniyomiExtensionLoader` (Android) and `dex-convert` (desktop/iOS). Fully supports video playback and adult tags (see [docs/KOTOTORO.md](KOTOTORO.md)). |

@@ -4,8 +4,8 @@
 
 | Component | Pinned Version | Rationale |
 |---|---|---|
-| **JDK** | `11` (`Temurin-11` / OpenJDK 11) | Standard JVM target for Android dexing and Aniyomi extension runtime. |
-| **Gradle** | `7.6.4` | Stable Gradle wrapper compatible with Kotlin 1.8.22 and JDK 11 without deprecation warnings. |
+| **JDK** | `17` (`Temurin-17` / OpenJDK 17) | Standard JVM target for Android dexing and Aniyomi/Kototoro compiler compatibility. |
+| **Gradle** | `7.6.4` | Stable Gradle wrapper compatible with Kotlin 1.8.22 and JDK 17 without deprecation warnings. |
 | **Kotlin** | `1.8.22` | Upstream Aniyomi extension compiler baseline. Major upgrades (e.g. Kotlin 2.x) risk metadata format incompatibilities with host classloaders. |
 | **JaCoCo** | `0.8.8` | Code coverage reporting (`>80%` on core & multisrc bases). |
 
@@ -20,10 +20,10 @@ Aniyomi (and compatible forks like Kototoro v2.3+) provides core networking, par
 
 | Host Client / App Version | Kotlin Stdlib | OkHttp | kotlinx.serialization | kotlinx.coroutines | Jsoup | Aniyomi Extension API |
 |---|---|---|---|---|---|---|
-| **Aniyomi v0.15.2.4** (Stable) | `1.8.22` – `1.9.23` | `4.11.0` – `4.12.0` | `1.5.1` – `1.6.2` | `1.7.3` – `1.8.0` | `1.16.1` – `1.17.2` | `1.3` / `1.4` |
-| **Aniyomi Preview (r7000+)** | `1.9.23` | `4.12.0` | `1.6.3` | `1.8.0` | `1.17.2` | `1.4` |
-| **Kuukiyomi** | `1.9.20` | `4.11.0` | `1.5.1` | `1.7.3` | `1.16.1` | `1.4` |
-| **Kototoro v2.3.2** | `1.9.23` | `4.12.0` | `1.6.3` | `1.8.1` | `1.17.2` | `1.4` (via `source-host`) |
+| **Aniyomi v0.15.2.4** (Stable) | `1.8.22` – `1.9.23` | `4.11.0` – `4.12.0` | `1.5.1` – `1.6.2` | `1.7.3` – `1.8.0` | `1.16.1` – `1.17.2` | `14` (libVersion) |
+| **Aniyomi Preview (r7000+)** | `1.9.23` | `4.12.0` | `1.6.3` | `1.8.0` | `1.17.2` | `14` (libVersion) |
+| **Kuukiyomi** | `1.9.20` | `4.11.0` | `1.5.1` | `1.7.3` | `1.16.1` | `14` (libVersion) |
+| **Kototoro v2.3.2** | `1.9.23` | `4.12.0` | `1.6.3` | `1.8.1` | `1.17.2` | `14` (via `source-host` & `AniyomiExtensionLoader`) |
 
 ---
 

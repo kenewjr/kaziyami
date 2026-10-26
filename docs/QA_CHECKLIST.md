@@ -88,11 +88,13 @@ When reporting an issue, sanitize all logcat output before submitting:
 
 ## 5. Kototoro (v2.3+) Verification Checklist
 
-1. [ ] **Build Plugin JAR**: Run `./gradlew packageKototoroPlugin` to generate `build/libs/kaziyami-kototoro-all-v1.4.1.jar` (or use any built extension APK).
-2. [ ] **File Transfer**: Copy `kaziyami-kototoro-all-v1.4.1.jar` to phone internal storage or downloads.
-3. [ ] **Import into Kototoro**: Open **Kototoro** -> **Settings** -> **Remote Sources** -> **Import Plugin JAR** (or **Install Extension APK**).
-4. [ ] **Source Discovery**: Verify all 6 Kaziyami adult sources appear in Kototoro's source catalog.
-5. [ ] **Catalog Browsing**: Open any source (e.g. `Nekopoi` or `Hentaimama`). Confirm popular anime cards, titles, and thumbnails load correctly.
-6. [ ] **Search & Filters**: Run search query. Confirm matching adult titles return without crashes.
-7. [ ] **Episode List**: Tap title -> confirm chapters/episodes display in proper sequence.
-8. [ ] **Video Streaming**: Tap episode -> confirm video stream begins playback in Kototoro's integrated player. Verify subtitles and quality tracks.
+1. [ ] **Add Repository**: In Kototoro, open **Settings** -> **Extension management** -> **Repositories** -> **Add repository** (+). Select **ANIYOMI** type, enter `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json`, and confirm.
+2. [ ] **Trust Prompt**: Confirm trust for the repository when the signing key prompt appears.
+3. [ ] **Repository Listing**: Verify all 6 extensions display with package-qualified icons and labels formatted as `Kaziyami: <Site>`.
+4. [ ] **Installation**: Tap **Install** for each extension. Confirm successful installation via package manager without error.
+5. [ ] **Browse Catalog**: Open each source from Explore / Sources list. Confirm popular and latest anime items display with cover images.
+6. [ ] **Search & Filters**: Perform search query with filters (genres / sorting). Verify results match and return without exceptions.
+7. [ ] **Anime Details**: Open an entry. Verify title, synopsis, status, genres, and chapter/episode list populate accurately.
+8. [ ] **Video Playback**: Tap an episode. Verify video stream plays smoothly in Kototoro's player. Test at least two stream hosts / qualities where available (e.g. 1080p, 720p).
+9. [ ] **Cloudflare / Turnstile Clearance**: If a challenge prompt occurs, trigger the in-app WebView clearance flow, complete challenge, and verify cookies persist.
+10. [ ] **Domain Override**: In source settings, enter a mirror domain from `docs/SOURCES.md`. Confirm catalog updates to fetch via the new domain.

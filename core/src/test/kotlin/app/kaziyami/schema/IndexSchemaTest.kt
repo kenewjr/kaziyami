@@ -149,5 +149,49 @@ class IndexSchemaTest {
         val fp = meta["signingKeyFingerprint"]?.jsonPrimitive?.content
         assertNotNull(fp)
         assertEquals(64, fp!!.length, "Signing fingerprint must be 64-char hex string: $fp")
+
+        // Kototoro index_v2 pointer contract
+        assertEquals("index.min.json", obj["index_v2"]?.jsonPrimitive?.content, "Kototoro repo.json must declare index_v2 pointing to index.min.json")
+    }
+
+    @Test
+    fun validateKototoroContractInvariants() {
+        val repoDir = getRepoDir()
+        val indexFile = File(repoDir, "index.json")
+        assertTrue(indexFile.exists())
+
+        val array = json.parseToJsonElement(indexFile.readText()).jsonArray
+        for (el in array) {
+            val obj = el.jsonObject
+            val pkg = obj["pkg"]!!.jsonPrimitive.content
+            val ver = obj["version"]!!.jsonPrimitive.content
+            val nsfw = obj["nsfw"]!!.jsonPrimitive.content
+
+            // 1. Kototoro Aniyomi libVersion contract (12.0 - 16.0)
+            val libVersionNum = ver.substringBefore('.').toDoubleOrNull()
+            assertNotNull(libVersionNum, "libVersion must be numeric for $pkg")
+            assertTrue(libVersionNum!! in 12.0..16.0, "Kototoro requires Aniyomi libVersion between 12.0 and 16.0, got $libVersionNum for $pkg")
+
+            // 2. Kototoro icon path resolution: icon/$packageName.png
+            val iconFile = File(repoDir, "icon/$pkg.png")
+            assertTrue(iconFile.exists(), "Kototoro resolves icons by package name icon/$pkg.png; missing: ${iconFile.path}")
+
+            // 3. Adult NSFW flag
+            assertEquals("1", nsfw, "Adult content must flag nsfw=1")
+
+            // 4. Manifest checks on built APKs if present
+            val apk = obj["apk"]?.jsonPrimitive?.content
+            val apkFile = File(repoDir, "apk/$apk")
+            if (apkFile.exists()) {
+                ZipFile(apkFile).use { zf ->
+                    val manifest = zf.getInputStream(zf.getEntry("AndroidManifest.xml")!!).bufferedReader().readText()
+                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension\""), "Missing uses-feature tachiyomi.animeextension in $apk")
+                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.class\""), "Missing tachiyomi.animeextension.class in $apk")
+                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.version\"") && manifest.contains("android:value=\"14\""), "Missing tachiyomi.animeextension.version=14 in $apk")
+                    assertTrue(manifest.contains("android:name=\"tachiyomix.extensionLib\""), "Missing tachiyomix.extensionLib helper in $apk")
+                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.nsfw\"") && manifest.contains("android:value=\"1\""), "Missing tachiyomi.animeextension.nsfw=1 in $apk")
+                }
+            }
+        }
     }
 }

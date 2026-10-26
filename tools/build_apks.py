@@ -185,6 +185,9 @@ def create_apk(ext, meta, signing_cfg, output_apk_path):
             android:name="tachiyomi.animeextension.version"
             android:value="{meta['libVersion']}" />
         <meta-data
+            android:name="tachiyomix.extensionLib"
+            android:value="{meta['libVersion']}" />
+        <meta-data
             android:name="tachiyomi.animeextension.nsfw"
             android:value="{"1" if meta['isNsfw'] else "0"}" />
     </application>
@@ -257,6 +260,10 @@ def main():
     print(f"[+] Using signing keystore: {signing_cfg['path']} (release: {signing_cfg['is_release']})")
 
     out_apk_dir = os.path.abspath(debug_dir) if debug_dir else os.path.join(ROOT_DIR, "repo", "apk")
+    if os.path.exists(out_apk_dir):
+        for f in os.listdir(out_apk_dir):
+            if f.endswith(".apk"):
+                os.remove(os.path.join(out_apk_dir, f))
     os.makedirs(out_apk_dir, exist_ok=True)
 
     built_apks = []

@@ -100,6 +100,12 @@ Always sanitize fixtures to remove user tokens, cookies, tracking identifiers, o
 ./gradlew check jacocoTestReport
 ```
 
+### JDK 17 Configuration & Overrides
+The build requires JDK 17. **Never commit local file paths or `org.gradle.java.home` into the repository's `gradle.properties`**. Machine-specific JDK overrides belong exclusively in user-level `~/.gradle/gradle.properties`:
+```properties
+org.gradle.java.home=/path/to/your/jdk-17
+```
+
 ### Live Smoke Integration Tests
 Hits live endpoints to verify `popular -> details -> episodes -> video stream 200/206`:
 ```bash

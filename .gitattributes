@@ -1,0 +1,7 @@
+# Enforce proper line endings
+* text=auto
+
+# Scripts must always have LF line endings
+gradlew text eol=lf
+*.sh text eol=lf
+*.py text eol=lf

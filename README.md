@@ -22,7 +22,7 @@
 |---|---|---|
 | **Aniyomi (Stable & Preview)** | **Supported** | Full compatibility with standard `AnimeExtensionLoader` APK contract. |
 | **Kuukiyomi** | *Untested* | Unverified fork; theoretical compatibility via shared anime extension contract (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). |
-| **Kototoro** | **Supported** | Kototoro v2.3+ natively supports Kaziyami sources via external plugin JAR or `source-host` APK conversion (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
+| **Kototoro** | **Supported** | Kototoro v2.3.2 natively supports Kaziyami Aniyomi extensions via built-in repository manager and `AniyomiExtensionLoader` (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
 
 ---
 
@@ -55,23 +55,20 @@ Release APKs are signed with the maintainer's dedicated release keystore. When i
 
 ### Installation in Kototoro (v2.3+)
 
-Kototoro supports Kaziyami sources through two direct mechanisms:
+Kototoro natively ingests Aniyomi extension repositories without requiring standalone JARs:
 
-**Method A: Standalone Plugin JAR (Recommended)**
-1. Build or download the all-in-one plugin JAR:
-   ```bash
-   ./gradlew packageKototoroPlugin
+1. Open **Kototoro** on your device.
+2. Navigate to **Settings** -> **Extension management** -> **Repositories** tab.
+3. Tap **Add repository** (+).
+4. In the repository type prompt, select **ANIYOMI**.
+5. Paste the repository URL:
+   ```text
+   https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json
    ```
-   Artifact output: `build/libs/kaziyami-kototoro-all-v1.4.1.jar`
-2. Open **Kototoro** on your device.
-3. Navigate to **Settings** -> **Remote Sources**.
-4. Tap **Import Plugin JAR** and select `kaziyami-kototoro-all-v1.4.1.jar`.
-5. All 6 sources appear in Kototoro's catalog with video streaming enabled.
-
-**Method B: Extension APK Import**
-1. Download any Kaziyami extension APK from the `repo` branch or Releases.
-2. In Kototoro, go to **Settings** -> **Remote Sources** -> **Install Extension APK**.
-3. Kototoro's embedded `source-host` and `dex-convert` automatically bridges the Aniyomi anime source.
+6. Tap **Confirm** / **Add**. When prompted with the repository trust dialog, confirm trust.
+7. Switch to the **Extensions** tab under **Aniyomi**.
+8. Find any of the 6 Kaziyami extensions (labeled `Kaziyami: <Site>`) and tap **Install**.
+9. To ensure adult titles display, configure **Content rating** -> **Adult** in the catalog filter menu.
 
 ---
 

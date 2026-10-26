@@ -69,6 +69,15 @@ EXT_COLORS = {
     "kaziyami": (156, 39, 176)       # Purple (Brand)
 }
 
+EXT_PACKAGES = {
+    "nekopoi": "eu.kanade.tachiyomi.animeextension.id.nekopoi",
+    "indohentai": "eu.kanade.tachiyomi.animeextension.id.indohentai",
+    "nontonhentai": "eu.kanade.tachiyomi.animeextension.id.nontonhentai",
+    "hentaimama": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
+    "javsubbed": "eu.kanade.tachiyomi.animeextension.en.javsubbed",
+    "hanime": "eu.kanade.tachiyomi.animeextension.en.hanime",
+}
+
 def main():
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     icon_dirs = [
@@ -86,6 +95,10 @@ def main():
             target = os.path.join(d, f"{name}.png")
             with open(target, "wb") as f:
                 f.write(png_bytes)
+            if name in EXT_PACKAGES:
+                pkg_target = os.path.join(d, f"{EXT_PACKAGES[name]}.png")
+                with open(pkg_target, "wb") as f:
+                    f.write(png_bytes)
         print(f"[+] Generated 192x192 icon: {name}.png")
 
 if __name__ == "__main__":

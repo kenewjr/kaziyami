@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 object RemoteMirrorFetcher {
 
     private const val MIRRORS_REPO_URL =
-        "https://raw.githubusercontent.com/kenewjr/kaziyami/master/repo/mirrors.json"
+        "https://raw.githubusercontent.com/kenewjr/kaziyami/repo/mirrors.json"
 
     // Only allow verified trusted domain patterns
     private val ALLOWED_DOMAIN_PATTERNS = listOf(

@@ -130,12 +130,12 @@ def build_index(fingerprint=None):
         # Fallback to source descriptors if APKs not built yet
         print("[*] No built APKs found in repo/apk/, using fallback metadata...")
         fallback_extensions = [
-            ("Nekopoi", "id", "1.4.1", 1, "https://nekopoi.care"),
-            ("IndoHentai", "id", "1.4.1", 1, "https://indohentai.net"),
-            ("NontonHentai", "id", "1.4.1", 1, "https://nontonhentai.net"),
-            ("Hentaimama", "en", "1.4.1", 1, "https://hentaimama.io"),
-            ("JAVSubbed", "en", "1.4.1", 1, "https://javsubbed.net"),
-            ("Hanime", "en", "1.4.1", 1, "https://hanime.tv"),
+            ("Nekopoi", "id", "14.1", 1, "https://nekopoi.care"),
+            ("IndoHentai", "id", "14.1", 1, "https://indohentai.net"),
+            ("NontonHentai", "id", "14.1", 1, "https://nontonhentai.net"),
+            ("Hentaimama", "en", "14.1", 1, "https://hentaimama.io"),
+            ("JAVSubbed", "en", "14.1", 1, "https://javsubbed.net"),
+            ("Hanime", "en", "14.1", 1, "https://hanime.tv"),
         ]
         for name, lang, ver, code, url in fallback_extensions:
             sid = source_ids.get((name, lang), "0")
@@ -180,12 +180,20 @@ def build_index(fingerprint=None):
             "shortName": "kaziyami",
             "website": "https://github.com/kenewjr/kaziyami",
             "signingKeyFingerprint": fp
-        }
+        },
+        "index_v2": "index.min.json"
     }
     repo_meta_path = os.path.join(REPO_DIR, "repo.json")
     with open(repo_meta_path, "w", encoding="utf-8") as f:
         json.dump(repo_meta, f, indent=2)
     print(f"[+] Wrote {repo_meta_path} (fingerprint: {fp})")
+
+    # 4. Copy mirrors.json to repo if present in tools/
+    src_mirrors = os.path.join(ROOT_DIR, "tools", "mirrors.json")
+    if os.path.exists(src_mirrors):
+        import shutil
+        shutil.copy2(src_mirrors, os.path.join(REPO_DIR, "mirrors.json"))
+        print("[+] Copied tools/mirrors.json to repo/mirrors.json")
 
 if __name__ == "__main__":
     fp = sys.argv[1] if len(sys.argv) > 1 else None

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class NetworkLeakTest {
 
-    private val forbiddenSubstrings = listOf("kaziyami", "aniyomi", "tachiyomi", "extension")
+    private val forbiddenSubstrings = listOf("kaziyami", "aniyomi", "tachiyomi", "kototoro", "extension")
 
     @Test
     fun testBrowserHeadersDoNotLeakIdentity() {
