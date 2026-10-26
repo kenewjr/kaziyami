@@ -20,7 +20,18 @@
   - [x] 5.5 Network performance & caching (`TtlCache`, `NetworkConfig`, `ParserBenchmarkTest`, extended `NetworkLeakTest`).
   - [x] 5.6 Security & privacy review (`LogScrubber`, `tools/scan_secrets.py`, CI secret scanning).
   - [x] 5.7 Scheduled structure monitoring (`tools/monitor_sources.py`, `.github/workflows/monitor.yml`).
-  - [x] 5.8 Error UX (`ErrorClassifier`, `ErrorClassifierTest`, `docs/HARDENING.md`).
+- [x] **Network Resilience v2: Fewer Challenges, Correct Solving, Clear Failure**
+  - [x] Request budget & concurrency: Token bucket rate limiter, concurrency cap (1-2 per host), jitter (`TokenBucketRateLimiter`, `RateLimiterAndJitterTest`).
+  - [x] Caching & referer chain: Aggressive TTL caching on popular/latest/details/episodes, browser navigation referer chains (`GenericThemeSource`).
+  - [x] Sequential extraction: Prioritize preferred host, stop on first working stream (`ExtractorRegistry.resolveSequential`, `SequentialExtractorTest`).
+  - [x] Session & header consistency: BrowserProfile UA / Client Hints validation, stable deterministic header order (`BrowserProfile`, `BrowserProfileTest`).
+  - [x] Connection pooling: HTTP/2 with keep-alive connection reuse (`ConnectionReuseTest`).
+  - [x] Challenge classification: Classify JS_CHALLENGE, INTERACTIVE_CAPTCHA, RATE_LIMITED, IP_OR_REGION_BLOCK, WAF_OTHER, ORIGIN_DOWN, ISP_BLOCK (`ChallengeClassifier`, `ChallengeClassificationTest`).
+  - [x] Circuit breaker: Host-level failure tracking, cooldown, and fast-fail (`HostCircuitBreaker`, `CircuitBreakerTest`).
+  - [x] WebView solver reliability: Coalesced concurrent solves, loop guard, timeout handling (`WebViewSolverManager`, `WebViewSolverTest`).
+  - [x] Signed video URL handling: Single re-resolution on 403/410 (`VideoResolverHelper`, `SignedVideoResolverTest`).
+  - [x] Observability without leaking: Local redacted metrics table (`HostDiagnostics`, `LiveSmokeTest`).
+  - [x] Documentation: `docs/ANTIBOT.md` detailing capabilities, deliberate non-features, known limits, and per-source protection matrix.
 - [x] **Phase 6: Release, Maintenance, Expansion**
   - [x] 6.1 Release v1.4.1 preparation (`CHANGELOG.md`, `docs/RELEASE_NOTES_DRAFT.md`).
   - [x] 6.2 Device QA kit (`docs/QA_CHECKLIST.md`, `docs/QA_REPORT_TEMPLATE.md`).

@@ -97,6 +97,52 @@ object ExtractorRegistry {
     }
 
     /**
+     * Sequentially tries candidate embed URLs, prioritizing the user's preferred host and
+     * stopping at the first working stream. Only probes subsequent hosts on failure.
+     */
+    fun resolveSequential(
+        urls: List<String>,
+        preferredHost: String? = null,
+        referer: String = "",
+        client: OkHttpClient = OkHttpClient()
+    ): List<Video> {
+        if (urls.isEmpty()) return emptyList()
+
+        val orderedUrls = if (!preferredHost.isNullOrBlank()) {
+            urls.sortedByDescending { it.contains(preferredHost, ignoreCase = true) }
+        } else {
+            urls
+        }
+
+        val unhandled = mutableListOf<String>()
+        for (url in orderedUrls) {
+            val extractor = findExtractor(url)
+            if (extractor == null) {
+                val host = try { URI(url).host ?: url } catch (_: Exception) { url }
+                unhandled.add(host)
+                continue
+            }
+            try {
+                val videos = extractor.extract(url, client)
+                if (videos.isNotEmpty()) {
+                    // Stop at first working extractor to reduce request burst
+                    return deduplicateAndSort(videos, preferredHost = preferredHost)
+                }
+            } catch (e: Exception) {
+                val host = try { URI(url).host ?: url } catch (_: Exception) { url }
+                unhandled.add("$host (${e.message ?: "failed"})")
+            }
+        }
+
+        if (unhandled.isNotEmpty() && urls.isNotEmpty()) {
+            throw IllegalStateException(
+                "Sequential extraction failed across all candidates [${urls.size}]. Failed/unhandled: ${unhandled.joinToString(", ")}"
+            )
+        }
+        return emptyList()
+    }
+
+    /**
      * Extracts streams without throwing on missing extractor, returning empty list if unhandled.
      */
     fun extract(url: String, client: OkHttpClient): List<Video> {

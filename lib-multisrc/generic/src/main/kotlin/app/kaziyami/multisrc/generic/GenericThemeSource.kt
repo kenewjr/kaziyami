@@ -15,6 +15,9 @@ import app.kaziyami.core.LazyImage
 import app.kaziyami.core.MirrorManager
 import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
+import app.kaziyami.network.BrowserHeaders
+import app.kaziyami.network.NetworkConfig
+import app.kaziyami.network.TtlCache
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -32,6 +35,10 @@ open class GenericThemeSource(
     val config: SourceConfig,
     val preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
 ) : ParsedAnimeHttpSource(), eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource {
+
+    val pageCache = TtlCache<String, AnimesPage>(defaultTtlMs = NetworkConfig.POPULAR_CACHE_TTL_MS)
+    val detailCache = TtlCache<String, SAnime>(defaultTtlMs = NetworkConfig.DETAIL_PAGE_CACHE_TTL_MS)
+    val episodeListCache = TtlCache<String, List<SEpisode>>(defaultTtlMs = NetworkConfig.EPISODE_LIST_CACHE_TTL_MS)
 
     override val name: String = config.name
     override val lang: String = config.lang
@@ -77,6 +84,12 @@ open class GenericThemeSource(
             entries = arrayOf("1080p", "720p", "480p", "360p"),
             entryValues = arrayOf("1080p", "720p", "480p", "360p"),
             defaultValue = "1080p"
+        )
+        screen.addEditTextPreference(
+            key = "preferred_host",
+            title = "Preferred video host",
+            summary = "Prioritize specific video embed host (e.g. streamtape, voe, doodstream)",
+            defaultValue = ""
         )
         screen.addSwitchPreference(
             key = "show_raw_titles",
@@ -363,8 +376,15 @@ open class GenericThemeSource(
         }.distinct().map { UrlUtils.resolve(baseUrl, it) }
 
         val preferredQuality = preferences.getString("preferred_quality", "1080p")
-        return ExtractorRegistry.resolveAll(iframeUrls, client = client).let {
-            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality)
+        val preferredHost = preferences.getString("preferred_host", "").takeIf { it.isNotBlank() }
+        val referer = response.request.url.toString()
+        return ExtractorRegistry.resolveSequential(
+            urls = iframeUrls,
+            preferredHost = preferredHost,
+            referer = referer,
+            client = client
+        ).let {
+            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
         }
     }
 
@@ -394,6 +414,40 @@ open class GenericThemeSource(
         values: Array<String> = arrayOf("Default", "Popular", "Latest", "A-Z", "Rating"),
         state: Int = 0
     ) : AnimeFilter.Select<String>(name, values, state)
+
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
+        val cacheKey = "popular_$page"
+        val cached = pageCache.get(cacheKey)
+        if (cached != null) return cached
+        val fresh = super.getPopularAnime(page)
+        pageCache.put(cacheKey, fresh)
+        return fresh
+    }
+
+    override suspend fun getLatestUpdates(page: Int): AnimesPage {
+        val cacheKey = "latest_$page"
+        val cached = pageCache.get(cacheKey)
+        if (cached != null) return cached
+        val fresh = super.getLatestUpdates(page)
+        pageCache.put(cacheKey, fresh)
+        return fresh
+    }
+
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
+        val cached = detailCache.get(anime.url)
+        if (cached != null) return cached
+        val fresh = super.getAnimeDetails(anime)
+        detailCache.put(anime.url, fresh)
+        return fresh
+    }
+
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
+        val cached = episodeListCache.get(anime.url)
+        if (cached != null) return cached
+        val fresh = super.getEpisodeList(anime)
+        episodeListCache.put(anime.url, fresh)
+        return fresh
+    }
 
     /**
      * Checks if a document contains explicit empty-state indicators rather than selector drift.

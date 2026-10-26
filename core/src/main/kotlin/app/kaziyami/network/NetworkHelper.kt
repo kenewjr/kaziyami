@@ -1,11 +1,13 @@
 package app.kaziyami.network
 
+import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
@@ -16,14 +18,18 @@ import kotlin.random.Random
 /**
  * Exception raised when an anti-bot challenge (Cloudflare Turnstile, JavaScript challenge, etc.) is detected.
  */
-class CloudflareChallengeException(message: String) : IOException(message)
+class CloudflareChallengeException(
+    message: String,
+    val isInteractive: Boolean = false,
+    val targetUrl: String = ""
+) : IOException(message)
 
 /**
  * Standard HTTP header sets mirroring real browser behavior to avoid automated bot fingerprinting.
+ * Deterministic header ordering is strictly maintained across all code paths.
  */
 object BrowserHeaders {
-    const val DEFAULT_USER_AGENT =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    const val DEFAULT_USER_AGENT = BrowserProfile.DEFAULT_USER_AGENT
 
     enum class HeaderType {
         NAVIGATE,
@@ -32,43 +38,64 @@ object BrowserHeaders {
     }
 
     /**
-     * Generates a realistic header set for navigations, API calls, or media requests.
+     * Generates a realistic, deterministic header set for navigations, API calls, or media requests.
      */
-    fun headersFor(url: String, referer: String? = null, type: HeaderType = HeaderType.NAVIGATE): Headers {
+    fun headersFor(
+        url: String,
+        referer: String? = null,
+        type: HeaderType = HeaderType.NAVIGATE,
+        profile: BrowserProfile = BrowserProfile.DEFAULT
+    ): Headers {
         val builder = Headers.Builder()
-            .set("User-Agent", DEFAULT_USER_AGENT)
-            .set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
-            .set("Accept-Encoding", "gzip, deflate, br")
-            .set("Sec-Ch-Ua", "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"")
-            .set("Sec-Ch-Ua-Mobile", "?0")
-            .set("Sec-Ch-Ua-Platform", "\"Windows\"")
 
+        // 1. User-Agent
+        builder.set("User-Agent", profile.userAgent)
+
+        // 2. Accept
+        when (type) {
+            HeaderType.NAVIGATE -> builder.set(
+                "Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+            )
+            HeaderType.XHR -> builder.set("Accept", "application/json, text/javascript, */*; q=0.01")
+            HeaderType.IMAGE -> builder.set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+        }
+
+        // 3. Accept-Language & Encoding
+        builder.set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
+        builder.set("Accept-Encoding", "gzip, deflate, br")
+
+        // 4. Referer (if present)
+        if (referer != null) {
+            builder.set("Referer", referer)
+        }
+
+        // 5. Client Hints (Strictly verified against User-Agent)
+        val clientHints = profile.getEffectiveClientHints()
+        clientHints["Sec-Ch-Ua"]?.let { builder.set("Sec-Ch-Ua", it) }
+        clientHints["Sec-Ch-Ua-Mobile"]?.let { builder.set("Sec-Ch-Ua-Mobile", it) }
+        clientHints["Sec-Ch-Ua-Platform"]?.let { builder.set("Sec-Ch-Ua-Platform", it) }
+
+        // 6. Fetch Metadata
         when (type) {
             HeaderType.NAVIGATE -> {
-                builder.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-                builder.set("Sec-Fetch-Dest", "document")
-                builder.set("Sec-Fetch-Mode", "navigate")
                 builder.set("Sec-Fetch-Site", if (referer != null) "same-origin" else "none")
+                builder.set("Sec-Fetch-Mode", "navigate")
                 builder.set("Sec-Fetch-User", "?1")
+                builder.set("Sec-Fetch-Dest", "document")
                 builder.set("Upgrade-Insecure-Requests", "1")
             }
             HeaderType.XHR -> {
-                builder.set("Accept", "application/json, text/javascript, */*; q=0.01")
-                builder.set("Sec-Fetch-Dest", "empty")
-                builder.set("Sec-Fetch-Mode", "cors")
                 builder.set("Sec-Fetch-Site", "same-origin")
+                builder.set("Sec-Fetch-Mode", "cors")
+                builder.set("Sec-Fetch-Dest", "empty")
                 builder.set("X-Requested-With", "XMLHttpRequest")
             }
             HeaderType.IMAGE -> {
-                builder.set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-                builder.set("Sec-Fetch-Dest", "image")
-                builder.set("Sec-Fetch-Mode", "no-cors")
                 builder.set("Sec-Fetch-Site", "cross-site")
+                builder.set("Sec-Fetch-Mode", "no-cors")
+                builder.set("Sec-Fetch-Dest", "image")
             }
-        }
-
-        if (referer != null) {
-            builder.set("Referer", referer)
         }
 
         return builder.build()
@@ -84,15 +111,21 @@ object BrowserHeaders {
  * Interceptor that injects standard browser headers into requests if omitted.
  */
 class BrowserHeaderInterceptor(
-    private val defaultRefererProvider: (() -> String)? = null
+    private val defaultRefererProvider: (() -> String)? = null,
+    private val profile: BrowserProfile = BrowserProfile.DEFAULT
 ) : Interceptor {
+    constructor(refererProvider: () -> String) : this(refererProvider, BrowserProfile.DEFAULT)
+    constructor(profile: BrowserProfile) : this(null, profile)
+    constructor() : this(null, BrowserProfile.DEFAULT)
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
         val builder = original.newBuilder()
 
         val defaultHeaders = BrowserHeaders.headersFor(
             url = original.url.toString(),
-            referer = defaultRefererProvider?.invoke()
+            referer = defaultRefererProvider?.invoke(),
+            profile = profile
         )
         for (i in 0 until defaultHeaders.size) {
             val name = defaultHeaders.name(i)
@@ -106,83 +139,122 @@ class BrowserHeaderInterceptor(
 }
 
 /**
+ * Interceptor checking and updating host circuit breakers.
+ */
+class CircuitBreakerInterceptor(
+    private val circuitBreaker: HostCircuitBreaker
+) : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val host = chain.request().url.host
+        circuitBreaker.checkPermission(host)
+
+        try {
+            val response = chain.proceed(chain.request())
+            if (response.code in 200..399) {
+                circuitBreaker.recordSuccess(host)
+            } else if (response.code in listOf(500, 502, 503, 504)) {
+                circuitBreaker.recordFailure(host, "HTTP ${response.code}")
+            }
+            return response
+        } catch (e: Exception) {
+            circuitBreaker.recordFailure(host, e.message ?: "Connection error")
+            throw e
+        }
+    }
+}
+
+/**
  * Detects Cloudflare interstitials, Turnstile challenges, and block responses.
  */
 object ChallengeDetector {
     fun isChallenge(response: Response): Boolean {
-        if (response.header("cf-mitigated") == "challenge") {
-            return true
-        }
-        val code = response.code
-        if (code == 403 || code == 503) {
-            val server = response.header("Server") ?: ""
-            val peekBody = try {
-                response.peekBody(4096).string()
-            } catch (_: Exception) {
-                ""
-            }
-
-            if (server.contains("cloudflare", ignoreCase = true) ||
-                peekBody.contains("Just a moment...", ignoreCase = true) ||
-                peekBody.contains("Attention Required", ignoreCase = true) ||
-                peekBody.contains("cf-turnstile", ignoreCase = true) ||
-                peekBody.contains("challenge-platform", ignoreCase = true) ||
-                peekBody.contains("Checking your browser", ignoreCase = true)
-            ) {
-                return true
-            }
-        }
-        return false
+        val res = ChallengeClassifier.classify(response)
+        return res.classification in listOf(
+            ChallengeClass.JS_CHALLENGE,
+            ChallengeClass.INTERACTIVE_CAPTCHA
+        )
     }
 }
 
 /**
  * Interceptor that monitors incoming HTTP responses for challenge/block pages.
  */
-class CloudflareInterceptor : Interceptor {
+class CloudflareInterceptor(
+    private val rateLimiter: TokenBucketRateLimiter? = null
+) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val response = chain.proceed(request)
+        val host = request.url.host
+        HostDiagnostics.recordRequest(host)
 
-        if (ChallengeDetector.isChallenge(response)) {
-            val url = request.url.toString()
-            response.close()
-            throw CloudflareChallengeException(
-                "Cloudflare challenge detected on $url. Please open the site in WebView to solve the challenge."
-            )
+        val response = chain.proceed(request)
+        val resolution = ChallengeClassifier.classify(response)
+
+        if (resolution.classification != ChallengeClass.NONE) {
+            HostDiagnostics.recordChallenge(host, resolution.classification)
         }
 
-        return response
+        when (resolution.classification) {
+            ChallengeClass.RATE_LIMITED -> {
+                HostDiagnostics.recordRateLimit(host)
+                rateLimiter?.lowerBudget(host)
+                // Let retry interceptor handle 429 backoff
+                return response
+            }
+            ChallengeClass.INTERACTIVE_CAPTCHA -> {
+                val url = request.url.toString()
+                response.close()
+                throw CloudflareChallengeException(
+                    message = "${resolution.message} Target: $url",
+                    isInteractive = true,
+                    targetUrl = url
+                )
+            }
+            ChallengeClass.JS_CHALLENGE -> {
+                val url = request.url.toString()
+                response.close()
+                throw CloudflareChallengeException(
+                    message = "Cloudflare challenge detected on $url. ${resolution.message}",
+                    isInteractive = false,
+                    targetUrl = url
+                )
+            }
+            ChallengeClass.IP_OR_REGION_BLOCK,
+            ChallengeClass.ISP_BLOCK -> {
+                val url = request.url.toString()
+                response.close()
+                throw IOException("${resolution.message} (Target: $url)")
+            }
+            else -> {
+                // Pass through normal response or origin errors
+                return response
+            }
+        }
     }
 }
 
 /**
- * Rate-limiting interceptor that enforces minimum intervals with randomized jitter between requests to a single host.
+ * Rate-limiting interceptor that enforces token bucket budgets, concurrency caps, and jitter per host.
  */
 class RateLimitInterceptor(
-    private val permitsPerSecond: Double = 3.0
+    val rateLimiter: TokenBucketRateLimiter = TokenBucketRateLimiter()
 ) : Interceptor {
-    private val hostLastAccess = ConcurrentHashMap<String, Long>()
-    private val minIntervalMs = (1000.0 / permitsPerSecond).toLong()
+
+    constructor(permitsPerSecond: Double) : this(
+        TokenBucketRateLimiter(
+            defaultCapacity = permitsPerSecond.coerceAtLeast(1.0),
+            defaultRefillRatePerSec = permitsPerSecond.coerceAtLeast(0.5)
+        )
+    )
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val host = chain.request().url.host
-        val now = System.currentTimeMillis()
-        val last = hostLastAccess[host] ?: 0L
-
-        val elapsed = now - last
-        if (elapsed < minIntervalMs) {
-            val jitter = Random.nextLong(20, 80)
-            val sleepTime = (minIntervalMs - elapsed) + jitter
-            try {
-                Thread.sleep(sleepTime)
-            } catch (_: InterruptedException) {
-                Thread.currentThread().interrupt()
-            }
+        rateLimiter.acquire(host)
+        try {
+            return chain.proceed(chain.request())
+        } finally {
+            rateLimiter.release(host)
         }
-        hostLastAccess[host] = System.currentTimeMillis()
-
-        return chain.proceed(chain.request())
     }
 }
 
@@ -224,13 +296,17 @@ class RetryInterceptor(
 typealias RetryAfterInterceptor = RetryInterceptor
 
 /**
- * In-memory thread-safe cookie storage shared across calls.
+ * In-memory thread-safe cookie storage shared across calls with per-host isolation and clearance tracking.
  */
 class SimpleCookieJar : CookieJar {
     private val store = ConcurrentHashMap<String, MutableList<Cookie>>()
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        val list = store.getOrPut(url.host) { mutableListOf() }
+        saveCookies(url.host, cookies)
+    }
+
+    fun saveCookies(host: String, cookies: List<Cookie>) {
+        val list = store.getOrPut(host) { mutableListOf() }
         synchronized(list) {
             for (cookie in cookies) {
                 list.removeAll { it.name == cookie.name }
@@ -247,26 +323,98 @@ class SimpleCookieJar : CookieJar {
             return list.toList()
         }
     }
+
+    /**
+     * Checks if a valid, unexpired cf_clearance cookie is present for the host.
+     */
+    fun hasValidClearance(host: String): Boolean {
+        val list = store[host] ?: return false
+        val now = System.currentTimeMillis()
+        synchronized(list) {
+            return list.any { it.name == "cf_clearance" && it.expiresAt > now }
+        }
+    }
+
+    /**
+     * Returns the expiry timestamp of the cf_clearance cookie, or null if absent.
+     */
+    fun getClearanceExpiry(host: String): Long? {
+        val list = store[host] ?: return null
+        synchronized(list) {
+            return list.firstOrNull { it.name == "cf_clearance" }?.expiresAt
+        }
+    }
+
+    /**
+     * Checks if cf_clearance is within the given threshold of expiration.
+     */
+    fun isClearanceNearExpiry(host: String, thresholdMs: Long = 60_000L): Boolean {
+        val expiry = getClearanceExpiry(host) ?: return false
+        val now = System.currentTimeMillis()
+        return (expiry - now) < thresholdMs
+    }
+
+    /**
+     * Synchronizes cookies from Android's android.webkit.CookieManager if present at runtime.
+     */
+    fun syncFromAndroidWebView(url: HttpUrl) {
+        try {
+            val cmClass = Class.forName("android.webkit.CookieManager")
+            val getInstance = cmClass.getMethod("getInstance")
+            val cookieManager = getInstance.invoke(null)
+            val getCookie = cmClass.getMethod("getCookie", String::class.java)
+            val rawHeader = getCookie.invoke(cookieManager, url.toString()) as? String
+            if (!rawHeader.isNullOrBlank()) {
+                val parsed = rawHeader.split(";").mapNotNull { part ->
+                    val trimmed = part.trim()
+                    val eq = trimmed.indexOf('=')
+                    if (eq > 0) {
+                        val name = trimmed.substring(0, eq).trim()
+                        val value = trimmed.substring(eq + 1).trim()
+                        Cookie.Builder()
+                            .domain(url.host)
+                            .name(name)
+                            .value(value)
+                            .build()
+                    } else null
+                }
+                saveCookies(url.host, parsed)
+            }
+        } catch (_: Throwable) {
+            // JVM environment without Android WebView
+        }
+    }
 }
 
 /**
- * Builds compliant OkHttpClient instances configured with realistic headers, rate limits, and challenge detection.
+ * Builds compliant OkHttpClient instances configured with connection pooling, rate limits, and challenge detection.
  */
 object NetworkFactory {
     fun createClient(
         baseClient: OkHttpClient = OkHttpClient(),
-        permitsPerSecond: Double = 3.0,
-        maxRetries: Int = 3,
-        cookieJar: CookieJar = SimpleCookieJar()
+        permitsPerSecond: Double = NetworkConfig.DEFAULT_REQUESTS_PER_PERIOD.toDouble(),
+        maxRetries: Int = NetworkConfig.MAX_RETRIES_ON_429.coerceAtLeast(2),
+        cookieJar: CookieJar = SimpleCookieJar(),
+        circuitBreaker: HostCircuitBreaker = HostCircuitBreaker()
     ): OkHttpClient {
+        val rateLimiter = TokenBucketRateLimiter(
+            defaultCapacity = permitsPerSecond.coerceAtLeast(1.0),
+            defaultRefillRatePerSec = permitsPerSecond.coerceAtLeast(0.5)
+        )
+        val pool = ConnectionPool(5, 5, TimeUnit.MINUTES)
+
         return baseClient.newBuilder()
+            .connectionPool(pool)
+            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
             .cookieJar(cookieJar)
-            .addInterceptor(RateLimitInterceptor(permitsPerSecond))
+            .addInterceptor(CircuitBreakerInterceptor(circuitBreaker))
+            .addInterceptor(RateLimitInterceptor(rateLimiter))
             .addInterceptor(RetryInterceptor(maxRetries))
             .addInterceptor(BrowserHeaderInterceptor())
-            .addInterceptor(CloudflareInterceptor())
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor(CloudflareInterceptor(rateLimiter))
+            .connectTimeout(NetworkConfig.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(NetworkConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(NetworkConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     }
 }

@@ -113,4 +113,19 @@ class MirrorManager(
             false
         }
     }
+
+    /**
+     * Updates the active healthy base URL if a mirror permanently redirects (HTTP 301/308)
+     * to a new domain, provided the destination domain is on the verified allowlist.
+     */
+    fun handlePermanentRedirect(fromUrl: String, toUrl: String, allowlist: List<String> = allMirrors): Boolean {
+        val cleanTo = toUrl.removeSuffix("/")
+        val isAllowed = allowlist.any { cleanTo.startsWith(it.removeSuffix("/")) }
+        if (isAllowed) {
+            markHealthy(cleanTo)
+            return true
+        }
+        return false
+    }
 }
+
