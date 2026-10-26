@@ -38,26 +38,9 @@ def load_source_ids():
     return ids
 
 def parse_manifest_from_apk(apk_path):
-    with zipfile.ZipFile(apk_path, "r") as zf:
-        if "AndroidManifest.xml" not in zf.namelist():
-            raise ValueError(f"No AndroidManifest.xml inside {apk_path}")
-        content = zf.read("AndroidManifest.xml").decode("utf-8", errors="ignore")
-
-    pkg = re.search(r'package\s*=\s*"([^"]+)"', content).group(1)
-    version_code = int(re.search(r'versionCode\s*=\s*"(\d+)"', content).group(1))
-    version_name = re.search(r'versionName\s*=\s*"([^"]+)"', content).group(1)
-    label = re.search(r'android:label\s*=\s*"([^"]+)"', content).group(1)
-
-    nsfw_match = re.search(r'tachiyomi\.animeextension\.nsfw"\s+android:value\s*=\s*"(\d+)"', content)
-    nsfw = int(nsfw_match.group(1)) if nsfw_match else 1
-
-    return {
-        "pkg": pkg,
-        "versionCode": version_code,
-        "versionName": version_name,
-        "label": label,
-        "nsfw": nsfw
-    }
+    sys.path.insert(0, os.path.join(ROOT_DIR, "tools"))
+    import android_sdk
+    return android_sdk.parse_apk_manifest(apk_path)
 
 def build_index(fingerprint=None):
     os.makedirs(REPO_DIR, exist_ok=True)

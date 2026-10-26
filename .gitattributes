@@ -5,3 +5,11 @@
 gradlew text eol=lf
 *.sh text eol=lf
 *.py text eol=lf
+
+# Binaries must not undergo line ending normalization
+*.apk binary
+*.keystore binary
+*.jks binary
+*.dex binary
+*.jar binary
+*.png binary

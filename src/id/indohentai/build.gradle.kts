@@ -1,6 +1,6 @@
 val extName = "IndoHentai"
 val extClass = "eu.kanade.tachiyomi.animeextension.id.indohentai.IndoHentai"
-val extVersionCode = 1
+val extVersionCode = 2
 val libVersion = "14"
 val isNsfw = true
 

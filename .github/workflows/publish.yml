@@ -43,6 +43,13 @@ jobs:
       - name: Generate Original Adaptive PNG Icons
         run: python tools/generate_icons.py
 
+      - name: Validate Release Signing Secrets
+        run: |
+          if [ -z "${{ secrets.KAZIYAMI_KEYSTORE_B64 }}" ] || [ -z "${{ secrets.KAZIYAMI_KEYSTORE_PASSWORD }}" ]; then
+            echo "::error::FATAL: Release signing secrets (KAZIYAMI_KEYSTORE_B64, KAZIYAMI_KEYSTORE_PASSWORD) are missing! Refusing to publish release."
+            exit 1
+          fi
+
       - name: Build and Sign Extension APKs
         env:
           KAZIYAMI_KEYSTORE_B64: ${{ secrets.KAZIYAMI_KEYSTORE_B64 }}
@@ -51,6 +58,9 @@ jobs:
           KAZIYAMI_KEY_PASSWORD: ${{ secrets.KAZIYAMI_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
+      - name: Verify Built Release APKs
+        run: python tools/verify_apks.py
+
       - name: Deploy Repository Assets to repo Branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -58,6 +68,9 @@ jobs:
           folder: repo
           single-commit: true
           commit-message: "deploy: publish Kaziyami extension release [skip ci]"
+
+      - name: Verify Published Repository Assets Over HTTPS
+        run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --retries 10 --delay 6
 
       - name: Create GitHub Release for Tag
         if: startsWith(github.ref, 'refs/tags/v')

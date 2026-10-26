@@ -139,10 +139,25 @@ tasks.register<Exec>("packageKototoroPlugin") {
     commandLine("python", "tools/package_kototoro_plugin.py")
 }
 
+val testVerifyApks by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Runs unit tests for APK verification logic with fixtures."
+    commandLine("python", "tools/test_verify_apks.py")
+}
+
+val verifyApks by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Verifies built extension APKs for signing, Dalvik bytecode, binary manifest, and metadata."
+    dependsOn(tasks.named("assembleRelease"))
+    commandLine("python", "tools/verify_apks.py", "--allow-debug-cert")
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."
     dependsOn(validateSourceConfigs)
     dependsOn(checkExtensionIcons)
+    dependsOn(testVerifyApks)
+    dependsOn(verifyApks)
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

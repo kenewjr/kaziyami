@@ -13,11 +13,10 @@ import sys
 
 def get_fingerprint_from_apksigner(apk_path):
     try:
-        out = subprocess.check_output(
-            ["apksigner", "verify", "--print-certs", apk_path],
-            stderr=subprocess.DEVNULL,
-            text=True
-        )
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import android_sdk
+        res = android_sdk.run_apksigner(["verify", "--print-certs", apk_path])
+        out = res.stdout if res.returncode == 0 else ""
         for line in out.splitlines():
             line_str = line.strip()
             if "SHA-256 digest:" in line_str or "SHA256:" in line_str:

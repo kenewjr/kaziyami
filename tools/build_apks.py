@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 build_apks.py:
-Packages and signs release APKs for all Kaziyami extensions, generates sha256sums.txt,
+Packages and signs release APKs for all Kaziyami extensions, compiles Dalvik executable (classes.dex)
+and Android Binary XML (AXML) manifests using D8 and AAPT2, aligns 4-byte boundaries using zipalign,
+signs using apksigner with v2 and v3 signature schemes, generates sha256sums.txt,
 and triggers repo index generation.
 """
 
@@ -16,6 +18,8 @@ import tempfile
 import zipfile
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT_DIR, "tools"))
+import android_sdk
 
 EXTENSIONS = [
     {
@@ -86,7 +90,7 @@ def check_icons():
             raise FileNotFoundError(f"[!] Extension {ext['name']} lacks an icon! Missing {xml_icon}")
     print("[+] All extension icons verified.")
 
-def get_signing_config():
+def get_signing_config(require_release=False):
     # 1. Environment secrets
     b64_keystore = os.environ.get("KAZIYAMI_KEYSTORE_B64")
     keystore_pw = os.environ.get("KAZIYAMI_KEYSTORE_PASSWORD")
@@ -128,6 +132,9 @@ def get_signing_config():
                 "is_release": True
             }
 
+    if require_release:
+        raise RuntimeError("FATAL: Release signing secrets (KAZIYAMI_KEYSTORE_B64, KAZIYAMI_KEYSTORE_PASSWORD) are missing! Refusing to build unsigned or mock-signed release APKs.")
+
     # 3. Fallback: generate test keystore for build simulation / PR
     test_dir = os.path.join(ROOT_DIR, "build", "test_keystore")
     os.makedirs(test_dir, exist_ok=True)
@@ -153,26 +160,14 @@ def get_signing_config():
         "is_release": False
     }
 
-def sign_apk(apk_path, signing_cfg):
-    cmd = [
-        "jarsigner",
-        "-sigalg", "SHA256withRSA",
-        "-digestalg", "SHA-256",
-        "-keystore", signing_cfg["path"],
-        "-storepass", signing_cfg["storepass"],
-        "-keypass", signing_cfg["keypass"],
-        apk_path,
-        signing_cfg["alias"]
-    ]
-    subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-def create_apk(ext, meta, signing_cfg, output_apk_path):
+def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
     pkg_name = f"eu.kanade.tachiyomi.animeextension.{ext['lang']}.{ext['name'].lower()}"
     manifest_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="{pkg_name}"
     android:versionCode="{meta['extVersionCode']}"
     android:versionName="{meta['version']}">
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
     <uses-feature android:name="tachiyomi.animeextension" />
     <application
         android:label="Kaziyami: {meta['extName']}"
@@ -194,52 +189,123 @@ def create_apk(ext, meta, signing_cfg, output_apk_path):
 </manifest>
 """
 
-    os.makedirs(os.path.dirname(output_apk_path), exist_ok=True)
-    if os.path.exists(output_apk_path):
-        os.remove(output_apk_path)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # 1. Compile resources (icon)
+        res_dir = os.path.join(tmp_dir, "res", "drawable")
+        os.makedirs(res_dir, exist_ok=True)
+        
+        # Check source icon
+        ext_icon_xml = os.path.join(ROOT_DIR, ext["dir"], "src", "main", "res", "drawable", "ic_launcher.xml")
+        png_icon = os.path.join(ROOT_DIR, "art", "icons", f"{ext['name'].lower()}.png")
+        
+        if os.path.exists(png_icon):
+            shutil.copy(png_icon, os.path.join(res_dir, "ic_launcher.png"))
+        elif os.path.exists(ext_icon_xml):
+            shutil.copy(ext_icon_xml, os.path.join(res_dir, "ic_launcher.xml"))
 
-    with zipfile.ZipFile(output_apk_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        # 1. Manifest
-        zf.writestr("AndroidManifest.xml", manifest_xml.strip())
+        compiled_dir = os.path.join(tmp_dir, "compiled")
+        os.makedirs(compiled_dir, exist_ok=True)
+        res_compile = subprocess.run([
+            sdk_tools["aapt2"], "compile",
+            "--dir", os.path.join(tmp_dir, "res"),
+            "-o", compiled_dir
+        ], capture_output=True, text=True)
+        if res_compile.returncode != 0:
+            raise RuntimeError(f"aapt2 compile failed for {ext['name']}: {res_compile.stderr}")
 
-        # 2. Icon
-        icon_path = os.path.join(ROOT_DIR, ext["dir"], "src", "main", "res", "drawable", "ic_launcher.xml")
-        if os.path.exists(icon_path):
-            with open(icon_path, "rb") as f:
-                zf.writestr("res/drawable/ic_launcher.xml", f.read())
+        flat_files = [os.path.join(compiled_dir, f) for f in os.listdir(compiled_dir) if f.endswith(".flat")]
 
-        # 3. Classes from extension
-        ext_classes_dir = os.path.join(ROOT_DIR, ext["dir"], "build", "classes", "kotlin", "main")
-        if os.path.exists(ext_classes_dir):
-            for root, _, files in os.walk(ext_classes_dir):
-                for file in files:
-                    full_p = os.path.join(root, file)
-                    rel_p = os.path.relpath(full_p, ext_classes_dir)
-                    zf.write(full_p, rel_p)
+        # 2. Link binary AndroidManifest.xml and resources into base.apk
+        manifest_path = os.path.join(tmp_dir, "AndroidManifest.xml")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write(manifest_xml)
 
-        # 4. Classes from core
-        core_classes_dir = os.path.join(ROOT_DIR, "core", "build", "classes", "kotlin", "main")
-        if os.path.exists(core_classes_dir):
-            for root, _, files in os.walk(core_classes_dir):
-                for file in files:
-                    full_p = os.path.join(root, file)
-                    rel_p = os.path.relpath(full_p, core_classes_dir)
-                    if rel_p not in zf.namelist():
-                        zf.write(full_p, rel_p)
+        base_apk = os.path.join(tmp_dir, "base.apk")
+        link_cmd = [
+            sdk_tools["aapt2"], "link",
+            "-I", sdk_tools["android_jar"],
+            "--manifest", manifest_path,
+            "-o", base_apk
+        ] + flat_files
 
-        # 5. Classes from multisrc
+        res_link = subprocess.run(link_cmd, capture_output=True, text=True)
+        if res_link.returncode != 0:
+            raise RuntimeError(f"aapt2 link failed for {ext['name']}: {res_link.stderr}")
+
+        # 3. Compile classes into classes.dex using D8
+        class_dirs = [
+            os.path.join(ROOT_DIR, ext["dir"], "build", "classes", "kotlin", "main"),
+            os.path.join(ROOT_DIR, "core", "build", "classes", "kotlin", "main")
+        ]
         if ext.get("multisrc"):
-            multi_dir = os.path.join(ROOT_DIR, ext["multisrc"], "build", "classes", "kotlin", "main")
-            if os.path.exists(multi_dir):
-                for root, _, files in os.walk(multi_dir):
-                    for file in files:
-                        full_p = os.path.join(root, file)
-                        rel_p = os.path.relpath(full_p, multi_dir)
-                        if rel_p not in zf.namelist():
-                            zf.write(full_p, rel_p)
+            class_dirs.append(os.path.join(ROOT_DIR, ext["multisrc"], "build", "classes", "kotlin", "main"))
 
-    # Sign the APK
-    sign_apk(output_apk_path, signing_cfg)
+        # Bundle class files into a temporary jar for D8 input
+        input_jar = os.path.join(tmp_dir, "input.jar")
+        with zipfile.ZipFile(input_jar, "w") as zf:
+            for c_dir in class_dirs:
+                if os.path.exists(c_dir):
+                    for root, _, files in os.walk(c_dir):
+                        for file in files:
+                            if file.endswith(".class"):
+                                full_p = os.path.join(root, file)
+                                rel_p = os.path.relpath(full_p, c_dir)
+                                if rel_p not in zf.namelist():
+                                    zf.write(full_p, rel_p)
+
+        dex_out_dir = os.path.join(tmp_dir, "dex")
+        os.makedirs(dex_out_dir, exist_ok=True)
+        d8_cmd = [
+            "java", "-cp", sdk_tools["d8_jar"], "com.android.tools.r8.D8",
+            "--release", "--min-api", "21",
+            "--lib", sdk_tools["android_jar"],
+            "--output", dex_out_dir,
+            input_jar
+        ]
+        res_d8 = subprocess.run(d8_cmd, capture_output=True, text=True)
+        if res_d8.returncode != 0:
+            raise RuntimeError(f"D8 failed for {ext['name']}: {res_d8.stderr}")
+
+        classes_dex = os.path.join(dex_out_dir, "classes.dex")
+        if not os.path.exists(classes_dex):
+            raise FileNotFoundError(f"classes.dex was not generated for {ext['name']}")
+
+        # 4. Add classes.dex into base_apk
+        with zipfile.ZipFile(base_apk, "a") as zf:
+            zf.write(classes_dex, "classes.dex")
+
+        # 5. Zipalign to 4-byte boundaries
+        aligned_apk = os.path.join(tmp_dir, "aligned.apk")
+        align_cmd = [sdk_tools["zipalign"], "-p", "-f", "4", base_apk, aligned_apk]
+        res_align = subprocess.run(align_cmd, capture_output=True, text=True)
+        if res_align.returncode != 0:
+            raise RuntimeError(f"zipalign failed for {ext['name']}: {res_align.stderr}")
+
+        # 6. Sign using apksigner with v2 and v3 schemes
+        os.makedirs(os.path.dirname(output_apk_path), exist_ok=True)
+        if os.path.exists(output_apk_path):
+            os.remove(output_apk_path)
+
+        sign_cmd = [
+            "java", "-jar", sdk_tools["apksigner_jar"], "sign",
+            "--ks", signing_cfg["path"],
+            "--ks-key-alias", signing_cfg["alias"],
+            "--ks-pass", f"pass:{signing_cfg['storepass']}",
+            "--key-pass", f"pass:{signing_cfg['keypass']}",
+            "--v2-signing-enabled", "true",
+            "--v3-signing-enabled", "true",
+            "--out", output_apk_path,
+            aligned_apk
+        ]
+        res_sign = subprocess.run(sign_cmd, capture_output=True, text=True)
+        if res_sign.returncode != 0:
+            raise RuntimeError(f"apksigner sign failed for {ext['name']}: {res_sign.stderr}")
+
+        # 7. Verify signature
+        verify_cmd = ["java", "-jar", sdk_tools["apksigner_jar"], "verify", "--verbose", output_apk_path]
+        res_verify = subprocess.run(verify_cmd, capture_output=True, text=True)
+        if res_verify.returncode != 0:
+            raise RuntimeError(f"apksigner verify failed on generated {output_apk_path}: {res_verify.stderr}")
 
 def compute_sha256(file_path):
     h = hashlib.sha256()
@@ -251,12 +317,17 @@ def compute_sha256(file_path):
 def main():
     check_icons()
     debug_dir = None
+    require_release = False
+    
     if "--debug-dir" in sys.argv:
         idx = sys.argv.index("--debug-dir")
         if idx + 1 < len(sys.argv):
             debug_dir = sys.argv[idx + 1]
+    if "--require-release" in sys.argv:
+        require_release = True
 
-    signing_cfg = get_signing_config()
+    sdk_tools = android_sdk.get_sdk_tools()
+    signing_cfg = get_signing_config(require_release=require_release)
     print(f"[+] Using signing keystore: {signing_cfg['path']} (release: {signing_cfg['is_release']})")
 
     out_apk_dir = os.path.abspath(debug_dir) if debug_dir else os.path.join(ROOT_DIR, "repo", "apk")
@@ -275,7 +346,7 @@ def main():
         apk_path = os.path.join(out_apk_dir, apk_name)
 
         print(f"[+] Assembling APK: {apk_name} ...")
-        create_apk(ext, meta, signing_cfg, apk_path)
+        create_apk(ext, meta, signing_cfg, apk_path, sdk_tools)
 
         apk_hash = compute_sha256(apk_path)
         sha256_lines.append(f"{apk_hash}  {apk_name}")
@@ -293,7 +364,6 @@ def main():
     print(f"[+] Wrote {sha256_file}")
 
     # Extract certificate fingerprint from the first built APK
-    sys.path.insert(0, os.path.join(ROOT_DIR, "tools"))
     from get_apk_fingerprint import get_apk_fingerprint
     first_apk = built_apks[0][2]
     fingerprint = get_apk_fingerprint(first_apk)
