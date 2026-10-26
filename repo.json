@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "name": "Kaziyami",
+    "shortName": "kaziyami",
+    "website": "https://github.com/kenewjr/kaziyami",
+    "signingKeyFingerprint": "2b30bb1cc3f36adab1bec45d3046bbccceeece8ad2db42c8aafeebaaf8787b0c"
+  },
+  "index_v2": "index.min.json"
+}
