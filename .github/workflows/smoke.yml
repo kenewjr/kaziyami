@@ -61,22 +61,22 @@ jobs:
             if (!passed) {
               const body = `### Automated Weekly Live Smoke Test Failure
 
-Automated testing detected that one or more video streams failed to return HTTP 200/206 status codes.
+                Automated testing detected that one or more video streams failed to return HTTP 200/206 status codes.
 
-> [!WARNING]
-> **Cloudflare Datacenter Blocking Notice**:
-> GitHub-hosted runners execute from Microsoft Azure datacenter IP ranges (AS8075). Many adult video CDNs and Cloudflare endpoints automatically block datacenter ASN traffic with HTTP 403 or managed challenges, **even when the site is fully functional on residential mobile phones**.
->
-> A failure in this workflow does NOT immediately mean the extension is broken. **You must confirm the failure on a real physical device before modifying code.**
+                > [!WARNING]
+                > **Cloudflare Datacenter Blocking Notice**:
+                > GitHub-hosted runners execute from Microsoft Azure datacenter IP ranges (AS8075). Many adult video CDNs and Cloudflare endpoints automatically block datacenter ASN traffic with HTTP 403 or managed challenges, **even when the site is fully functional on residential mobile phones**.
+                >
+                > A failure in this workflow does NOT immediately mean the extension is broken. **You must confirm the failure on a real physical device before modifying code.**
 
-### Verification Checklist on Physical Device:
-- [ ] Connect mobile phone to cellular data (4G/5G) or residential home Wi-Fi (do NOT use datacenter VPN).
-- [ ] Open the target website URL in the phone's mobile browser (Chrome/Brave).
-- [ ] Verify if Cloudflare Turnstile or CAPTCHA interstitial appears.
-- [ ] If challenge appears, open the source in Aniyomi and tap **Open in WebView** to solve and store clearance cookies.
-- [ ] Verify if video stream begins playback in Aniyomi.
-- [ ] If video still fails to play on phone, inspect network traffic for dead mirror domains or changed player embed parameters.
-`;
+                ### Verification Checklist on Physical Device:
+                - [ ] Connect mobile phone to cellular data (4G/5G) or residential home Wi-Fi (do NOT use datacenter VPN).
+                - [ ] Open the target website URL in the phone's mobile browser (Chrome/Brave).
+                - [ ] Verify if Cloudflare Turnstile or CAPTCHA interstitial appears.
+                - [ ] If challenge appears, open the source in Aniyomi and tap **Open in WebView** to solve and store clearance cookies.
+                - [ ] Verify if video stream begins playback in Aniyomi.
+                - [ ] If video still fails to play on phone, inspect network traffic for dead mirror domains or changed player embed parameters.
+                `;
 
               if (existingIssue) {
                 await github.rest.issues.createComment({
