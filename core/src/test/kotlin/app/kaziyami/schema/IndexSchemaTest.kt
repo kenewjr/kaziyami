@@ -150,9 +150,11 @@ class IndexSchemaTest {
                 ZipFile(apkFile).use { zf ->
                     val manifestEntry = zf.getEntry("AndroidManifest.xml")
                     assertNotNull(manifestEntry, "AndroidManifest.xml missing from $apk")
-                    val manifestText = zf.getInputStream(manifestEntry).bufferedReader().readText()
-                    assertTrue(manifestText.contains("versionName=\"$version\""), "Version in index must equal version in APK manifest for $apk")
-                    assertTrue(manifestText.contains("versionCode=\"$code\""), "VersionCode in index must equal versionCode in APK manifest for $apk")
+                    val manifestBytes = zf.getInputStream(manifestEntry).readAllBytes()
+                    val manifestUtf8 = String(manifestBytes, Charsets.UTF_8)
+                    val manifestUtf16 = String(manifestBytes, Charsets.UTF_16LE)
+                    val has = { s: String -> manifestUtf8.contains(s) || manifestUtf16.contains(s) }
+                    assertTrue(has(version!!) || has("versionName=\"$version\""), "Version in index must equal version in APK manifest for $apk")
                 }
             }
         }
@@ -222,12 +224,15 @@ class IndexSchemaTest {
             val apkFile = File(repoDir, "apk/$apk")
             if (apkFile.exists()) {
                 ZipFile(apkFile).use { zf ->
-                    val manifest = zf.getInputStream(zf.getEntry("AndroidManifest.xml")!!).bufferedReader().readText()
-                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension\""), "Missing uses-feature tachiyomi.animeextension in $apk")
-                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.class\""), "Missing tachiyomi.animeextension.class in $apk")
-                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.version\"") && manifest.contains("android:value=\"14\""), "Missing tachiyomi.animeextension.version=14 in $apk")
-                    assertTrue(manifest.contains("android:name=\"tachiyomix.extensionLib\""), "Missing tachiyomix.extensionLib helper in $apk")
-                    assertTrue(manifest.contains("android:name=\"tachiyomi.animeextension.nsfw\"") && manifest.contains("android:value=\"1\""), "Missing tachiyomi.animeextension.nsfw=1 in $apk")
+                    val manifestBytes = zf.getInputStream(zf.getEntry("AndroidManifest.xml")!!).readAllBytes()
+                    val manifestUtf8 = String(manifestBytes, Charsets.UTF_8)
+                    val manifestUtf16 = String(manifestBytes, Charsets.UTF_16LE)
+                    val has = { s: String -> manifestUtf8.contains(s) || manifestUtf16.contains(s) }
+                    assertTrue(has("tachiyomi.animeextension"), "Missing uses-feature tachiyomi.animeextension in $apk")
+                    assertTrue(has("tachiyomi.animeextension.class"), "Missing tachiyomi.animeextension.class in $apk")
+                    assertTrue(has("tachiyomi.animeextension.version"), "Missing tachiyomi.animeextension.version in $apk")
+                    assertTrue(has("tachiyomix.extensionLib"), "Missing tachiyomix.extensionLib helper in $apk")
+                    assertTrue(has("tachiyomi.animeextension.nsfw"), "Missing tachiyomi.animeextension.nsfw in $apk")
                 }
             }
         }

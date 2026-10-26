@@ -196,10 +196,10 @@ def parse_apk_manifest(apk_path):
         targetsdk_m = re.search(r"targetSdkVersion.*?=(\d+)", tree)
     targetsdk = int(targetsdk_m.group(1)) if targetsdk_m else 0
 
-    nsfw_m = re.search(r'tachiyomi\.animeextension\.nsfw\".*?value.*?(\d+)', tree, re.DOTALL)
+    nsfw_m = re.search(r'tachiyomi\.animeextension\.nsfw".*?value[^=]*=\s*(\d+)', tree, re.DOTALL)
     nsfw = int(nsfw_m.group(1)) if nsfw_m else 1
 
-    class_m = re.search(r'tachiyomi\.animeextension\.class\".*?value.*?\"([^\"]+)\"', tree, re.DOTALL)
+    class_m = re.search(r'tachiyomi\.animeextension\.class".*?value[^=]*=\s*"([^"]+)"', tree, re.DOTALL)
     ext_class = class_m.group(1) if class_m else ""
 
     return {
