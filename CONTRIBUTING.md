@@ -121,3 +121,15 @@ To automatically calculate and bump affected extensions:
 ```
 
 CI will fail if code was altered without bumping `extVersionCode` (`./gradlew checkBump`).
+
+---
+
+## 7. Dual Adapter Availability (Aniyomi + Kototoro)
+
+Because Kaziyami sources are built on a platform-neutral engine and standard `AnimeHttpSource` ABI:
+
+1. **Automatic Dual Compatibility**: Every newly created source is automatically compatible with **both Aniyomi and Kototoro (v2.3+)** out of the box. No secondary parser rewrite is necessary.
+2. **In Aniyomi**: The source builds as a standard extension APK (`eu.kanade.tachiyomi.animeextension.<lang>.<name>`) indexed in `index.min.json`.
+3. **In Kototoro**:
+   - **Direct APK Import**: Kototoro's embedded `source-host` runtime and `dex-convert` bridge automatically convert and run the extension APK.
+   - **Suite Plugin JAR**: Running `./gradlew packageKototoroPlugin` bundles all active sources into `build/libs/kaziyami-kototoro-all-v1.4.1.jar`, loadable via **Settings -> Remote Sources -> Import Plugin JAR**.

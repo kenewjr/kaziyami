@@ -132,6 +132,13 @@ tasks.register<Exec>("generateRepoIndex") {
     commandLine("python", "tools/generate_repo_index.py")
 }
 
+tasks.register<Exec>("packageKototoroPlugin") {
+    group = "distribution"
+    description = "Packages all Kaziyami sources into a Kototoro-compatible plugin JAR."
+    dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "classes" } })
+    commandLine("python", "tools/package_kototoro_plugin.py")
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."

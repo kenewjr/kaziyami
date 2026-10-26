@@ -27,3 +27,17 @@
 3. **Rigorous Evidence Baseline**:
    - **Nekopoi** is the only site with 100% headless end-to-end stream playback verified from this CLI environment: Dean Edwards packer unpacked from StreamPoi embed, yielding a multi-bitrate HLS playlist (`master.m3u8`) whose TS segments respond with `HTTP 206 Partial Content` (`video/MP2T`). Saved in `docs/evidence/nekopoi/`.
    - **IndoHentai** (`cf-mitigated: challenge` 403) and **JAVSubbed** (`103.10.223.15:443 Connection refused`) downgraded to **Unverified** because they cannot be reached headlessly from this network environment and must be verified from the user's local machine or Android WebView.
+
+---
+
+## 3. Deep Dive: `hhanime.tv` vs `hanime.tv` Comparative Analysis
+
+| Dimension | `hhanime.tv` (Target Site in Prompt) | `hanime.tv` (Implemented Primary Base) |
+|---|---|---|
+| **Domain Status** | **Defunct / Parked Squatter** | **Active Production Platform** |
+| **DNS & TLS Resolution** | `https://hhanime.tv` fails TLS handshake (`getaddrinfo failed`). Plain HTTP `http://hhanime.tv` issues `HTTP 302` redirect to parking gateway `http://ww80.hhanime.tv`. | Resolves cleanly to Cloudflare edge IPs with valid wildcard TLS certificate. |
+| **Web Server / Architecture** | Nginx ad-redirector executing JavaScript ad scripts (`Joken` token loader). No anime catalog exists. | Production Astro SSR frontend with client-side Vue components and REST API backend at `https://guest.freeanimehentai.net`. |
+| **Video Delivery Mechanism** | None (0 media files, 0 streams, 0 video players). | Adaptive multi-bitrate HLS (`.m3u8`) playlists with fragmented MPEG-TS chunks served from dedicated CDN edge nodes. |
+| **Free vs. Premium Playback** | None. | - **Free Anonymous Playback**: Public catalog streams available at standard definitions (480p, 720p, 1080p). Video player hydration requires Turnstile verification (`0x4AAAAAABsjKGKilqEiCHWo`) and session token.<br>- **Premium Playback (Paywalled)**: 4K UHD streams, server-direct downloads, and ad-free priority pipelines gated by paid account authentication. |
+| **Bypass Policy Adherence** | N/A (no content). | **Strictly compliant**: Kaziyami interacts exclusively with the public anonymous free tier via standard WebView challenge clearance. Never attempts to bypass logins, paywalls, premium tiers, or download restrictions. |
+| **Engine Identity & Mirror Status** | Cannot be used as primary base or mirror. | Established as primary base for `Kaziyami: Hanime`. If `hhanime.tv` or any domain ever re-emerges using the same Astro/Vue API backend, it can be added to `mirrors.json`. |

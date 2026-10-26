@@ -45,10 +45,16 @@
   - [x] 7.5 Bug-report bundle (`scripts/collect_diagnostics.py`, wrappers, `tools/test_collect_diagnostics.py` verifying fake cookies, bearer tokens, signed URLs, and IP redaction).
   - [x] 7.6 Acceptance & Verification pass (`assembleDebugAll` verified, `./gradlew test` green, secret scan 0 leaks, preflight & diagnostics unit tests green).
 
+- [x] **Phase 8: Repo Audit Fixes, Dependency Policy, Kototoro Support**
+  - [x] 8.1 Audit fixes: Replaced all `kaziyami-extensions` references; custom repo URL is `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json`. Cleaned `master` branch by gitignoring generated artifacts (`repo/apk/`, `repo/index.json`, `repo/index.min.json`, `repo/sha256sums.txt`) published on orphan `repo` branch. Verified remote raw index and all 6 APK URLs resolve HTTP 200 (`tools/verify_remote_repo.py`). Removed test key fingerprint; confirmed 0 secrets in git history. Softened unverified fork claims to "Untested". Documented `hhanime.tv` vs `hanime.tv` deep dive in `docs/SOURCES.md`. Fixed `.github/workflows/smoke.yml` permissions.
+  - [x] 8.2 Dependency policy: Documented host app runtime library matrix in `docs/STACK.md`. Configured `.github/dependabot.yml` with semver-major ignores for host-provided libraries and weekly batching. Prepared PR #1 closure explanation in `docs/PR1_RESPONSE.md`. Implemented `tools/verify_runtime_compat.py` and added `runtime-compat` CI job.
+  - [x] 8.3 Kototoro support: Researched official `Kototoro-app/Kototoro` (`v2.3.2`, Apache-2.0) and parsers repo (`skepsun/kototoro-parsers`, GPL-3.0) with exact citations in `docs/KOTOTORO.md`. Documented licensing decision in `docs/LICENSES.md` (GPL isolation via Apache-2.0 `source-host` reflection bridge). Built platform-neutral engine interfaces (`app.kaziyami.engine.*`) and adapters (`AniyomiSourceAdapter`, `KototoroSourceWrapper`, `KototoroPlugin`). Built `packageKototoroPlugin` Gradle task producing `build/libs/kaziyami-kototoro-all-v1.4.1.jar`. Created shared adapter contract tests, host fakes test, loader smoke test, packaging test, and extended network leak test.
+  - [x] 8.4 Documentation: Updated `README.md`, `docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, `docs/COMPATIBILITY.md`, `docs/QA_CHECKLIST.md`, and `docs/DECISIONS.md`.
+
 ---
 
 ## Current Status
-- **Overall Status**: Complete end-to-end pipeline (Phase 0 through Phase 7) verified, hardened, and pre-flight tested.
-- **Last Green Run**: `./gradlew clean build test` executed with all tasks passing; `assembleDebugAll` and `build_apks.py` tested; secret leak scan 0 leaks; all unit tests passing.
-- **Open Items**: None. Repository ready for physical device test following `docs/QA_CHECKLIST.md`.
-- **Unverified Items**: Real device physical screen interaction (to be executed by user following `docs/DEVICE_SETUP.md` and `docs/QA_CHECKLIST.md`).
+- **Overall Status**: Phase 8 completed. Platform-neutral engine, Aniyomi adapter, and Kototoro plugin verified. All tests green, zero identity leaks, zero secrets, dependency compatibility enforced.
+- **Last Green Run**: `./gradlew test` (all modules passing), `./gradlew packageKototoroPlugin` (347 KB JAR), `verify_runtime_compat.py` (passed), `scan_secrets.py` (0 leaks), `verify_remote_repo.py` (all 6 APKs HTTP 200).
+- **Open Items**: Awaiting user confirmation before closing PR #1 on GitHub remotely.
+

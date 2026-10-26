@@ -28,3 +28,14 @@ This document enumerates the immutable interfaces, package naming conventions, a
    The loaded instance is cast to `eu.kanade.tachiyomi.animesource.AnimeSource`. Any custom package for these base interfaces results in a `ClassCastException`.
 4. **Internal Modularity (Kaziyami Scope)**:
    All internal helpers (`app.kaziyami.core`, `app.kaziyami.multisrc.*`, `app.kaziyami.extractors.*`, `app.kaziyami.network`, `app.kaziyami.filters`) reside entirely within the extension DEX and are completely independent of host reflection.
+
+---
+
+## 3. Client & Fork Compatibility Matrix
+
+| Client / Fork | Status | Evidence & Verification Notes |
+|---|---|---|
+| **Aniyomi (Stable & Preview)** | **Supported** | Primary reference implementation. Verified against Aniyomi bytecode contract (`AnimeExtensionLoader` / `AnimeHttpSource`). |
+| **Kuukiyomi** | *Untested* | Downstream fork sharing Aniyomi extension architecture. Not tested on physical device with Kaziyami APKs. |
+| **Dantotsu** | *Untested* | Anime/Manga tracker client supporting extension APIs. Not directly verified in test harness. |
+| **Kototoro** | **Supported** | Multi-media reader/player (v2.3+). Natively loads Aniyomi anime extensions via its embedded `source-host` runtime and `dex-convert` bridge (see [docs/KOTOTORO.md](KOTOTORO.md)). |

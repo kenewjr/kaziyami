@@ -35,6 +35,14 @@ class IndexSchemaTest {
     fun validateIndexJsonStructure() {
         val repoDir = getRepoDir()
         val indexFile = File(repoDir, "index.json")
+        if (!indexFile.exists()) {
+            val script = listOf(File("tools/generate_repo_index.py"), File("../tools/generate_repo_index.py")).firstOrNull { it.exists() }
+            if (script != null) {
+                val pb = ProcessBuilder("python", script.absolutePath)
+                pb.redirectErrorStream(true)
+                pb.start().waitFor()
+            }
+        }
         assertTrue(indexFile.exists(), "repo/index.json must exist")
 
         val content = indexFile.readText()

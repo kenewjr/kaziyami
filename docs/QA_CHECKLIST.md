@@ -83,3 +83,16 @@ When reporting an issue, sanitize all logcat output before submitting:
 - **Redact Tokens**: Remove authorization headers, bearer tokens, and stream signature query parameters (`?token=...`, `&sig=...`).
 - **Redact Personal Identifiers**: Remove IP addresses, device identifiers (IMEI/MAC), and user file paths.
 - **Keep Technical Details**: Keep HTTP status codes, error stack traces, requested URL paths (e.g. `/anime/slug/`), and extractor names.
+
+---
+
+## 5. Kototoro (v2.3+) Verification Checklist
+
+1. [ ] **Build Plugin JAR**: Run `./gradlew packageKototoroPlugin` to generate `build/libs/kaziyami-kototoro-all-v1.4.1.jar` (or use any built extension APK).
+2. [ ] **File Transfer**: Copy `kaziyami-kototoro-all-v1.4.1.jar` to phone internal storage or downloads.
+3. [ ] **Import into Kototoro**: Open **Kototoro** -> **Settings** -> **Remote Sources** -> **Import Plugin JAR** (or **Install Extension APK**).
+4. [ ] **Source Discovery**: Verify all 6 Kaziyami adult sources appear in Kototoro's source catalog.
+5. [ ] **Catalog Browsing**: Open any source (e.g. `Nekopoi` or `Hentaimama`). Confirm popular anime cards, titles, and thumbnails load correctly.
+6. [ ] **Search & Filters**: Run search query. Confirm matching adult titles return without crashes.
+7. [ ] **Episode List**: Tap title -> confirm chapters/episodes display in proper sequence.
+8. [ ] **Video Streaming**: Tap episode -> confirm video stream begins playback in Kototoro's integrated player. Verify subtitles and quality tracks.

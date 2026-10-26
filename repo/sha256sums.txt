@@ -1,6 +1,0 @@
-a4140481a7d827a3d1c6a0d33d9e26d88bb3cff3efd183169ebfca1d5bb5b7ef  kaziyami-id.nekopoi-v1.4.1.apk
-6069d262388c3f8ec0715e62e2086f80943136ef8379bfb8de67229344a92d27  kaziyami-id.indohentai-v1.4.1.apk
-257076e611125a04ffbce82880331454926d6b85ed2ea8526996091189201de6  kaziyami-id.nontonhentai-v1.4.1.apk
-f462ab13ab223f2d36dee979e217cc12569794b7511869d4e61aaf4d45b3cb98  kaziyami-en.hentaimama-v1.4.1.apk
-4a1ffbd13a6a53ab91cde120f8aad230188976ff1fbd3a73a18d3eb56e98c578  kaziyami-en.javsubbed-v1.4.1.apk
-31f86a5d270eb54a34ac7525e4b05c924f2a0c1e5a9c298ef9fb45786efd10eb  kaziyami-en.hanime-v1.4.1.apk

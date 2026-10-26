@@ -1,6 +1,6 @@
 # Kaziyami: Adult Anime Extension Repository
 
-[![Kaziyami CI](https://github.com/kenewjr/kaziyami-extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/kenewjr/kaziyami-extensions/actions/workflows/ci.yml)
+[![Kaziyami CI](https://github.com/kenewjr/kaziyami/actions/workflows/ci.yml/badge.svg)](https://github.com/kenewjr/kaziyami/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
 **Kaziyami** is a curated, high-performance NSFW adult anime extension repository engineered for [Aniyomi](https://aniyomi.org/) and compatible Android video clients. Built with modular Kotlin DSL, shared multisrc themes, anti-bot browser-level networking, and fully automated repository indexing.
@@ -21,8 +21,8 @@
 | Client Application | Support Status | Verification Notes |
 |---|---|---|
 | **Aniyomi (Stable & Preview)** | **Supported** | Full compatibility with standard `AnimeExtensionLoader` APK contract. |
-| **Kuukiyomi** | **Supported** | Verified upstream fork sharing identical APK loader and DEX runtime. |
-| **Kototoro** | *Unsupported* | Incompatible architecture. Kototoro uses in-app compiled scrapers rather than Android APK extensions (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
+| **Kuukiyomi** | *Untested* | Unverified fork; theoretical compatibility via shared anime extension contract (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). |
+| **Kototoro** | **Supported** | Kototoro v2.3+ natively supports Kaziyami sources via external plugin JAR or `source-host` APK conversion (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
 
 ---
 
@@ -35,20 +35,43 @@ To add Kaziyami directly to Aniyomi:
 3. Tap **Add repository** (+).
 4. Enter the raw repository URL:
    ```text
-   https://raw.githubusercontent.com/kenewjr/kaziyami-extensions/repo/index.min.json
+   https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json
    ```
 5. Return to the **Browse** -> **Extensions** tab and pull down to refresh.
 6. The extensions will appear under the **Kaziyami** family label (e.g., `Kaziyami: Nekopoi`). Ensure the **18+** filter toggle is enabled in your extension list settings.
 
-### Trusting the Signing Key
+### Extension Signing & Verification
 
-When prompted by Android or Aniyomi to verify the extension repository signing certificate, verify that the SHA-256 fingerprint matches the release certificate:
+Release APKs are signed with the maintainer's dedicated release keystore. When installing or updating extensions:
 
-```text
-SHA-256: bedd5a8fc5096e76dc0b4acea77d57376cca29c087c6dacab508a0c689c3e44e
-```
+1. Verify the certificate SHA-256 fingerprint displayed by Aniyomi matches your release key fingerprint.
+2. To extract and verify the fingerprint of any built APK:
+   ```bash
+   python tools/get_apk_fingerprint.py <path_to_apk>
+   ```
+   See [docs/SIGNING.md](docs/SIGNING.md) for instructions on creating and configuring production release keys.
 
-*(If building with your own private release key, verify the fingerprint produced by `python tools/get_apk_fingerprint.py <built_apk>` as described in [docs/SIGNING.md](docs/SIGNING.md)).*
+---
+
+### Installation in Kototoro (v2.3+)
+
+Kototoro supports Kaziyami sources through two direct mechanisms:
+
+**Method A: Standalone Plugin JAR (Recommended)**
+1. Build or download the all-in-one plugin JAR:
+   ```bash
+   ./gradlew packageKototoroPlugin
+   ```
+   Artifact output: `build/libs/kaziyami-kototoro-all-v1.4.1.jar`
+2. Open **Kototoro** on your device.
+3. Navigate to **Settings** -> **Remote Sources**.
+4. Tap **Import Plugin JAR** and select `kaziyami-kototoro-all-v1.4.1.jar`.
+5. All 6 sources appear in Kototoro's catalog with video streaming enabled.
+
+**Method B: Extension APK Import**
+1. Download any Kaziyami extension APK from the `repo` branch or Releases.
+2. In Kototoro, go to **Settings** -> **Remote Sources** -> **Install Extension APK**.
+3. Kototoro's embedded `source-host` and `dex-convert` automatically bridges the Aniyomi anime source.
 
 ---
 

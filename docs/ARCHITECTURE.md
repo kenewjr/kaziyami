@@ -8,46 +8,37 @@ Comprehensive architecture documentation for the Aniyomi extension repository.
 
 ```text
 kaziyami/
-├── core/                                   # Shared foundational models, network, parsers, and utilities
+├── core/                                   # Platform-neutral engine & shared adapters
 │   ├── src/main/kotlin/
-│   │   ├── eu/kanade/tachiyomi/animesource/ # Aniyomi core interfaces & models (SAnime, SEpisode, Video)
-│   │   └── app/kaziyami/
-│   │       ├── filters/                   # Dynamic FilterSpec, DynamicSelect, TriState, and FilterBuilder
-│   │       ├── core/                      # Utilities: UrlUtils, LazyImage, EpisodeNumberParser, DateParser,
-│   │       │                              #   HtmlText, MirrorManager, SourceConfig, ExtractorRegistry
-│   │       ├── extractors/                # Built-in host stream extractors (Direct, StreamTape, Dood, etc.)
-│   │       └── network/                   # BrowserHeaders, RateLimitInterceptor, RetryInterceptor,
-│   │                                      #   ChallengeDetector, CloudflareInterceptor, NetworkFactory
-│   └── src/test/kotlin/.../               # 80%+ coverage unit & integration tests with MockWebServer
+│   │   ├── app/kaziyami/
+│   │   │   ├── engine/                    # Platform-neutral contracts: KaziyamiSource, HttpClientProvider,
+│   │   │   │                              #   ChallengeSolver, CookieStore, PreferenceStore, Logger
+│   │   │   ├── adapter/
+│   │   │   │   ├── aniyomi/               # AniyomiSourceAdapter: bridges KaziyamiSource to AnimeHttpSource
+│   │   │   │   └── kototoro/              # KototoroPlugin, KototoroSourceWrapper: Kototoro source-host bridge
+│   │   │   ├── filters/                   # Dynamic FilterSpec, DynamicSelect, TriState, and FilterBuilder
+│   │   │   ├── core/                      # Utilities: UrlUtils, LazyImage, EpisodeNumberParser, DateParser,
+│   │   │   │                              #   HtmlText, MirrorManager, SourceConfig, ExtractorRegistry
+│   │   │   ├── extractors/                # Host video extractors (StreamPoi, StreamTape, Dood, Mp4Upload, etc.)
+│   │   │   └── network/                   # TokenBucketRateLimiter, HostCircuitBreaker, BrowserProfile,
+│   │   │                                  #   ChallengeClassifier, ErrorClassifier, LogScrubber, TtlCache
+│   │   └── eu/kanade/tachiyomi/animesource/ # Aniyomi ABI shims (SAnime, SEpisode, Video, AnimeHttpSource)
+│   └── src/test/kotlin/.../               # 80%+ coverage tests, contract tests, and packaging verification
 │
-├── lib-multisrc/                          # Engine-specific base templates inheriting ParsedAnimeHttpSource
-│   ├── generic/                           # app.kaziyami.multisrc.generic: GenericThemeSource
-│   ├── dooplay/                           # app.kaziyami.multisrc.dooplay: DooPlayTheme (AJAX player decoder)
-│   ├── animestream/                       # app.kaziyami.multisrc.animestream: AnimeStreamTheme (Base64 embed options)
-│   └── retrotube/                         # app.kaziyami.multisrc.retrotube: RetroTubeTheme (Tube-style multi-server base)
+├── lib-multisrc/                          # Engine-specific theme bases
+│   ├── generic/                           # GenericThemeSource
+│   ├── dooplay/                           # DooPlayTheme (AJAX player decoder)
+│   ├── animestream/                       # AnimeStreamTheme (Base64 embed options)
+│   └── retrotube/                         # RetroTubeTheme (Tube-style multi-server base)
 │
-├── src/                                   # Standalone runnable extension modules
-│   ├── id/                                # Indonesian extensions
-│   │   ├── nekopoi/                       # Custom ThemeNekopoi / WordPress source
-│   │   ├── indohentai/                    # Custom SSR card grid source
-│   │   └── nontonhentai/                  # AnimeStream engine source
-│   └── en/                                # English / Multi-language extensions
-│       ├── hentaimama/                    # DooPlay engine source
-│       ├── javsubbed/                     # RetroTube engine source
-│       └── hanime/                        # Astro / Vue SSR direct source
+├── src/                                   # Standalone extension modules (all 6 adult sources)
+│   ├── id/                                # Indonesian extensions (nekopoi, indohentai, nontonhentai)
+│   └── en/                                # English extensions (hentaimama, javsubbed, hanime)
 │
-├── schemas/                               # JSON schema definitions
-│   ├── source_config.schema.json          # SourceConfig declarative specification schema
-│   └── index.schema.json                  # Aniyomi extension repository index.json schema
-│
+├── schemas/                               # JSON schema definitions (source_config, index)
 ├── sources/                               # Declarative site configuration JSON files
-│   └── demo_source.json                   # Reference implementation demonstrating schema validation
-│
-├── scripts/                               # Developer tooling & test harnesses
-│   └── fetch_fixture.py                   # Automated fixture download & sanitization tool
-│
-└── tools/                                 # Build & release automations
-    └── generate_repo_index.py             # Generates index.json and index.min.json for Aniyomi clients
+├── scripts/                               # Developer tooling, preflight gate, diagnostics
+└── tools/                                 # Build & release automations (build_apks, package_kototoro_plugin)
 ```
 
 ---

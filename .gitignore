@@ -21,7 +21,12 @@ bin/
 *.jks
 local.properties
 keystore.properties
+
+# Distribution & Build Outputs (published only on dedicated 'repo' branch)
 repo/apk/
+repo/index.json
+repo/index.min.json
+repo/sha256sums.txt
 
 # OS
 .DS_Store

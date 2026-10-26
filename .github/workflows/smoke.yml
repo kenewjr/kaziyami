@@ -39,6 +39,8 @@ jobs:
         run: ./gradlew liveSmokeTest
 
       - name: Manage Health Issues
+        if: github.repository == 'kenewjr/kaziyami' && github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |

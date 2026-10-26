@@ -178,7 +178,7 @@ def build_index(fingerprint=None):
         "meta": {
             "name": "Kaziyami",
             "shortName": "kaziyami",
-            "website": "https://github.com/kenewjr/kaziyami-extensions",
+            "website": "https://github.com/kenewjr/kaziyami",
             "signingKeyFingerprint": fp
         }
     }

@@ -1,15 +1,40 @@
 version: 2
 updates:
-  # Gradle wrapper and dependencies
+  # Gradle wrapper and build dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
     groups:
-      gradle-dependencies:
+      host-runtime-dependencies:
         patterns:
-          - "*"
+          - "org.jetbrains.kotlin*"
+          - "com.squareup.okhttp3*"
+          - "org.jetbrains.kotlinx*"
+          - "org.jsoup*"
+        update-types:
+          - "minor"
+          - "patch"
+      test-dependencies:
+        patterns:
+          - "org.junit.jupiter*"
+          - "org.assertj*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Block breaking semver-major jumps for host-provided libraries and tools
+      - dependency-name: "org.jetbrains.kotlin*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.squareup.okhttp3*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlinx*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gradle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.junit.jupiter*"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"

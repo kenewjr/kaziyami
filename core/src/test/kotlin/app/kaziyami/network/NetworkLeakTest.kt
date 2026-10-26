@@ -89,4 +89,42 @@ class NetworkLeakTest {
             )
         }
     }
+
+    @Test
+    fun testKototoroAdapterHeadersDoNotLeakIdentity() {
+        val fakeSource = object : app.kaziyami.engine.KaziyamiSource {
+            override val id = 123L
+            override val name = "Nekopoi"
+            override val lang = "id"
+            override val baseUrl = "https://nekopoi.care"
+            override fun popular(page: Int) = app.kaziyami.engine.KaziyamiPage(emptyList<app.kaziyami.engine.KaziyamiMedia>(), false)
+            override fun latest(page: Int) = app.kaziyami.engine.KaziyamiPage(emptyList<app.kaziyami.engine.KaziyamiMedia>(), false)
+            override fun search(page: Int, query: String, filters: List<Any>) = app.kaziyami.engine.KaziyamiPage(emptyList<app.kaziyami.engine.KaziyamiMedia>(), false)
+            override fun details(url: String) = app.kaziyami.engine.KaziyamiMedia("1", "Title", url)
+            override fun episodes(url: String) = emptyList<app.kaziyami.engine.KaziyamiEpisode>()
+            override fun videos(url: String) = listOf(
+                app.kaziyami.engine.KaziyamiVideo(url, "720p", "https://streampoi.com/video.mp4", mapOf("Referer" to url, "User-Agent" to BrowserHeaders.DEFAULT_USER_AGENT))
+            )
+        }
+        val wrapper = app.kaziyami.adapter.kototoro.KototoroSourceWrapper(fakeSource)
+        val dummyResp = okhttp3.Response.Builder()
+            .request(okhttp3.Request.Builder().url("https://nekopoi.care/hentai/1/ep1").build())
+            .protocol(okhttp3.Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(okhttp3.ResponseBody.create(null, ""))
+            .build()
+        val videos = wrapper.videoListParse(dummyResp)
+        for (v in videos) {
+            val headers = v.headers ?: continue
+            for (i in 0 until headers.size) {
+                val name = headers.name(i).lowercase()
+                val value = headers.value(i).lowercase()
+                for (forbidden in forbiddenSubstrings) {
+                    assertFalse(name.contains(forbidden), "Kototoro adapter header '$name: $value' leaks prohibited substring '$forbidden'")
+                    assertFalse(value.contains(forbidden), "Kototoro adapter header '$name: $value' leaks prohibited substring '$forbidden'")
+                }
+            }
+        }
+    }
 }

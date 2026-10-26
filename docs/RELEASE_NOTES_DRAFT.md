@@ -19,5 +19,5 @@ Kaziyami is a privacy-first, resilient adult (NSFW) anime extension repository f
 ### Installation URL
 Add this repository URL inside Aniyomi (**Settings -> Browse -> Anime extension repos**):
 ```
-https://raw.githubusercontent.com/<username>/kaziyami-extensions/master/repo/repo.json
+https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json
 ```
