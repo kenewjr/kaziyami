@@ -95,7 +95,7 @@ def verify_single_apk(apk_path, allowed_sources, allow_debug_cert=False):
             for line in out.splitlines():
                 if "Signer #1 certificate DN:" in line:
                     dn = line.lower()
-                    if "android debug" in dn or "kaziyami test" in dn or "ou=kaziyami" in dn:
+                    if "android debug" in dn or "kaziyami test" in dn or "cn=test" in dn:
                         errors.append(f"APK is signed with a debug/throwaway test certificate: {line.strip()}")
 
     # 4. Manifest / SDK / Badging checks
