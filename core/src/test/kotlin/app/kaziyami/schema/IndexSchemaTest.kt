@@ -26,23 +26,61 @@ class IndexSchemaTest {
     )
 
     private fun getRepoDir(): File {
-        return requireNotNull(listOf(File("repo"), File("../repo")).firstOrNull { it.exists() }) {
-            "repo directory must exist"
+        val root = listOf(File("."), File("..")).firstOrNull {
+            File(it, "gradlew").exists() || File(it, "settings.gradle.kts").exists()
+        } ?: File(".")
+        val repoDir = File(root, "repo")
+        if (!repoDir.exists()) {
+            repoDir.mkdirs()
         }
+        val indexFile = File(repoDir, "index.json")
+        val repoJson = File(repoDir, "repo.json")
+        val iconDir = File(repoDir, "icon")
+
+        val pythonCommands = if (System.getProperty("os.name").lowercase().contains("win")) {
+            listOf("python", "py")
+        } else {
+            listOf("python3", "python")
+        }
+
+        if (!iconDir.exists() || iconDir.listFiles()?.isEmpty() != false) {
+            val iconScript = File(root, "tools/generate_icons.py")
+            if (iconScript.exists()) {
+                for (py in pythonCommands) {
+                    try {
+                        val pb = ProcessBuilder(py, iconScript.absolutePath)
+                        pb.directory(root)
+                        pb.redirectErrorStream(true)
+                        val p = pb.start()
+                        p.waitFor()
+                        if (iconDir.exists() && iconDir.listFiles()?.isNotEmpty() == true) break
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+
+        if (!indexFile.exists() || !repoJson.exists()) {
+            val indexScript = File(root, "tools/generate_repo_index.py")
+            if (indexScript.exists()) {
+                for (py in pythonCommands) {
+                    try {
+                        val pb = ProcessBuilder(py, indexScript.absolutePath)
+                        pb.directory(root)
+                        pb.redirectErrorStream(true)
+                        val p = pb.start()
+                        p.waitFor()
+                        if (indexFile.exists() && repoJson.exists()) break
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+        return repoDir
     }
 
     @Test
     fun validateIndexJsonStructure() {
         val repoDir = getRepoDir()
         val indexFile = File(repoDir, "index.json")
-        if (!indexFile.exists()) {
-            val script = listOf(File("tools/generate_repo_index.py"), File("../tools/generate_repo_index.py")).firstOrNull { it.exists() }
-            if (script != null) {
-                val pb = ProcessBuilder("python", script.absolutePath)
-                pb.redirectErrorStream(true)
-                pb.start().waitFor()
-            }
-        }
         assertTrue(indexFile.exists(), "repo/index.json must exist")
 
         val content = indexFile.readText()

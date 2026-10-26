@@ -40,6 +40,12 @@ jobs:
       - name: Grant Execute Permission
         run: chmod +x gradlew
 
+      - name: Generate Extension Icons
+        run: python tools/generate_icons.py
+
+      - name: Generate Repository Index
+        run: python tools/generate_repo_index.py
+
       - name: Check Extension Icons
         run: ./gradlew checkExtensionIcons
 
