@@ -186,10 +186,14 @@ def parse_apk_manifest(apk_path):
     label_m = re.search(r"application: label='([^']+)'", badge)
     label = label_m.group(1) if label_m else ""
 
-    minsdk_m = re.search(r"sdkVersion:'(\d+)'", badge)
+    minsdk_m = re.search(r"(?:sdkVersion|minSdkVersion)[\s:']*(\d+)", badge)
+    if not minsdk_m:
+        minsdk_m = re.search(r"minSdkVersion.*?=(\d+)", tree)
     minsdk = int(minsdk_m.group(1)) if minsdk_m else 0
 
-    targetsdk_m = re.search(r"targetSdkVersion:'(\d+)'", badge)
+    targetsdk_m = re.search(r"targetSdkVersion[\s:']*(\d+)", badge)
+    if not targetsdk_m:
+        targetsdk_m = re.search(r"targetSdkVersion.*?=(\d+)", tree)
     targetsdk = int(targetsdk_m.group(1)) if targetsdk_m else 0
 
     nsfw_m = re.search(r'tachiyomi\.animeextension\.nsfw\".*?value.*?(\d+)', tree, re.DOTALL)
