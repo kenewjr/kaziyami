@@ -201,7 +201,10 @@ def check_repository_artifacts(root_dir: str = None) -> dict:
             with open(index_b_path, "r", encoding="utf-8") as f:
                 index_data_b = json.load(f)
 
-            ext_list = index_data_b.get("extensionList", {}).get("extensions", [])
+            if isinstance(index_data_b, list):
+                ext_list = index_data_b
+            else:
+                ext_list = index_data_b.get("extensionList", {}).get("extensions", [])
             results["variant_b_kototoro"]["details"].append(f"Loaded repo/jar/index.json with {len(ext_list)} extensions")
 
             sums_b = {}
@@ -209,17 +212,26 @@ def check_repository_artifacts(root_dir: str = None) -> dict:
                 for line in f:
                     parts = line.strip().split(None, 1)
                     if len(parts) == 2:
-                        sums_b[parts[1].strip()] = parts[0].strip()
+                        raw_file = parts[1].strip()
+                        clean_name = os.path.basename(raw_file)
+                        sums_b[clean_name] = parts[0].strip()
+                        sums_b[raw_file] = parts[0].strip()
 
+            jar_apk_dir = os.path.join(jar_dir, "apk")
             jar_files = [f for f in os.listdir(jar_dir) if f.endswith(".jar")]
+            if os.path.exists(jar_apk_dir):
+                for f in os.listdir(jar_apk_dir):
+                    if f.endswith(".jar") and f not in jar_files:
+                        jar_files.append(f)
+
             if not jar_files:
                 results["variant_b_kototoro"]["status"] = "WARN"
-                results["variant_b_kototoro"]["errors"].append("No .jar files found in repo/jar/")
+                results["variant_b_kototoro"]["errors"].append("No .jar files found in repo/jar/ or repo/jar/apk/")
             else:
                 for jname in jar_files:
-                    jpath = os.path.join(jar_dir, jname)
+                    jpath = os.path.join(jar_apk_dir, jname) if os.path.exists(os.path.join(jar_apk_dir, jname)) else os.path.join(jar_dir, jname)
                     actual_sha = sha256_file(jpath)
-                    expected_sha = sums_b.get(jname)
+                    expected_sha = sums_b.get(jname) or sums_b.get(f"apk/{jname}")
                     if expected_sha and actual_sha != expected_sha:
                         results["variant_b_kototoro"]["errors"].append(f"SHA-256 mismatch for {jname}")
 

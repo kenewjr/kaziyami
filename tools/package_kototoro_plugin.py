@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.join(ROOT_DIR, "tools"))
 import android_sdk
 
 REPO_JAR_DIR = os.path.join(ROOT_DIR, "repo", "jar")
+REPO_JAR_APK_DIR = os.path.join(REPO_JAR_DIR, "apk")
 BUILD_LIBS_DIR = os.path.join(ROOT_DIR, "build", "libs")
 
 SOURCES = [
@@ -172,6 +173,7 @@ def prune_old_artifacts(directory: str, extension: str, keep: int = 3):
 
 def package():
     os.makedirs(REPO_JAR_DIR, exist_ok=True)
+    os.makedirs(REPO_JAR_APK_DIR, exist_ok=True)
     os.makedirs(BUILD_LIBS_DIR, exist_ok=True)
 
     print("[*] Packaging Kototoro plugin JARs (Unified Variant B)...")
@@ -235,7 +237,8 @@ def package():
             for rel_path, full_path in all_classes.items():
                 zout.write(full_path, rel_path)
 
-    # Also copy to build/libs/
+    # Also copy to repo/jar/apk/ and build/libs/
+    shutil.copy2(all_jar_path, os.path.join(REPO_JAR_APK_DIR, all_jar_name))
     shutil.copy2(all_jar_path, os.path.join(BUILD_LIBS_DIR, all_jar_name))
     print(f"[+] Packaged {all_jar_name} ({len(all_classes)} classes, {os.path.getsize(all_jar_path)} bytes)")
 
@@ -273,11 +276,13 @@ def package():
                 for rel_path, full_path in src_specific_classes.items():
                     zout.write(full_path, rel_path)
 
+        shutil.copy2(single_jar_path, os.path.join(REPO_JAR_APK_DIR, single_jar_name))
         shutil.copy2(single_jar_path, os.path.join(BUILD_LIBS_DIR, single_jar_name))
         print(f"[+] Packaged {single_jar_name} ({os.path.getsize(single_jar_path)} bytes)")
 
     # 4. Prune older versions (keep newest 3)
     prune_old_artifacts(REPO_JAR_DIR, ".jar", keep=3)
+    prune_old_artifacts(REPO_JAR_APK_DIR, ".jar", keep=3)
 
     # 5. Generate sha256sums.txt for JARs
     sums_path = os.path.join(REPO_JAR_DIR, "sha256sums.txt")
@@ -285,7 +290,7 @@ def package():
         for fname in sorted(os.listdir(REPO_JAR_DIR)):
             if fname.endswith(".jar"):
                 h = sha256_file(os.path.join(REPO_JAR_DIR, fname))
-                f.write(f"{h}  {fname}\n")
+                f.write(f"{h}  apk/{fname}\n")
     print(f"[+] Generated {sums_path}")
     return 0
 

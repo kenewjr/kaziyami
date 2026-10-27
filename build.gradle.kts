@@ -187,6 +187,20 @@ val verifyApks by tasks.registering(Exec::class) {
     commandLine("python", "tools/verify_apks.py", "--allow-debug-cert")
 }
 
+val verifyJars by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Validates Kototoro plugin JARs and repository index against the format contract."
+    dependsOn(tasks.named("packageJar"))
+    dependsOn(":samples:kototoro-hello:packageHelloJar")
+    commandLine(
+        "python", "tools/verify_jars.py",
+        "--jars",
+        "samples/kototoro-hello/build/libs/kaziyami-hello.jar",
+        "repo/jar/apk/kaziyami-all-v1.4.2.jar",
+        "--repo-dir", "repo/jar"
+    )
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."
@@ -194,6 +208,7 @@ tasks.register("check") {
     dependsOn(checkExtensionIcons)
     dependsOn(testVerifyApks)
     dependsOn(verifyApks)
+    dependsOn(verifyJars)
     dependsOn(tasks.named("packageJar"))
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

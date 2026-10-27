@@ -20,9 +20,10 @@
 
 | Client Application | Support Status | Verification Notes |
 |---|---|---|
-| **Aniyomi (Stable & Preview)** | **Supported** | Full compatibility with standard `AnimeExtensionLoader` APK contract. |
+| **Aniyomi (Stable & Preview)** | **Supported** | Full compatibility with standard `AnimeExtensionLoader` APK contract (tested offline + deterministic fixtures). |
 | **Kuukiyomi** | *Untested* | Unverified fork; theoretical compatibility via shared anime extension contract (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). |
-| **Kototoro** | **Supported** | Kototoro v2.3.2 natively supports Kaziyami Aniyomi extensions via built-in repository manager and `AniyomiExtensionLoader` (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
+| **Kototoro (Variant A: APK)** | **Supported** | Compatible via Kototoro's built-in `AniyomiExtensionLoader` (see [docs/KOTOTORO.md](docs/KOTOTORO.md)). |
+| **Kototoro (Variant B: JAR)** | **Verified Contract** | Implements Kototoro `ContentParserFactory` reflection entrypoint and `ContentParserSource` enum with dual bytecode (`classes.dex` + JVM `.class`) and array repo schema; verified via isolated host reflection contract tests. Device execution pending. |
 
 ---
 
@@ -58,29 +59,34 @@ Release APKs are signed with the maintainer's dedicated release keystore. When i
 Kototoro supports Kaziyami through two distribution variants:
 
 #### Variant A: Aniyomi Extension Repository (APK)
-1. Open **Kototoro** on your device.
-2. Navigate to **Settings** -> **Extension management** -> **Repositories** tab.
-3. Tap **Add repository** (+).
-4. In the repository type prompt, select **ANIYOMI**.
-5. Paste the repository URL:
+1. Open **Kototoro** on your Android device.
+2. Tap **Explore** on the bottom navigation bar.
+3. Tap **Manage** (the sliders / layers icon at the top right) to open the Sources screen.
+4. Select the **Repositories** tab.
+5. Tap **+** (floating action button).
+6. In the repository type prompt, select **ANIYOMI**.
+7. Paste the repository URL:
    ```text
    https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json
    ```
-6. Tap **Confirm** / **Add** and confirm repository trust.
-7. Switch to the **Aniyomi** extensions section, select any Kaziyami extension (e.g. `Kaziyami: Nekopoi`), and tap **Install**.
+8. Tap **Add** / **Confirm** and trust the repository certificate.
+9. Switch to the **Aniyomi** extensions section, select any Kaziyami extension (e.g. `Kaziyami: Nekopoi`), and tap **Install**.
 
 #### Variant B: Kototoro JAR Parser Plugin (JAR)
-- **Direct JAR Import**:
-  1. Download `kaziyami-all-v1.4.2.jar` (or per-source JAR) from releases.
-  2. In Kototoro, go to **Settings** -> **Extension management** -> **Packages** tab.
-  3. Tap **Import local JAR**.
-  4. Select the `.jar` file to install.
-- **JAR Repository**:
-  1. Under **Settings** -> **Extension management** -> **Repositories** tab, tap **Add repository** (+).
-  2. Paste the JAR repository URL:
+- **Adding the JAR Repository**:
+  1. Open **Kototoro** -> **Explore** -> **Manage** (top-right icon) -> **Repositories** tab.
+  2. Tap **+** (floating action button).
+  3. In the repository type chooser, select **JAR**.
+  4. Paste the JAR repository URL:
      ```text
      https://raw.githubusercontent.com/kenewjr/kaziyami/repo/jar/index.min.json
      ```
+  5. Tap **Add**. Kototoro fetches the index and displays packages under the **Packages** tab. Tap **Install** / **Update** on `kaziyami-all` or individual packages.
+- **Direct Local JAR Import**:
+  1. Download `kaziyami-all-v1.4.2.jar` (or per-source JAR) from the repository releases.
+  2. In Kototoro, go to **Explore** -> **Manage** -> **Packages** tab.
+  3. Tap **Import local JAR** (chip button with `+` icon at top).
+  4. Select the downloaded `.jar` file from device storage. Kototoro verifies the package and registers parsers under **Sources**.
 
 For detailed update workflows, troubleshooting, and rollback steps, see [docs/UPDATING.md](docs/UPDATING.md).
 

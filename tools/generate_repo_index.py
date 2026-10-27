@@ -241,112 +241,95 @@ def generate_aniyomi_repo(fingerprint=None):
 build_index = generate_aniyomi_repo
 
 def generate_kototoro_repo():
-    """Generates Mode B Kototoro JAR repository metadata."""
+    """Generates Mode B Kototoro JAR repository metadata matching verified ExtensionIndexDto schema."""
     os.makedirs(JAR_DIR, exist_ok=True)
+    jar_apk_dir = os.path.join(JAR_DIR, "apk")
+    os.makedirs(jar_apk_dir, exist_ok=True)
     source_ids = load_source_ids()
 
     # Prune older JARs (keep latest 3)
     prune_old_artifacts(JAR_DIR, ".jar", keep=3)
+    prune_old_artifacts(jar_apk_dir, ".jar", keep=3)
 
-    jar_files = [f for f in os.listdir(JAR_DIR) if f.endswith(".jar")] if os.path.exists(JAR_DIR) else []
-    jar_files.sort()
+    print(f"[+] Mode B (Kototoro JAR): Inspecting JARs in {JAR_DIR} and {jar_apk_dir}...")
 
-    print(f"[+] Mode B (Kototoro JAR): Inspecting JARs in {JAR_DIR}...")
-
-    # Build ExtensionStoreIndex schema
+    # Build List<ExtensionIndexDto> schema verified in Kototoro ground truth
     extensions = []
 
     # 1. Main all-in-one suite entry
     suite_code = max(get_source_version(f"src/{s['lang']}/{s['slug']}")["versionCode"] for s in SOURCES_DEF)
     suite_ver = f"1.4.{suite_code}"
     all_jar = f"kaziyami-all-v{suite_ver}.jar"
-    all_jar_path = os.path.join(JAR_DIR, all_jar)
-    all_sha = sha256_file(all_jar_path) if os.path.exists(all_jar_path) else ""
-    all_size = os.path.getsize(all_jar_path) if os.path.exists(all_jar_path) else 0
 
     all_sources = []
     for s in SOURCES_DEF:
-        name, lang, url = s["name"], s["lang"], s["url"]
-        sid = int(source_ids.get((name, lang), "0"))
+        name, lang = s["name"], s["lang"]
+        sid = source_ids.get((name, lang), "0")
         all_sources.append({
-            "id": sid,
             "name": name,
-            "language": lang,
-            "homeUrl": url
+            "id": sid,
+            "lang": lang
         })
+
+    all_jar_path = os.path.join(jar_apk_dir, all_jar)
+    if not os.path.exists(all_jar_path):
+        all_jar_path = os.path.join(JAR_DIR, all_jar)
+    all_jar_size = os.path.getsize(all_jar_path) if os.path.exists(all_jar_path) else 0
+    all_jar_sha = sha256_file(all_jar_path) if os.path.exists(all_jar_path) else ""
 
     extensions.append({
         "name": "Kaziyami: Adult Anime Suite",
-        "packageName": "app.kaziyami.kototoro",
-        "resources": {
-            "apkUrl": "",
-            "iconUrl": "icon/app.kaziyami.kototoro.png",
-            "jarUrl": f"jar/{all_jar}"
-        },
-        "extensionLib": "1.4",
-        "versionCode": suite_code,
-        "versionName": suite_ver,
-        "sha256": all_sha,
-        "size": all_size,
-        "contentWarning": "NSFW",
+        "pkg": "app.kaziyami.kototoro",
+        "apk": all_jar,
+        "lang": "all",
+        "code": suite_code,
+        "version": suite_ver,
+        "nsfw": 1,
+        "sha256": all_jar_sha,
+        "size": all_jar_size,
         "sources": all_sources
     })
 
     # 2. Individual source entries
     for s in SOURCES_DEF:
-        name, lang, slug, url = s["name"], s["lang"], s["slug"], s["url"]
-        sid = int(source_ids.get((name, lang), "0"))
+        name, lang, slug = s["name"], s["lang"], s["slug"]
+        sid = source_ids.get((name, lang), "0")
         s_ver = get_source_version(f"src/{lang}/{slug}")
         s_jar = f"kaziyami-{slug}-v{s_ver['versionName']}.jar"
-        s_jar_path = os.path.join(JAR_DIR, s_jar)
-        s_sha = sha256_file(s_jar_path) if os.path.exists(s_jar_path) else ""
-        s_size = os.path.getsize(s_jar_path) if os.path.exists(s_jar_path) else 0
+        s_jar_path = os.path.join(jar_apk_dir, s_jar)
+        if not os.path.exists(s_jar_path):
+            s_jar_path = os.path.join(JAR_DIR, s_jar)
+        s_jar_size = os.path.getsize(s_jar_path) if os.path.exists(s_jar_path) else 0
+        s_jar_sha = sha256_file(s_jar_path) if os.path.exists(s_jar_path) else ""
 
         extensions.append({
             "name": f"Kaziyami: {name}",
-            "packageName": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}",
-            "resources": {
-                "apkUrl": "",
-                "iconUrl": f"icon/eu.kanade.tachiyomi.animeextension.{lang}.{slug}.png",
-                "jarUrl": f"jar/{s_jar}"
-            },
-            "extensionLib": "1.4",
-            "versionCode": s_ver["versionCode"],
-            "versionName": s_ver["versionName"],
-            "sha256": s_sha,
-            "size": s_size,
-            "contentWarning": "NSFW",
+            "pkg": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}",
+            "apk": s_jar,
+            "lang": lang,
+            "code": s_ver["versionCode"],
+            "version": s_ver["versionName"],
+            "nsfw": 1,
+            "sha256": s_jar_sha,
+            "size": s_jar_size,
             "sources": [
                 {
-                    "id": sid,
                     "name": name,
-                    "language": lang,
-                    "homeUrl": url
+                    "id": sid,
+                    "lang": lang
                 }
             ]
         })
 
-    kototoro_index = {
-        "name": "Kaziyami Kototoro JAR Repository",
-        "badgeLabel": "kaziyami-jar",
-        "signingKey": "",
-        "contact": {
-            "website": "https://github.com/kenewjr/kaziyami"
-        },
-        "extensionList": {
-            "extensions": extensions
-        }
-    }
-
     # 1. repo/jar/index.json
     jar_index_path = os.path.join(JAR_DIR, "index.json")
     with open(jar_index_path, "w", encoding="utf-8") as f:
-        json.dump(kototoro_index, f, indent=2)
+        json.dump(extensions, f, indent=2)
 
     # 2. repo/jar/index.min.json
     jar_min_path = os.path.join(JAR_DIR, "index.min.json")
     with open(jar_min_path, "w", encoding="utf-8") as f:
-        json.dump(kototoro_index, f, separators=(",", ":"))
+        json.dump(extensions, f, separators=(",", ":"))
 
     # 3. repo/jar/repo.json
     jar_repo_meta = {
@@ -367,7 +350,7 @@ def generate_kototoro_repo():
         for fname in sorted(os.listdir(JAR_DIR)):
             if fname.endswith(".jar"):
                 h = sha256_file(os.path.join(JAR_DIR, fname))
-                f.write(f"{h}  {fname}\n")
+                f.write(f"{h}  apk/{fname}\n")
 
     print(f"[+] Mode B: Wrote Kototoro JAR repo index files ({len(extensions)} extensions)")
 

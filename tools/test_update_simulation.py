@@ -37,17 +37,18 @@ class TestUpdateSimulation(unittest.TestCase):
         with open(apk_index_path, "r", encoding="utf-8") as f:
             apk_data = json.load(f)
 
-        jar_extensions = jar_data["extensionList"]["extensions"]
+        # In verified Kototoro schema, index is a direct List<ExtensionIndexDto> array
+        jar_extensions = jar_data
         self.assertEqual(len(jar_extensions), 7)  # Suite + 6 individual sources
         self.assertEqual(len(apk_data), 6)  # 6 extensions
 
-        # Verify versionCode and sha256 presence
+        # Verify versionCode (field 'code') and sha256 presence
         for ext in jar_extensions:
-            self.assertIn("versionCode", ext)
-            self.assertIn("versionName", ext)
+            self.assertIn("code", ext)
+            self.assertIn("version", ext)
             self.assertIn("sha256", ext)
             self.assertIn("size", ext)
-            self.assertGreater(ext["versionCode"], 0)
+            self.assertGreater(ext["code"], 0)
 
         for entry in apk_data:
             self.assertIn("code", entry)

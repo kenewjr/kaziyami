@@ -45,10 +45,8 @@ class VersionConsistencyContractTest {
         val aniyomiArray = json.parseToJsonElement(aniyomiIndexFile.readText()).jsonArray
         val aniyomiMap = aniyomiArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
 
-        val kototoroTree = json.parseToJsonElement(kototoroIndexFile.readText()).jsonObject
-        val kototoroExts = kototoroTree["extensionList"]?.jsonObject?.get("extensions")?.jsonArray
-        assertNotNull(kototoroExts, "Kototoro extensions list must not be null")
-        val kototoroMap = kototoroExts!!.associateBy { it.jsonObject["packageName"]?.jsonPrimitive?.content }
+        val kototoroArray = json.parseToJsonElement(kototoroIndexFile.readText()).jsonArray
+        val kototoroMap = kototoroArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
 
         for ((lang, slug, _) in sources) {
             val buildFile = File(rootDir, "src/$lang/$slug/build.gradle.kts")
@@ -82,14 +80,14 @@ class VersionConsistencyContractTest {
             assertNotNull(kototoroEntry, "Kototoro index must contain entry for $aniyomiPkg")
 
             val expectedKototoroVersion = "1.4.$extVersionCode"
-            val actualKototoroVersion = kototoroEntry!!["versionName"]?.jsonPrimitive?.content
-            val actualKototoroCode = kototoroEntry["versionCode"]?.jsonPrimitive?.content?.toInt()
-            assertEquals(expectedKototoroVersion, actualKototoroVersion, "Kototoro versionName mismatch for $slug")
-            assertEquals(extVersionCode, actualKototoroCode, "Kototoro versionCode mismatch for $slug")
+            val actualKototoroVersion = kototoroEntry!!["version"]?.jsonPrimitive?.content
+            val actualKototoroCode = kototoroEntry["code"]?.jsonPrimitive?.content?.toInt()
+            assertEquals(expectedKototoroVersion, actualKototoroVersion, "Kototoro version mismatch for $slug")
+            assertEquals(extVersionCode, actualKototoroCode, "Kototoro code mismatch for $slug")
 
-            val expectedJarUrl = "jar/kaziyami-$slug-v$expectedKototoroVersion.jar"
-            val actualJarUrl = kototoroEntry["resources"]?.jsonObject?.get("jarUrl")?.jsonPrimitive?.content
-            assertEquals(expectedJarUrl, actualJarUrl, "Kototoro jarUrl mismatch for $slug")
+            val expectedJarApk = "kaziyami-$slug-v$expectedKototoroVersion.jar"
+            val actualJarApk = kototoroEntry["apk"]?.jsonPrimitive?.content
+            assertEquals(expectedJarApk, actualJarApk, "Kototoro apk field mismatch for $slug")
         }
     }
 }
