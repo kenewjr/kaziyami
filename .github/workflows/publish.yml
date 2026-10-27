@@ -2,9 +2,15 @@ name: Publish Kaziyami Release & Repository
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master ]
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: build & verify with throwaway keystore, skip publish'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: publish-repo
@@ -15,27 +21,31 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.10'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-disabled: false
+          cache-overwrite-existing: true
 
       - name: Grant Execute Permission
         run: chmod +x gradlew
@@ -44,24 +54,77 @@ jobs:
         run: python tools/generate_icons.py
 
       - name: Validate Release Signing Secrets
-        run: |
-          if [ -z "${{ secrets.KAZIYAMI_KEYSTORE_B64 }}" ] || [ -z "${{ secrets.KAZIYAMI_KEYSTORE_PASSWORD }}" ]; then
-            echo "::error::FATAL: Release signing secrets (KAZIYAMI_KEYSTORE_B64, KAZIYAMI_KEYSTORE_PASSWORD) are missing! Refusing to publish release."
-            exit 1
-          fi
-
-      - name: Build and Sign Extension APKs
         env:
           KAZIYAMI_KEYSTORE_B64: ${{ secrets.KAZIYAMI_KEYSTORE_B64 }}
           KAZIYAMI_KEYSTORE_PASSWORD: ${{ secrets.KAZIYAMI_KEYSTORE_PASSWORD }}
           KAZIYAMI_KEY_ALIAS: ${{ secrets.KAZIYAMI_KEY_ALIAS }}
           KAZIYAMI_KEY_PASSWORD: ${{ secrets.KAZIYAMI_KEY_PASSWORD }}
+          IS_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          missing=()
+          [ -z "$KAZIYAMI_KEYSTORE_B64" ] && missing+=("KAZIYAMI_KEYSTORE_B64")
+          [ -z "$KAZIYAMI_KEYSTORE_PASSWORD" ] && missing+=("KAZIYAMI_KEYSTORE_PASSWORD")
+          [ -z "$KAZIYAMI_KEY_ALIAS" ] && missing+=("KAZIYAMI_KEY_ALIAS")
+          [ -z "$KAZIYAMI_KEY_PASSWORD" ] && missing+=("KAZIYAMI_KEY_PASSWORD")
+
+          echo "=== Release Signing Secrets Audit ==="
+          [ -n "$KAZIYAMI_KEYSTORE_B64" ] && echo "  - KAZIYAMI_KEYSTORE_B64: PRESENT" || echo "  - KAZIYAMI_KEYSTORE_B64: MISSING"
+          [ -n "$KAZIYAMI_KEYSTORE_PASSWORD" ] && echo "  - KAZIYAMI_KEYSTORE_PASSWORD: PRESENT" || echo "  - KAZIYAMI_KEYSTORE_PASSWORD: MISSING"
+          [ -n "$KAZIYAMI_KEY_ALIAS" ] && echo "  - KAZIYAMI_KEY_ALIAS: PRESENT" || echo "  - KAZIYAMI_KEY_ALIAS: MISSING"
+          [ -n "$KAZIYAMI_KEY_PASSWORD" ] && echo "  - KAZIYAMI_KEY_PASSWORD: PRESENT" || echo "  - KAZIYAMI_KEY_PASSWORD: MISSING"
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing ${#missing[@]} required signing secret(s): ${missing[*]}"
+            echo "Hint: Secrets must be configured under Settings > Secrets and variables > Actions (repository secrets), not Dependabot or Environment, and are unavailable to Dependabot- or fork-triggered runs."
+            if [ "$IS_DRY_RUN" = "true" ]; then
+              echo "::warning::Dry-run mode active: proceeding with ephemeral throwaway keystore."
+            else
+              exit 1
+            fi
+          else
+            echo "All four release signing secrets are present."
+          fi
+
+      - name: Generate Throwaway Keystore (Dry Run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          mkdir -p /tmp/keystore
+          keytool -genkeypair -v \
+            -keystore /tmp/keystore/dryrun.keystore \
+            -alias dryrun \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass dryrunpass \
+            -keypass dryrunpass \
+            -dname "CN=Kaziyami Ephemeral, OU=Kaziyami, O=Kaziyami, L=Tokyo, ST=Tokyo, C=JP"
+          B64_KEYSTORE=$(base64 -w 0 /tmp/keystore/dryrun.keystore)
+          echo "KAZIYAMI_KEYSTORE_B64=$B64_KEYSTORE" >> $GITHUB_ENV
+          echo "KAZIYAMI_KEYSTORE_PASSWORD=dryrunpass" >> $GITHUB_ENV
+          echo "KAZIYAMI_KEY_ALIAS=dryrun" >> $GITHUB_ENV
+          echo "KAZIYAMI_KEY_PASSWORD=dryrunpass" >> $GITHUB_ENV
+
+      - name: Build and Sign Extension APKs
+        env:
+          KAZIYAMI_KEYSTORE_B64: ${{ env.KAZIYAMI_KEYSTORE_B64 || secrets.KAZIYAMI_KEYSTORE_B64 }}
+          KAZIYAMI_KEYSTORE_PASSWORD: ${{ env.KAZIYAMI_KEYSTORE_PASSWORD || secrets.KAZIYAMI_KEYSTORE_PASSWORD }}
+          KAZIYAMI_KEY_ALIAS: ${{ env.KAZIYAMI_KEY_ALIAS || secrets.KAZIYAMI_KEY_ALIAS }}
+          KAZIYAMI_KEY_PASSWORD: ${{ env.KAZIYAMI_KEY_PASSWORD || secrets.KAZIYAMI_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
       - name: Verify Built Release APKs
-        run: python tools/verify_apks.py
+        run: python tools/verify_apks.py ${{ inputs.dry_run && '--allow-debug-cert' || '' }}
+
+      - name: Upload Built APKs Artifact (Dry Run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: kaziyami-dryrun-apks
+          path: repo/apk/*.apk
+          retention-days: 1
 
       - name: Deploy Repository Assets to repo Branch
+        if: ${{ !inputs.dry_run }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: repo
@@ -70,10 +133,11 @@ jobs:
           commit-message: "deploy: publish Kaziyami extension release [skip ci]"
 
       - name: Verify Published Repository Assets Over HTTPS
+        if: ${{ !inputs.dry_run }}
         run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --retries 10 --delay 6
 
       - name: Create GitHub Release for Tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && !inputs.dry_run }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
