@@ -157,3 +157,4 @@ class KototoroHelloContractTest {
         assertTrue(apkFile.exists(), "Target APK file must exist under repo/apk/ layout")
     }
 }
+

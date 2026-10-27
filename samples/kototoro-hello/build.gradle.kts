@@ -21,3 +21,4 @@ val packageHelloJar by tasks.registering(Exec::class) {
 tasks.named("test") {
     dependsOn(packageHelloJar)
 }
+

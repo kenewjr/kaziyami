@@ -196,3 +196,4 @@ Based directly on Kototoro's source code (`SettingsActivity.kt`, `UnifiedSources
   D8-generated `classes.dex` inside the JAR runs on Android ART via `PluginClassLoader`.
 - **Conclusion**:
   **Fallback is NOT triggered.** Variant B is fully feasible and compliant.
+

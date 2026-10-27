@@ -9,3 +9,4 @@ import org.skepsun.kototoro.parsers.model.ContentParserSource
 fun newParser(source: ContentParserSource, context: ContentLoaderContext): ContentParser {
     return KaziyamiDemoParser(source, context)
 }
+

@@ -11,3 +11,4 @@ enum class ContentParserSource(
 ) : ContentSource {
     KAZIYAMI_DEMO("all", ContentType.HENTAI_VIDEO, "Kaziyami Demo");
 }
+
