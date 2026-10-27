@@ -5,6 +5,7 @@ Scans repository for accidentally committed private keys, tokens, and keystores.
 """
 import os
 import re
+import subprocess
 import sys
 
 SUSPICIOUS_PATTERNS = [
@@ -34,7 +35,8 @@ def scan():
             if fname.endswith((".keystore", ".jks", ".p12", ".key")):
                 # Check if ignored by git
                 rel_path = os.path.relpath(os.path.join(dirpath, fname), root_dir)
-                if not rel_path.startswith("build"):
+                is_ignored = subprocess.run(["git", "check-ignore", "-q", rel_path], cwd=root_dir).returncode == 0
+                if not rel_path.startswith("build") and not is_ignored:
                     violations.append((rel_path, "Forbidden binary key/keystore file"))
 
             full_path = os.path.join(dirpath, fname)
