@@ -7,7 +7,7 @@ dependencies {
     compileOnly("com.squareup.okhttp3:okhttp:4.11.0")
 
     testImplementation(project(":core"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.4")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 }
 
