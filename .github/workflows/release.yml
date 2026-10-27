@@ -1,4 +1,4 @@
-name: Publish Kaziyami Release & Repository
+name: Kaziyami Release Pipeline
 
 on:
   push:
@@ -18,31 +18,32 @@ concurrency:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
-  publish:
+  release:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-disabled: false
           cache-overwrite-existing: true
@@ -75,7 +76,7 @@ jobs:
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::Missing ${#missing[@]} required signing secret(s): ${missing[*]}"
-            echo "Hint: Secrets must be configured under Settings > Secrets and variables > Actions (repository secrets), not Dependabot or Environment, and are unavailable to Dependabot- or fork-triggered runs."
+            echo "Hint: Secrets must be configured under Settings > Secrets and variables > Actions (repository secrets)."
             if [ "$IS_DRY_RUN" = "true" ]; then
               echo "::warning::Dry-run mode active: proceeding with ephemeral throwaway keystore."
             else
@@ -104,23 +105,33 @@ jobs:
           echo "KAZIYAMI_KEY_ALIAS=dryrun" >> $GITHUB_ENV
           echo "KAZIYAMI_KEY_PASSWORD=dryrunpass" >> $GITHUB_ENV
 
-      - name: Build and Sign Extension APKs
+      - name: Run Test Verification Suite
+        run: |
+          ./gradlew check
+          python tools/test_update_simulation.py
+          python tools/test_preflight.py
+
+      - name: Assemble Both Distribution Variants (APKs & JARs)
         env:
           KAZIYAMI_KEYSTORE_B64: ${{ env.KAZIYAMI_KEYSTORE_B64 || secrets.KAZIYAMI_KEYSTORE_B64 }}
           KAZIYAMI_KEYSTORE_PASSWORD: ${{ env.KAZIYAMI_KEYSTORE_PASSWORD || secrets.KAZIYAMI_KEYSTORE_PASSWORD }}
           KAZIYAMI_KEY_ALIAS: ${{ env.KAZIYAMI_KEY_ALIAS || secrets.KAZIYAMI_KEY_ALIAS }}
           KAZIYAMI_KEY_PASSWORD: ${{ env.KAZIYAMI_KEY_PASSWORD || secrets.KAZIYAMI_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleAll
 
       - name: Verify Built Release APKs
         run: python tools/verify_apks.py ${{ inputs.dry_run && '--allow-debug-cert' || '' }}
 
-      - name: Upload Built APKs Artifact (Dry Run)
+      - name: Upload Artifacts (Dry Run)
         if: ${{ inputs.dry_run }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          name: kaziyami-dryrun-apks
-          path: repo/apk/*.apk
+          name: kaziyami-dryrun-artifacts
+          path: |
+            repo/apk/*.apk
+            repo/jar/*.jar
+            repo/sha256sums.txt
+            repo/jar/sha256sums.txt
           retention-days: 1
 
       - name: Deploy Repository Assets to repo Branch
@@ -130,20 +141,56 @@ jobs:
           branch: repo
           folder: repo
           single-commit: true
-          commit-message: "deploy: publish Kaziyami extension release [skip ci]"
+          commit-message: "deploy: publish Kaziyami extension & plugin release [skip ci]"
 
       - name: Verify Published Repository Assets Over HTTPS
+        id: verify_published
         if: ${{ !inputs.dry_run }}
-        run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --retries 10 --delay 6
+        run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --mode all --retries 10 --delay 6
+
+      - name: Rollback Repository Index on Verification Failure
+        if: ${{ failure() && steps.verify_published.outcome == 'failure' && !inputs.dry_run }}
+        run: |
+          echo "::error::Publish verification failed! Reverting repo branch index to previous commit..."
+          git fetch origin repo
+          git checkout origin/repo -- repo/index.json repo/index.min.json repo/repo.json repo/jar/index.json repo/jar/index.min.json repo/jar/repo.json || true
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "rollback: revert repository index due to asset verification failure [skip ci]" || true
+          git push origin HEAD:repo || true
+
+      - name: Extract Changelog Section
+        id: changelog
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && !inputs.dry_run }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          python -c "
+          import re
+          with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+              text = f.read()
+          pattern = r'## \[' + re.escape('$VERSION') + r'\].*?\n(.*?)(?=\n## \[|\Z)'
+          m = re.search(pattern, text, re.DOTALL)
+          notes = m.group(1).strip() if m else 'Kaziyami release $VERSION'
+          with open('release_notes.md', 'w', encoding='utf-8') as out:
+              out.write(notes)
+          "
 
       - name: Create GitHub Release for Tag
         if: ${{ startsWith(github.ref, 'refs/tags/v') && !inputs.dry_run }}
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release_notes.md
           files: |
             repo/apk/*.apk
+            repo/jar/*.jar
             repo/sha256sums.txt
+            repo/jar/sha256sums.txt
             repo/index.json
             repo/index.min.json
             repo/repo.json
-          generate_release_notes: true
+            repo/jar/index.json
+            repo/jar/index.min.json
+            repo/jar/repo.json
+          generate_release_notes: false
+

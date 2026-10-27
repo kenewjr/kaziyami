@@ -1,4 +1,4 @@
-name: Scheduled Structure Monitor
+name: Scheduled Source Monitor & Health Check
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   issues: write
 
 jobs:
@@ -15,18 +15,58 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Run Source Structure Monitor
-        run: python tools/monitor_sources.py
+        id: run_monitor
+        run: |
+          python tools/monitor_sources.py
 
       - name: Upload Structure Report Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: structure-report
           path: reports/structure_report.json
+
+      - name: Deduplicated Issue Alert on Source Drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -c "
+          import json, os, subprocess
+
+          report_file = 'reports/structure_report.json'
+          if not os.path.exists(report_file):
+              exit(0)
+
+          with open(report_file, 'r', encoding='utf-8') as f:
+              data = json.load(f)
+
+          degraded = [k for k, v in data.items() if v.get('status') != 'HEALTHY']
+          if not degraded:
+              print('[+] All monitored sources are healthy.')
+              exit(0)
+
+          issue_title = '[Source Drift] Layout change or outage detected on monitored sources'
+          check_cmd = ['gh', 'issue', 'list', '--state', 'open', '--search', issue_title, '--json', 'number']
+          res = subprocess.run(check_cmd, capture_output=True, text=True)
+          if res.returncode == 0 and res.stdout.strip() and res.stdout.strip() != '[]':
+              print('[*] Existing open issue found; skipping duplicate alert.')
+              exit(0)
+
+          body = '## Automated Source Drift Alert\n\nThe weekly source monitor detected degraded or unreachable status on the following sources:\n\n'
+          for src in degraded:
+              info = data[src]
+              body += f'- **{src}**: status={info.get(\"status\")}, http={info.get(\"http_code\")}, matches={info.get(\"item_matches\", 0)}\n'
+
+          body += '\n### Remediation Policy:\n- Automated publishing is strictly forbidden.\n- Verify against a physical device before changing selectors.\n- Prepare fixes in a PR with regression fixtures and extVersionCode bump.\n'
+
+          create_cmd = ['gh', 'issue', 'create', '--title', issue_title, '--body', body, '--label', 'bug']
+          subprocess.run(create_cmd)
+          print('[+] Opened alert issue for degraded sources.')
+          "

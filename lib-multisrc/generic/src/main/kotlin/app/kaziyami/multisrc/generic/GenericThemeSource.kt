@@ -15,6 +15,12 @@ import app.kaziyami.core.LazyImage
 import app.kaziyami.core.MirrorManager
 import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
+import app.kaziyami.engine.KaziyamiEpisode
+import app.kaziyami.engine.KaziyamiMedia
+import app.kaziyami.engine.KaziyamiPage
+import app.kaziyami.engine.KaziyamiSource
+import app.kaziyami.engine.KaziyamiTrack
+import app.kaziyami.engine.KaziyamiVideo
 import app.kaziyami.network.BrowserHeaders
 import app.kaziyami.network.NetworkConfig
 import app.kaziyami.network.TtlCache
@@ -34,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap
 open class GenericThemeSource(
     val config: SourceConfig,
     val preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
-) : ParsedAnimeHttpSource(), eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource {
+) : ParsedAnimeHttpSource(), eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource, KaziyamiSource {
 
     val pageCache = TtlCache<String, AnimesPage>(defaultTtlMs = NetworkConfig.POPULAR_CACHE_TTL_MS)
     val detailCache = TtlCache<String, SAnime>(defaultTtlMs = NetworkConfig.DETAIL_PAGE_CACHE_TTL_MS)
@@ -465,5 +471,111 @@ open class GenericThemeSource(
             bodyText.contains("ditemukan") ||
             bodyText.contains("0 results") ||
             document.selectFirst(".empty, .not-found, .notfound, .no-results, .error-404, .search-empty") != null
+    }
+
+    // ============================= KaziyamiSource Implementation =============================
+
+    override val id: Long
+        get() = super.id
+
+    override fun popular(page: Int): KaziyamiPage<KaziyamiMedia> {
+        val req = popularAnimeRequest(page)
+        val res = client.newCall(req).execute()
+        return parsePopularResponse(res)
+    }
+
+    override fun latest(page: Int): KaziyamiPage<KaziyamiMedia> {
+        val req = latestUpdatesRequest(page)
+        val res = client.newCall(req).execute()
+        return parseLatestResponse(res)
+    }
+
+    override fun search(page: Int, query: String, filters: List<Any>): KaziyamiPage<KaziyamiMedia> {
+        val filterList = (filters.firstOrNull() as? AnimeFilterList) ?: getFilterList()
+        val req = searchAnimeRequest(page, query, filterList)
+        val res = client.newCall(req).execute()
+        return parseSearchResponse(res)
+    }
+
+    override fun details(url: String): KaziyamiMedia {
+        val sAnime = SAnime.create().apply { this.url = url }
+        val req = animeDetailsRequest(sAnime)
+        val res = client.newCall(req).execute()
+        return parseDetailsResponse(res)
+    }
+
+    override fun episodes(url: String): List<KaziyamiEpisode> {
+        val sAnime = SAnime.create().apply { this.url = url }
+        val req = episodeListRequest(sAnime)
+        val res = client.newCall(req).execute()
+        return parseEpisodesResponse(res)
+    }
+
+    override fun videos(url: String): List<KaziyamiVideo> {
+        val sEpisode = SEpisode.create().apply { this.url = url }
+        val req = videoListRequest(sEpisode)
+        val res = client.newCall(req).execute()
+        return parseVideosResponse(res)
+    }
+
+    fun parsePopularResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
+        val page = popularAnimeParse(response)
+        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+    }
+
+    fun parseLatestResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
+        val page = latestUpdatesParse(response)
+        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+    }
+
+    fun parseSearchResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
+        val page = searchAnimeParse(response)
+        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+    }
+
+    fun parseDetailsResponse(response: Response): KaziyamiMedia {
+        val doc = response.asJsoup()
+        val parsed = animeDetailsParse(doc)
+        val path = UrlUtils.getPath(response.request.url.toString())
+        parsed.url = path
+        return parsed.toKaziyamiMedia()
+    }
+
+    fun parseEpisodesResponse(response: Response): List<KaziyamiEpisode> {
+        return episodeListParse(response).map { it.toKaziyamiEpisode() }
+    }
+
+    fun parseVideosResponse(response: Response): List<KaziyamiVideo> {
+        return videoListParse(response).map { it.toKaziyamiVideo() }
+    }
+
+    companion object {
+        fun SAnime.toKaziyamiMedia(): KaziyamiMedia {
+            val resolvedUrl = try { url } catch (_: Exception) { "" }
+            return KaziyamiMedia(
+                id = resolvedUrl,
+                title = try { title } catch (_: Exception) { "" },
+                url = resolvedUrl,
+                coverUrl = thumbnail_url.orEmpty(),
+                status = status,
+                genres = genre?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList(),
+                description = description.orEmpty()
+            )
+        }
+
+        fun SEpisode.toKaziyamiEpisode(): KaziyamiEpisode = KaziyamiEpisode(
+            name = name,
+            url = url,
+            episodeNumber = episode_number,
+            dateUpload = date_upload
+        )
+
+        fun Video.toKaziyamiVideo(): KaziyamiVideo = KaziyamiVideo(
+            url = url,
+            quality = quality,
+            videoUrl = videoUrl.orEmpty(),
+            headers = headers?.let { h -> (0 until h.size).associate { h.name(it) to h.value(it) } } ?: emptyMap(),
+            subtitles = subtitleTracks.map { KaziyamiTrack(it.url, it.lang) }
+        )
     }
 }

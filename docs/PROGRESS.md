@@ -51,10 +51,25 @@
   - [x] 8.3 Kototoro support: Researched official `Kototoro-app/Kototoro` (`v2.3.2`, Apache-2.0) and parsers repo (`skepsun/kototoro-parsers`, GPL-3.0) with exact citations in `docs/KOTOTORO.md`. Documented licensing decision in `docs/LICENSES.md` (GPL isolation via Apache-2.0 `source-host` reflection bridge). Built platform-neutral engine interfaces (`app.kaziyami.engine.*`) and adapters (`AniyomiSourceAdapter`, `KototoroSourceWrapper`, `KototoroPlugin`). Built `packageKototoroPlugin` Gradle task producing `build/libs/kaziyami-kototoro-all-v1.4.1.jar`. Created shared adapter contract tests, host fakes test, loader smoke test, packaging test, and extended network leak test.
   - [x] 8.4 Documentation: Updated `README.md`, `docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, `docs/COMPATIBILITY.md`, `docs/QA_CHECKLIST.md`, and `docs/DECISIONS.md`.
 
+- [x] **Phase 10: Two Distribution Variants (Variant A APK Repo + Variant B JAR Parser Repo)**
+  - [x] 10.1 Kototoro JAR Mechanism Research: Inspected `Kototoro-app/Kototoro` (`414e58f`), documented entrypoints (`ContentParserFactoryKt.newParser`), ClassLoader hierarchies, and licensing in `docs/KOTOTORO.md` and `docs/LICENSES.md`.
+  - [x] 10.2 Source ID Stability: Locked 64-bit permanent Kototoro IDs in `docs/SOURCE_IDS.md` with contract tests.
+  - [x] 10.3 Shared Engine & Adapters: Defined Kototoro ABI stubs in `core` (`ContentParser`, `ContentLoaderContext`, `ContentParserSource`, `ContentParserFactoryKt`), implemented `KototoroParserAdapter` and `KototoroParserRegistry`.
+  - [x] 10.4 Unified Dual-Runtime FAT JARs: `tools/package_kototoro_plugin.py` bundles both standard `.class` files (Desktop JVM) and `classes.dex` via D8 (Android ART) into `kaziyami-all-v*.jar` and 6 per-source JARs.
+  - [x] 10.5 Dual Repository Generation: `tools/generate_repo_index.py` produces Aniyomi repo metadata in `repo/` and Kototoro `ExtensionStoreIndex` metadata in `repo/jar/`.
+  - [x] 10.6 Build Automation: Added Gradle tasks `assembleAniyomi`, `packageJar`, and `assembleAll`.
+
+- [x] **Phase 11: Auto-Update Pipeline for JAR and APK Variants**
+  - [x] 11.1 Update Mechanism Research: Documented exact update rule (`isNewerThanInstalled(versionCode)` -> strictly `versionCode > installedVersionCode`), Packages tab UI presentation, on-demand refresh triggers, Extension Groups snapshot behavior, host file replacement (`files/plugins/<pkg>.jar` + `jar_plugin_versions` prefs), and ART DEX requirements with citations in `docs/KOTOTORO.md`.
+  - [x] 11.2 Monotonic Versioning & Simulation Tests: Implemented dynamic version extraction from `build.gradle.kts`. Created `AutoUpdateSimulationTest` and `test_update_simulation.py` asserting that release N+1 flags strictly the bumped package, while unchanged, same-version, and downgraded packages remain unflagged.
+  - [x] 11.3 Publish Ordering, Integrity & Rollback: Artifacts published before indexes; kept latest 3 versions of all APKs and JARs; SHA-256 and byte sizes embedded in index metadata; `verifyPublishedRepo` validates both variants over HTTPS; automatic rollback reverts index on verification failure.
+  - [x] 11.4 Release CI/CD Automation: Configured `.github/workflows/release.yml`, `.github/workflows/bump-and-release.yml`, and updated `.github/workflows/monitor.yml` with deduplicated issue alerts.
+  - [x] 11.5 User Documentation: Authored `docs/UPDATING.md` and updated `README.md` and `CHANGELOG.md` ([1.4.2]).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 8 completed. Platform-neutral engine, Aniyomi adapter, and Kototoro plugin verified. All tests green, zero identity leaks, zero secrets, dependency compatibility enforced.
-- **Last Green Run**: `./gradlew test` (all modules passing), `./gradlew packageKototoroPlugin` (347 KB JAR), `verify_runtime_compat.py` (passed), `scan_secrets.py` (0 leaks), `verify_remote_repo.py` (all 6 APKs HTTP 200).
-- **Open Items**: Awaiting user confirmation before closing PR #1 on GitHub remotely.
+- **Overall Status**: Phase 11 complete. Auto-update pipeline, simulation tests, dual-variant publishing, and rollback integrity verified across both Aniyomi and Kototoro targets. All tests 100% green.
+- **Last Green Run**: `./gradlew check` (all modules passing), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `./gradlew assembleAll` (13 APKs & JARs built and verified).
+- **Open Items**: Remote release publish gated on presence of live signing secrets (`KAZIYAMI_KEYSTORE_B64`, etc.). Ready for physical device test.
 

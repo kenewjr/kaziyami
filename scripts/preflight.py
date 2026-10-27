@@ -5,6 +5,7 @@ Local pre-flight diagnostic script for the user's local network and toolchain.
 Runs connectivity, DNS/ISP block detection, page parsing, video stream checks,
 and generates a sanitized preflight-report.json.
 """
+import hashlib
 import json
 import os
 import re
@@ -14,6 +15,9 @@ import subprocess
 import sys
 import urllib.parse
 import urllib.request
+import zipfile
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SOURCES = [
     {
@@ -100,6 +104,148 @@ def scrub_sensitive(text: str) -> str:
     # Scrub URL queries on streams
     text = re.sub(r"https?://[^\s?]+\?[^\s'\"]+", lambda m: m.group(0).split("?")[0] + "?[REDACTED_QUERY]", text)
     return text
+
+def sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(65536):
+            h.update(chunk)
+    return h.hexdigest()
+
+def check_repository_artifacts(root_dir: str = None) -> dict:
+    if root_dir is None:
+        root_dir = ROOT_DIR
+    repo_dir = os.path.join(root_dir, "repo")
+    apk_dir = os.path.join(repo_dir, "apk")
+    jar_dir = os.path.join(repo_dir, "jar")
+
+    results = {
+        "variant_a_aniyomi": {"status": "PASS", "details": [], "errors": []},
+        "variant_b_kototoro": {"status": "PASS", "details": [], "errors": []},
+    }
+
+    # Variant A: Aniyomi APK repo
+    index_a_path = os.path.join(repo_dir, "index.json")
+    repo_json_a = os.path.join(repo_dir, "repo.json")
+    sums_a_path = os.path.join(repo_dir, "sha256sums.txt")
+
+    if not (os.path.exists(index_a_path) and os.path.exists(repo_json_a) and os.path.exists(sums_a_path)):
+        results["variant_a_aniyomi"]["status"] = "WARN"
+        results["variant_a_aniyomi"]["errors"].append("Missing repository index or sha256sums.txt in repo/")
+    else:
+        try:
+            with open(index_a_path, "r", encoding="utf-8") as f:
+                index_data = json.load(f)
+            results["variant_a_aniyomi"]["details"].append(f"Loaded index.json with {len(index_data)} entries")
+
+            sums_a = {}
+            with open(sums_a_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split(None, 1)
+                    if len(parts) == 2:
+                        sums_a[parts[1].strip()] = parts[0].strip()
+
+            if not os.path.exists(apk_dir):
+                results["variant_a_aniyomi"]["status"] = "WARN"
+                results["variant_a_aniyomi"]["errors"].append(f"APK directory {apk_dir} does not exist")
+            else:
+                for entry in index_data:
+                    apk_name = entry.get("apk")
+                    if not apk_name:
+                        results["variant_a_aniyomi"]["errors"].append(f"Entry {entry.get('name')} missing apk filename")
+                        continue
+                    apk_path = os.path.join(apk_dir, apk_name)
+                    if not os.path.exists(apk_path):
+                        results["variant_a_aniyomi"]["errors"].append(f"APK not found: {apk_name}")
+                        continue
+
+                    actual_sha = sha256_file(apk_path)
+                    expected_sha = sums_a.get(apk_name)
+                    if expected_sha and actual_sha != expected_sha:
+                        results["variant_a_aniyomi"]["errors"].append(f"SHA-256 mismatch for {apk_name}")
+
+                    try:
+                        with zipfile.ZipFile(apk_path, "r") as zf:
+                            if zf.testzip() is not None:
+                                results["variant_a_aniyomi"]["errors"].append(f"Corrupt ZIP: {apk_name}")
+                            namelist = zf.namelist()
+                            if "classes.dex" not in namelist:
+                                results["variant_a_aniyomi"]["errors"].append(f"Missing classes.dex in {apk_name}")
+                            if "AndroidManifest.xml" not in namelist:
+                                results["variant_a_aniyomi"]["errors"].append(f"Missing AndroidManifest.xml in {apk_name}")
+                            else:
+                                manifest_bytes = zf.read("AndroidManifest.xml")
+                                if len(manifest_bytes) < 4 or int.from_bytes(manifest_bytes[:2], "little") != 0x0003:
+                                    results["variant_a_aniyomi"]["errors"].append(f"Invalid AXML manifest in {apk_name}")
+                    except Exception as e:
+                        results["variant_a_aniyomi"]["errors"].append(f"Failed to inspect {apk_name}: {e}")
+
+                if results["variant_a_aniyomi"]["errors"]:
+                    results["variant_a_aniyomi"]["status"] = "FAIL"
+                else:
+                    results["variant_a_aniyomi"]["details"].append(f"Verified all {len(index_data)} APKs (DEX, manifest, SHA256)")
+        except Exception as e:
+            results["variant_a_aniyomi"]["status"] = "FAIL"
+            results["variant_a_aniyomi"]["errors"].append(f"Failed to parse Aniyomi repo metadata: {e}")
+
+    # Variant B: Kototoro JAR repo
+    index_b_path = os.path.join(jar_dir, "index.json")
+    repo_json_b = os.path.join(jar_dir, "repo.json")
+    sums_b_path = os.path.join(jar_dir, "sha256sums.txt")
+
+    if not (os.path.exists(index_b_path) and os.path.exists(repo_json_b) and os.path.exists(sums_b_path)):
+        results["variant_b_kototoro"]["status"] = "WARN"
+        results["variant_b_kototoro"]["errors"].append("Missing repository index or sha256sums.txt in repo/jar/")
+    else:
+        try:
+            with open(index_b_path, "r", encoding="utf-8") as f:
+                index_data_b = json.load(f)
+
+            ext_list = index_data_b.get("extensionList", {}).get("extensions", [])
+            results["variant_b_kototoro"]["details"].append(f"Loaded repo/jar/index.json with {len(ext_list)} extensions")
+
+            sums_b = {}
+            with open(sums_b_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split(None, 1)
+                    if len(parts) == 2:
+                        sums_b[parts[1].strip()] = parts[0].strip()
+
+            jar_files = [f for f in os.listdir(jar_dir) if f.endswith(".jar")]
+            if not jar_files:
+                results["variant_b_kototoro"]["status"] = "WARN"
+                results["variant_b_kototoro"]["errors"].append("No .jar files found in repo/jar/")
+            else:
+                for jname in jar_files:
+                    jpath = os.path.join(jar_dir, jname)
+                    actual_sha = sha256_file(jpath)
+                    expected_sha = sums_b.get(jname)
+                    if expected_sha and actual_sha != expected_sha:
+                        results["variant_b_kototoro"]["errors"].append(f"SHA-256 mismatch for {jname}")
+
+                    try:
+                        with zipfile.ZipFile(jpath, "r") as zf:
+                            if zf.testzip() is not None:
+                                results["variant_b_kototoro"]["errors"].append(f"Corrupt ZIP: {jname}")
+                            namelist = zf.namelist()
+                            if "classes.dex" not in namelist:
+                                results["variant_b_kototoro"]["errors"].append(f"Missing classes.dex (Android ART) in {jname}")
+                            if "org/skepsun/kototoro/parsers/ContentParserFactoryKt.class" not in namelist:
+                                results["variant_b_kototoro"]["errors"].append(f"Missing ContentParserFactoryKt entrypoint in {jname}")
+                            if "org/skepsun/kototoro/parsers/model/ContentParserSource.class" not in namelist:
+                                results["variant_b_kototoro"]["errors"].append(f"Missing ContentParserSource enum in {jname}")
+                    except Exception as e:
+                        results["variant_b_kototoro"]["errors"].append(f"Failed to inspect {jname}: {e}")
+
+                if results["variant_b_kototoro"]["errors"]:
+                    results["variant_b_kototoro"]["status"] = "FAIL"
+                else:
+                    results["variant_b_kototoro"]["details"].append(f"Verified {len(jar_files)} JARs (DEX, .class entrypoints, SHA256)")
+        except Exception as e:
+            results["variant_b_kototoro"]["status"] = "FAIL"
+            results["variant_b_kototoro"]["errors"].append(f"Failed to parse Kototoro JAR repo metadata: {e}")
+
+    return results
 
 def check_toolchain() -> dict:
     results = {}
@@ -269,7 +415,7 @@ def run_preflight() -> dict:
     print("                  KAZIYAMI LOCAL PRE-FLIGHT TEST SUITE                  ")
     print("="*80)
 
-    report = {"toolchain": {}, "sources": {}}
+    report = {"toolchain": {}, "artifacts": {}, "sources": {}}
 
     # 1. Toolchain
     print("[*] 1. Checking host toolchain...")
@@ -277,8 +423,19 @@ def run_preflight() -> dict:
     for tool, res in report["toolchain"].items():
         print(f"    [{res['status']}] {tool.upper()}: {res['info']}")
 
-    # 2. Source connectivity & DNS checks
-    print("\n[*] 2. Checking network, DNS/ISP status, and layouts...")
+    # 2. Distribution artifacts (Variant A APKs & Variant B JARs)
+    print("\n[*] 2. Checking repository distribution artifacts...")
+    report["artifacts"] = check_repository_artifacts()
+    for variant_key, res in report["artifacts"].items():
+        vname = "Variant A (Aniyomi APKs)" if "a" in variant_key else "Variant B (Kototoro JARs)"
+        print(f"    [{res['status']}] {vname}:")
+        for detail in res["details"]:
+            print(f"        [+] {detail}")
+        for err in res["errors"]:
+            print(f"        [-] {err}")
+
+    # 3. Source connectivity & DNS checks
+    print("\n[*] 3. Checking network, DNS/ISP status, and layouts...")
     print(f"{'SOURCE':<14} | {'MIRROR':<32} | {'HTTP':<5} | {'STATUS':<10} | {'NOTE'}")
     print("-" * 80)
 

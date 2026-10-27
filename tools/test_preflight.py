@@ -42,5 +42,21 @@ class TestPreflight(unittest.TestCase):
         self.assertIn("adb", res)
         self.assertIn("gradlew", res)
 
+    def test_check_repository_artifacts_structure(self):
+        res = preflight.check_repository_artifacts()
+        self.assertIn("variant_a_aniyomi", res)
+        self.assertIn("variant_b_kototoro", res)
+        self.assertIn(res["variant_a_aniyomi"]["status"], ["PASS", "WARN", "FAIL"])
+        self.assertIn(res["variant_b_kototoro"]["status"], ["PASS", "WARN", "FAIL"])
+        self.assertIsInstance(res["variant_a_aniyomi"]["details"], list)
+        self.assertIsInstance(res["variant_b_kototoro"]["details"], list)
+
+    def test_check_repository_artifacts_passes_for_current_repo(self):
+        res = preflight.check_repository_artifacts()
+        self.assertEqual(res["variant_a_aniyomi"]["status"], "PASS")
+        self.assertEqual(res["variant_b_kototoro"]["status"], "PASS")
+        self.assertEqual(len(res["variant_a_aniyomi"]["errors"]), 0)
+        self.assertEqual(len(res["variant_b_kototoro"]["errors"]), 0)
+
 if __name__ == "__main__":
     unittest.main()

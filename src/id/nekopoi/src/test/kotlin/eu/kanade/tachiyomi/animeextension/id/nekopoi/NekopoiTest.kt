@@ -111,4 +111,48 @@ class NekopoiTest {
         assertEquals("https://nekopoi.app", next)
         assertEquals("https://nekopoi.app", source.baseUrl)
     }
+
+    @Test
+    fun parseKototoroParity() = kotlinx.coroutines.runBlocking {
+        val dummyContext = object : org.skepsun.kototoro.parsers.ContentLoaderContext() {
+            override val httpClient = OkHttpClient()
+            override val cookieJar = okhttp3.CookieJar.NO_COOKIES
+        }
+        val adapter = app.kaziyami.adapter.kototoro.KototoroParserAdapter(
+            kaziyamiSource = source,
+            source = org.skepsun.kototoro.parsers.model.ContentParserSource.NEKOPOI,
+            context = dummyContext
+        )
+
+        // Popular parity
+        val html = loadFixture("popular.html")
+        val aniyomiPage = source.popularAnimeParse(mockResponse("https://nekopoi.care/category/hentai/page/1/", html))
+        val kaziyamiPage = source.parsePopularResponse(mockResponse("https://nekopoi.care/category/hentai/page/1/", html))
+
+        assertEquals(aniyomiPage.animes.size, kaziyamiPage.items.size)
+        assertEquals(aniyomiPage.hasNextPage, kaziyamiPage.hasNextPage)
+        assertEquals(aniyomiPage.animes[0].title, kaziyamiPage.items[0].title)
+        assertEquals(aniyomiPage.animes[0].url, kaziyamiPage.items[0].url)
+
+        // Details parity
+        val detailsHtml = loadFixture("details.html")
+        val aniyomiDetails = source.animeDetailsParse(mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", detailsHtml))
+        val kaziyamiDetails = source.parseDetailsResponse(mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", detailsHtml))
+        assertEquals(aniyomiDetails.title, kaziyamiDetails.title)
+        assertEquals(aniyomiDetails.description, kaziyamiDetails.description)
+
+        // Episodes parity
+        val epHtml = loadFixture("episodes.html")
+        val aniyomiEps = source.episodeListParse(mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", epHtml))
+        val kaziyamiEps = source.parseEpisodesResponse(mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", epHtml))
+        assertEquals(aniyomiEps.size, kaziyamiEps.size)
+        assertEquals(aniyomiEps[0].name, kaziyamiEps[0].name)
+        assertEquals(aniyomiEps[0].episode_number, kaziyamiEps[0].episodeNumber)
+
+        // Videos parity
+        val vidHtml = loadFixture("video_player.html")
+        val aniyomiVids = source.videoListParse(mockResponse("https://nekopoi.care/hentai/kanojo-ep-1/", vidHtml))
+        val kaziyamiVids = source.parseVideosResponse(mockResponse("https://nekopoi.care/hentai/kanojo-ep-1/", vidHtml))
+        assertEquals(aniyomiVids.size, kaziyamiVids.size)
+    }
 }

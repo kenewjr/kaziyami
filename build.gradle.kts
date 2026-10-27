@@ -119,6 +119,13 @@ tasks.register<Exec>("assembleRelease") {
     commandLine("python", "tools/build_apks.py")
 }
 
+tasks.register<Exec>("assembleAniyomi") {
+    group = "distribution"
+    description = "Builds Aniyomi APKs and generates repo/ index files."
+    dependsOn(tasks.named("assembleRelease"))
+    commandLine("python", "tools/generate_repo_index.py", "--mode", "aniyomi")
+}
+
 tasks.register<Exec>("assembleDebugAll") {
     group = "build"
     description = "Assembles debug APKs for all extensions into build/kaziyami-debug/."
@@ -128,8 +135,8 @@ tasks.register<Exec>("assembleDebugAll") {
 
 tasks.register<Exec>("generateRepoIndex") {
     group = "distribution"
-    description = "Generates Aniyomi repo index.json and index.min.json."
-    commandLine("python", "tools/generate_repo_index.py")
+    description = "Generates repository indexes for both Aniyomi and Kototoro."
+    commandLine("python", "tools/generate_repo_index.py", "--mode", "all")
 }
 
 tasks.register<Exec>("packageKototoroPlugin") {
@@ -137,6 +144,20 @@ tasks.register<Exec>("packageKototoroPlugin") {
     description = "Packages all Kaziyami sources into a Kototoro-compatible plugin JAR."
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "classes" } })
     commandLine("python", "tools/package_kototoro_plugin.py")
+}
+
+tasks.register<Exec>("packageJar") {
+    group = "distribution"
+    description = "Packages Kototoro JAR plugins and generates repo/jar/ repository indexes."
+    dependsOn(tasks.named("packageKototoroPlugin"))
+    commandLine("python", "tools/generate_repo_index.py", "--mode", "kototoro")
+}
+
+tasks.register("assembleAll") {
+    group = "distribution"
+    description = "Builds both Variant A (Aniyomi APKs) and Variant B (Kototoro JARs) with repo indexes."
+    dependsOn(tasks.named("assembleAniyomi"))
+    dependsOn(tasks.named("packageJar"))
 }
 
 val testVerifyApks by tasks.registering(Exec::class) {

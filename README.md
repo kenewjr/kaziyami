@@ -55,8 +55,9 @@ Release APKs are signed with the maintainer's dedicated release keystore. When i
 
 ### Installation in Kototoro (v2.3+)
 
-Kototoro natively ingests Aniyomi extension repositories without requiring standalone JARs:
+Kototoro supports Kaziyami through two distribution variants:
 
+#### Variant A: Aniyomi Extension Repository (APK)
 1. Open **Kototoro** on your device.
 2. Navigate to **Settings** -> **Extension management** -> **Repositories** tab.
 3. Tap **Add repository** (+).
@@ -65,10 +66,23 @@ Kototoro natively ingests Aniyomi extension repositories without requiring stand
    ```text
    https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json
    ```
-6. Tap **Confirm** / **Add**. When prompted with the repository trust dialog, confirm trust.
-7. Switch to the **Extensions** tab under **Aniyomi**.
-8. Find any of the 6 Kaziyami extensions (labeled `Kaziyami: <Site>`) and tap **Install**.
-9. To ensure adult titles display, configure **Content rating** -> **Adult** in the catalog filter menu.
+6. Tap **Confirm** / **Add** and confirm repository trust.
+7. Switch to the **Aniyomi** extensions section, select any Kaziyami extension (e.g. `Kaziyami: Nekopoi`), and tap **Install**.
+
+#### Variant B: Kototoro JAR Parser Plugin (JAR)
+- **Direct JAR Import**:
+  1. Download `kaziyami-all-v1.4.2.jar` (or per-source JAR) from releases.
+  2. In Kototoro, go to **Settings** -> **Extension management** -> **Packages** tab.
+  3. Tap **Import local JAR**.
+  4. Select the `.jar` file to install.
+- **JAR Repository**:
+  1. Under **Settings** -> **Extension management** -> **Repositories** tab, tap **Add repository** (+).
+  2. Paste the JAR repository URL:
+     ```text
+     https://raw.githubusercontent.com/kenewjr/kaziyami/repo/jar/index.min.json
+     ```
+
+For detailed update workflows, troubleshooting, and rollback steps, see [docs/UPDATING.md](docs/UPDATING.md).
 
 ---
 
@@ -132,6 +146,8 @@ Outputs signed APKs to `repo/apk/`, generates `repo/sha256sums.txt`, and builds 
 
 - System design details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Technology versions: [docs/STACK.md](docs/STACK.md)
+- Kototoro integration & invariants: [docs/KOTOTORO.md](docs/KOTOTORO.md)
+- Auto-update guide & rollbacks: [docs/UPDATING.md](docs/UPDATING.md)
 - Keystore setup & CI secrets: [docs/SIGNING.md](docs/SIGNING.md)
 - Release procedures: [docs/RELEASING.md](docs/RELEASING.md)
 - Troubleshooting & issue reporting: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
