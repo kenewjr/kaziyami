@@ -20,9 +20,19 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
     apply(plugin = "jacoco")
 
+    extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+        jvmToolchain(17)
+    }
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
+    }
+
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
             jvmTarget = "11"
+            allWarningsAsErrors = true
             freeCompilerArgs = freeCompilerArgs + listOf(
                 "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
             )
@@ -35,6 +45,10 @@ subprojects {
         }
         testLogging {
             events("passed", "skipped", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showCauses = true
+            showStackTraces = true
+            showStandardStreams = false
         }
         finalizedBy(tasks.named("jacocoTestReport"))
     }
@@ -180,5 +194,12 @@ tasks.register("check") {
     dependsOn(checkExtensionIcons)
     dependsOn(testVerifyApks)
     dependsOn(verifyApks)
+    dependsOn(tasks.named("packageJar"))
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
+}
+
+project(":core") {
+    tasks.named("test") {
+        dependsOn(rootProject.tasks.named("packageKototoroPlugin"))
+    }
 }

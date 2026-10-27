@@ -76,29 +76,50 @@ object BrowserHeaders {
         clientHints["Sec-Ch-Ua-Mobile"]?.let { builder.set("Sec-Ch-Ua-Mobile", it) }
         clientHints["Sec-Ch-Ua-Platform"]?.let { builder.set("Sec-Ch-Ua-Platform", it) }
 
-        // 6. Fetch Metadata
+        // 6. Fetch Metadata (Sec-Fetch-Site computed from target url & referer)
+        val targetHost = if (url.isNotBlank()) {
+            try { java.net.URI(url).host } catch (_: Exception) { null }
+        } else null
+        val refererHost = referer?.let {
+            try { java.net.URI(it).host } catch (_: Exception) { null }
+        }
+
+        val siteRelation = when {
+            refererHost == null -> if (type == HeaderType.IMAGE) "cross-site" else "none"
+            targetHost != null && refererHost.equals(targetHost, ignoreCase = true) -> "same-origin"
+            targetHost != null && isSameSite(refererHost, targetHost) -> "same-site"
+            targetHost == null -> "same-origin"
+            else -> "cross-site"
+        }
+
         when (type) {
             HeaderType.NAVIGATE -> {
-                builder.set("Sec-Fetch-Site", if (referer != null) "same-origin" else "none")
+                builder.set("Sec-Fetch-Site", siteRelation)
                 builder.set("Sec-Fetch-Mode", "navigate")
                 builder.set("Sec-Fetch-User", "?1")
                 builder.set("Sec-Fetch-Dest", "document")
                 builder.set("Upgrade-Insecure-Requests", "1")
             }
             HeaderType.XHR -> {
-                builder.set("Sec-Fetch-Site", "same-origin")
+                builder.set("Sec-Fetch-Site", siteRelation)
                 builder.set("Sec-Fetch-Mode", "cors")
                 builder.set("Sec-Fetch-Dest", "empty")
                 builder.set("X-Requested-With", "XMLHttpRequest")
             }
             HeaderType.IMAGE -> {
-                builder.set("Sec-Fetch-Site", "cross-site")
+                builder.set("Sec-Fetch-Site", if (siteRelation == "none") "cross-site" else siteRelation)
                 builder.set("Sec-Fetch-Mode", "no-cors")
                 builder.set("Sec-Fetch-Dest", "image")
             }
         }
 
         return builder.build()
+    }
+
+    private fun isSameSite(h1: String, h2: String): Boolean {
+        val p1 = h1.split(".").takeLast(2).joinToString(".")
+        val p2 = h2.split(".").takeLast(2).joinToString(".")
+        return p1.equals(p2, ignoreCase = true)
     }
 
     /**

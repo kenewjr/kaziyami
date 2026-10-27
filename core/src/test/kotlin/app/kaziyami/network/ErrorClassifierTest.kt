@@ -58,4 +58,26 @@ class ErrorClassifierTest {
         assertEquals(ErrorClassifier.ErrorType.ALL_MIRRORS_FAILED, err.type)
         assertTrue(err.message.contains("Site unreachable across all configured mirrors"))
     }
+
+    @Test
+    fun testServerCloudflareHeaderWith403ClassifiesAsChallenge() {
+        val err = ErrorClassifier.classify(
+            httpCode = 403,
+            headers = mapOf("Server" to "cloudflare"),
+            bodySnippet = "Access denied"
+        )
+        assertEquals(ErrorClassifier.ErrorType.CHALLENGE_REQUIRED, err.type)
+        assertTrue(err.isRecoverableInWebView)
+    }
+
+    @Test
+    fun testCfRayHeaderWith503ClassifiesAsChallenge() {
+        val err = ErrorClassifier.classify(
+            httpCode = 503,
+            headers = mapOf("cf-ray" to "8fa123456789"),
+            bodySnippet = "Service unavailable"
+        )
+        assertEquals(ErrorClassifier.ErrorType.CHALLENGE_REQUIRED, err.type)
+        assertTrue(err.isRecoverableInWebView)
+    }
 }

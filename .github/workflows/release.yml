@@ -122,6 +122,36 @@ jobs:
       - name: Verify Built Release APKs
         run: python tools/verify_apks.py ${{ inputs.dry_run && '--allow-debug-cert' || '' }}
 
+      - name: Assert Release Signing Certificate SHA-256
+        if: ${{ !inputs.dry_run }}
+        env:
+          EXPECTED_FINGERPRINT: ${{ vars.KAZIYAMI_CERT_SHA256 }}
+        run: |
+          python -c "
+          import os, sys, glob
+          sys.path.insert(0, 'tools')
+          import android_sdk
+
+          expected = os.getenv('EXPECTED_FINGERPRINT', '').strip().lower().replace(':', '')
+          if not expected:
+              print('[-] Repository variable KAZIYAMI_CERT_SHA256 is not set!')
+              sys.exit(1)
+
+          apks = glob.glob('repo/apk/*.apk')
+          if not apks:
+              print('[-] No APKs found to verify certificate!')
+              sys.exit(1)
+
+          for apk in apks:
+              fp = android_sdk.get_apk_cert_fingerprint(apk).lower().replace(':', '')
+              print(f'[+] {os.path.basename(apk)} cert fingerprint: {fp}')
+              if fp != expected:
+                  print(f'[-] SECURITY VIOLATION: APK {apk} signed with certificate {fp}, which does not match expected release fingerprint {expected}! Halting publish.')
+                  sys.exit(1)
+
+          print('[+] All APKs verified against official release certificate fingerprint.')
+          "
+
       - name: Upload Artifacts (Dry Run)
         if: ${{ inputs.dry_run }}
         uses: actions/upload-artifact@v4

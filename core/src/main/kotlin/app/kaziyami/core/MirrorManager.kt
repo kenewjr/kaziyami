@@ -119,9 +119,11 @@ class MirrorManager(
      * to a new domain, provided the destination domain is on the verified allowlist.
      */
     fun handlePermanentRedirect(fromUrl: String, toUrl: String, allowlist: List<String> = allMirrors): Boolean {
+        val cleanFrom = fromUrl.removeSuffix("/")
         val cleanTo = toUrl.removeSuffix("/")
         val isAllowed = allowlist.any { cleanTo.startsWith(it.removeSuffix("/")) }
         if (isAllowed) {
+            markFailed(cleanFrom)
             markHealthy(cleanTo)
             return true
         }

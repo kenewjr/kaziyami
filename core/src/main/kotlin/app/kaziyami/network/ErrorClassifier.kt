@@ -27,14 +27,15 @@ object ErrorClassifier {
         bodySnippet: String = "",
         unsupportedHosts: List<String> = emptyList()
     ): UserError {
-        val serverHeader = headers["Server"].orEmpty().lowercase()
-        val cfMitigated = headers["cf-mitigated"].orEmpty().lowercase()
+        val serverHeader = headers.entries.firstOrNull { it.key.equals("Server", ignoreCase = true) }?.value.orEmpty().lowercase()
+        val cfMitigated = headers.entries.firstOrNull { it.key.equals("cf-mitigated", ignoreCase = true) }?.value.orEmpty().lowercase()
+        val hasCfRay = headers.keys.any { it.equals("cf-ray", ignoreCase = true) }
         val bodyLower = bodySnippet.lowercase()
 
         // 1. Cloudflare / Turnstile / DDOS protection challenge
         if (cfMitigated == "challenge" ||
             bodyLower.contains("just a moment...") ||
-            bodyLower.contains("cloudflare") && (httpCode == 403 || httpCode == 503) ||
+            ((serverHeader.contains("cloudflare") || hasCfRay || bodyLower.contains("cloudflare")) && (httpCode == 403 || httpCode == 503)) ||
             bodyLower.contains("cf-browser-verification")
         ) {
             return UserError(

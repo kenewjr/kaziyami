@@ -55,7 +55,7 @@ object ExtractorRegistry {
         val extractor = findExtractor(embedUrl)
             ?: throw IllegalArgumentException("Unsupported video host for embed URL: '$embedUrl'. No registered extractor matched this host.")
 
-        val extracted = extractor.extract(embedUrl, client)
+        val extracted = extractor.extract(embedUrl, referer, client)
         if (extracted.isEmpty()) {
             throw IllegalStateException("Extractor '${extractor.name}' found for '$embedUrl' but returned no playable streams.")
         }
@@ -78,7 +78,7 @@ object ExtractorRegistry {
                 continue
             }
             try {
-                val videos = extractor.extract(url, client)
+                val videos = extractor.extract(url, referer, client)
                 results.addAll(videos)
             } catch (e: Exception) {
                 val host = try { URI(url).host ?: url } catch (_: Exception) { url }
@@ -123,7 +123,7 @@ object ExtractorRegistry {
                 continue
             }
             try {
-                val videos = extractor.extract(url, client)
+                val videos = extractor.extract(url, referer, client)
                 if (videos.isNotEmpty()) {
                     // Stop at first working extractor to reduce request burst
                     return deduplicateAndSort(videos, preferredHost = preferredHost)

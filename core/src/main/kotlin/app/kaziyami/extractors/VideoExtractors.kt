@@ -9,7 +9,8 @@ import java.util.regex.Pattern
 interface VideoExtractor {
     val name: String
     fun canExtract(url: String): Boolean
-    fun extract(url: String, client: OkHttpClient): List<Video>
+    fun extract(url: String, referer: String = "", client: OkHttpClient = OkHttpClient()): List<Video>
+    fun extract(url: String, client: OkHttpClient): List<Video> = extract(url, "", client)
 }
 
 class DirectVideoExtractor : VideoExtractor {
@@ -20,9 +21,10 @@ class DirectVideoExtractor : VideoExtractor {
         return lower.endsWith(".mp4") || lower.endsWith(".m3u8") || lower.contains(".mp4?") || lower.contains(".m3u8?")
     }
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val effectiveRef = if (referer.isNotBlank()) referer else url
         val headers = Headers.Builder()
-            .set("Referer", url)
+            .set("Referer", effectiveRef)
             .build()
         val quality = if (url.contains("1080p", ignoreCase = true)) {
             "Direct 1080p"
@@ -43,9 +45,13 @@ class StreamTapeExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val embedUrl = if (!url.contains("/e/")) url.replace("/v/", "/e/") else url
-        val req = Request.Builder().url(embedUrl).build()
+        val reqBuilder = Request.Builder().url(embedUrl)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -90,9 +96,13 @@ class DoodExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val embedUrl = if (!url.contains("/e/")) url.replace("/d/", "/e/") else url
-        val req = Request.Builder().url(embedUrl).build()
+        val reqBuilder = Request.Builder().url(embedUrl)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -125,8 +135,12 @@ class VoeExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
-        val req = Request.Builder().url(url).build()
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val reqBuilder = Request.Builder().url(url)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -151,7 +165,7 @@ class Mp4UploadExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val embedUrl = if (!url.contains("embed-")) {
             val id = url.substringAfterLast("/").substringBefore(".")
             "https://www.mp4upload.com/embed-$id.html"
@@ -159,7 +173,11 @@ class Mp4UploadExtractor : VideoExtractor {
             url
         }
 
-        val req = Request.Builder().url(embedUrl).build()
+        val reqBuilder = Request.Builder().url(embedUrl)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -183,8 +201,12 @@ class StreamWishExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
-        val req = Request.Builder().url(url).build()
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val reqBuilder = Request.Builder().url(url)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -208,8 +230,12 @@ class FilemoonExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
-        val req = Request.Builder().url(url).build()
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val reqBuilder = Request.Builder().url(url)
+        if (referer.isNotBlank()) {
+            reqBuilder.header("Referer", referer)
+        }
+        val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -233,8 +259,9 @@ class StreamPoiExtractor : VideoExtractor {
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
-    override fun extract(url: String, client: OkHttpClient): List<Video> {
-        val req = Request.Builder().url(url).header("Referer", "https://nekopoi.care/").build()
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val effectiveRef = if (referer.isNotBlank()) referer else "https://nekopoi.care/"
+        val req = Request.Builder().url(url).header("Referer", effectiveRef).build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -282,4 +309,3 @@ class StreamPoiExtractor : VideoExtractor {
         return payload
     }
 }
-

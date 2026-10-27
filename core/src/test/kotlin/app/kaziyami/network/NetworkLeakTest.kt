@@ -1,6 +1,7 @@
 package app.kaziyami.network
 
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
@@ -112,7 +113,7 @@ class NetworkLeakTest {
             .protocol(okhttp3.Protocol.HTTP_1_1)
             .code(200)
             .message("OK")
-            .body(okhttp3.ResponseBody.create(null, ""))
+            .body("".toResponseBody(null))
             .build()
         val videos = wrapper.videoListParse(dummyResp)
         for (v in videos) {

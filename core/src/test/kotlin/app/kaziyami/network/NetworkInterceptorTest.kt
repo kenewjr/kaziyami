@@ -62,6 +62,13 @@ class NetworkInterceptorTest {
 
         val imgHeaders = BrowserHeaders.headersFor("https://example.com/img.jpg", type = BrowserHeaders.HeaderType.IMAGE)
         assertEquals("image", imgHeaders["Sec-Fetch-Dest"])
+
+        // Cross-origin and same-origin Sec-Fetch-Site calculation
+        val crossSiteHeaders = BrowserHeaders.headersFor("https://target.com/api", referer = "https://source.com/watch", type = BrowserHeaders.HeaderType.XHR)
+        assertEquals("cross-site", crossSiteHeaders["Sec-Fetch-Site"])
+
+        val sameOriginHeaders = BrowserHeaders.headersFor("https://example.com/api", referer = "https://example.com/watch", type = BrowserHeaders.HeaderType.XHR)
+        assertEquals("same-origin", sameOriginHeaders["Sec-Fetch-Site"])
     }
 
     @Test

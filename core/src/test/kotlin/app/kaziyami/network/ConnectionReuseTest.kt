@@ -45,6 +45,8 @@ class ConnectionReuseTest {
         assertEquals(2, server.requestCount)
         val recorded1 = server.takeRequest()
         val recorded2 = server.takeRequest()
+        assertEquals("/path1", recorded1.path)
+        assertEquals("/path2", recorded2.path)
 
         // Keep-alive connection reuse
         assertTrue(client.connectionPool.idleConnectionCount() >= 1 || client.connectionPool.connectionCount() >= 1)

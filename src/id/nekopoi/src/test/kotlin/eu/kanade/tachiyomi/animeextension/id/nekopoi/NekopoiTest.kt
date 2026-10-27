@@ -123,6 +123,8 @@ class NekopoiTest {
             source = org.skepsun.kototoro.parsers.model.ContentParserSource.NEKOPOI,
             context = dummyContext
         )
+        org.junit.jupiter.api.Assertions.assertNotNull(adapter)
+        assertEquals(org.skepsun.kototoro.parsers.model.ContentParserSource.NEKOPOI, adapter.source)
 
         // Popular parity
         val html = loadFixture("popular.html")

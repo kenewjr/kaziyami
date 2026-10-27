@@ -121,4 +121,21 @@ class MirrorResilienceTest {
         assertTrue(mirrors.contains("https://hanime.tv"))
         assertTrue(mirrors.contains("https://guest.freeanimehentai.net"))
     }
+
+    @Test
+    fun testPermanentRedirectUpdatesActiveAndRetiresOld() {
+        val manager = MirrorManager(
+            defaultBaseUrl = "https://primary.nekopoi.care",
+            mirrors = listOf("https://backup1.nekopoi.app", "https://backup2.nekopoi.link")
+        )
+
+        assertEquals("https://primary.nekopoi.care", manager.currentBase())
+
+        val success = manager.handlePermanentRedirect(
+            fromUrl = "https://primary.nekopoi.care",
+            toUrl = "https://backup1.nekopoi.app"
+        )
+        assertTrue(success)
+        assertEquals("https://backup1.nekopoi.app", manager.currentBase())
+    }
 }

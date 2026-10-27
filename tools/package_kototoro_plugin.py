@@ -86,6 +86,14 @@ def should_include(entry_name: str) -> bool:
     for pat in EXCLUDE_PATTERNS:
         if pat.search(entry_name):
             return False
+    # Exclude Kototoro host parser-api classes (provided by host parent ClassLoader)
+    if entry_name.startswith("org/skepsun/kototoro/parsers/"):
+        if not (entry_name.startswith("org/skepsun/kototoro/parsers/ContentParserFactoryKt") or
+                entry_name.startswith("org/skepsun/kototoro/parsers/model/ContentParserSource")):
+            return False
+    # Exclude host standard libraries and Android runtime classes
+    if entry_name.startswith(("android/", "okhttp3/", "org/jsoup/", "kotlin/", "kotlinx/")):
+        return False
     return True
 
 def collect_classes_from_dir(build_dir: str):

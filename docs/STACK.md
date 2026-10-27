@@ -48,6 +48,31 @@ Aniyomi (and compatible forks like Kototoro v2.3+) provides core networking, par
 
 ## 4. Dependabot Grouping & Safety Controls
 
+- `actions`: GitHub Actions updates (weekly).
+- `gradle`: Gradle wrapper & build plugins (weekly).
+- `host-runtime`: All `compileOnly` dependencies pinned to host runtime matrix with major/breaking updates strictly blocked.
+
+---
+
+## 5. Artifact Versioning Convention & Dual-Format Reconciliation
+
+Kaziyami distributes extensions across two distinct packaging formats derived from a single unified codebase:
+
+1. **Variant A: Aniyomi APK Extension Convention (`v14.x`)**
+   - **`libVersion`**: `"14"` (integer 14 representing upstream Aniyomi Extension API 14 compatibility).
+   - **`extVersionCode`**: Monotonically increasing integer (e.g. `2`).
+   - **APK Filename**: `kaziyami-<lang>.<slug>-v<libVersion>.<extVersionCode>.apk` (e.g. `kaziyami-id.nekopoi-v14.2.apk`).
+   - **Manifest**: `android:versionCode="2"`, `android:versionName="14.2"`.
+   - **Index (`repo/index.json`)**: `"version": "14.2"`, `"code": 2`.
+
+2. **Variant B: Kototoro JAR Plugin Convention (`v1.4.x`)**
+   - **Semantic Version**: `1.4.<extVersionCode>` (derived by mapping `libVersion` 14 to major/minor `1.4` and appending monotonic integer code).
+   - **JAR Filename**: `kaziyami-all-v1.4.<extVersionCode>.jar` and `kaziyami-<slug>-v1.4.<extVersionCode>.jar`.
+   - **Index (`repo/jar/index.json`)**: `"versionCode": 2`, `"versionName": "1.4.2"`.
+
+3. **Parity Invariant**:
+   Both representations share the identical integer `extVersionCode` (e.g. `2`). Host applications (Aniyomi and Kototoro) strictly evaluate `installedVersionCode < remoteVersionCode`, ensuring seamless update detection across both distribution channels.
+
 1. **Host-provided dependencies**: Ignore semver-major updates in `.github/dependabot.yml`.
 2. **Weekly Batching**: Minor and patch updates grouped weekly (`monday`).
 3. **Automated Verification**: The `runtime-compat` CI job runs `tools/verify_runtime_compat.py` to assert that no module specifies dependency versions outside the supported matrix in this document.

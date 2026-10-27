@@ -53,7 +53,20 @@ jobs:
         run: ./gradlew checkExtensionIcons
 
       - name: Run Build and Offline Tests with Coverage
-        run: ./gradlew check jacocoTestReport
+        run: ./gradlew check jacocoTestReport --continue
+
+      - name: Verify Test Counts and Execution Gates
+        if: success() || failure()
+        run: python tools/check_test_counts.py
+
+      - name: Upload Test Reports on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
 
       - name: Verify Version Bumps on PR
         if: github.event_name == 'pull_request'

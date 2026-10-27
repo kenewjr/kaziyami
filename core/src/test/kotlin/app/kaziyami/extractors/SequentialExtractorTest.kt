@@ -19,7 +19,7 @@ class SequentialExtractorTest {
 
         override fun canExtract(url: String): Boolean = url.contains(domainKeyword)
 
-        override fun extract(url: String, client: OkHttpClient): List<Video> {
+        override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
             probeCount.incrementAndGet()
             if (shouldSucceed) {
                 return listOf(Video("https://cdn.$domainKeyword/stream.mp4", "$name - 1080p", "https://cdn.$domainKeyword/stream.mp4"))
