@@ -4,11 +4,11 @@ plugins {
 
 dependencies {
     compileOnly(project(":core"))
-    compileOnly("com.squareup.okhttp3:okhttp:4.11.0")
+    compileOnly("com.squareup.okhttp3:okhttp:4.12.1")
 
     testImplementation(project(":core"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 }
 
 val packageHelloJar by tasks.registering(Exec::class) {
