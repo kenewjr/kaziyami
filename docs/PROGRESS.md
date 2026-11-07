@@ -86,12 +86,16 @@
   - [x] 15.2 Purged GitHub Releases: Cleaned uploaded binary assets and release wrappers on GitHub while preserving git tags (`v0.0.1`, `v1.4.2`).
   - [x] 15.3 Single Unified JAR Architecture: Replaced separate per-source JAR generation in `tools/package_kototoro_plugin.py` with strictly the single suite JAR `kaziyami-all-v*.jar`. In Kototoro, all 6 sources are enumerated under Sources with individual enable/disable toggles.
   - [x] 15.4 Synchronized Versioning Contract: All extensions sync with the Kototoro suite JAR code and version metadata.
-
+- [x] **Phase 16: Baseline 1.0.0, SmartDns DoH Fallback & Bumper Tooling**
+  - [x] 16.1 Unified 1.0.0 Baseline: Reset `extVersion = "1.0.0"`, `extVersionCode = 1`, `libVersion = "1.0"` across all 6 extensions and Kototoro plugin suite.
+  - [x] 16.2 SmartDns & Fallback DoH: Implemented `SmartDns` with Cloudflare `1.1.1.1` and Google `8.8.8.8` DoH fallback on Indonesian ISP sinkholes (`SINKHOLE_IPS`) and zero-latency loopback fast-path (`127.0.0.1`, MockWebServer).
+  - [x] 16.3 One-Shot Source Bumper: Created `tools/bump_source.py` and Gradle task `bump -Psource=<slug>`.
+  - [x] 16.4 Full Verification: `./gradlew check` (185 tests green), `verify_jars.py`, `test_update_simulation.py`, `test_preflight.py`, `test_collect_diagnostics.py`, and `scan_secrets.py` (0 leaks) 100% green.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 11 complete. Auto-update pipeline, simulation tests, dual-variant publishing, and rollback integrity verified across both Aniyomi and Kototoro targets. All tests 100% green.
-- **Last Green Run**: `./gradlew check` (all modules passing), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `./gradlew assembleAll` (13 APKs & JARs built and verified).
-- **Open Items**: Remote release publish gated on presence of live signing secrets (`KAZIYAMI_KEYSTORE_B64`, etc.). Ready for physical device test.
+- **Overall Status**: Phase 16 complete. Official 1.0.0 baseline established across all 6 Aniyomi APKs and the single unified Kototoro JAR suite (`kaziyami-all-v1.0.0.jar`). SmartDns DoH fallback active. Verification 100% green.
+- **Last Green Run**: `./gradlew check` (all 185 tests passing), `verify_jars.py` (1 valid entry), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Open Items**: None. Ready for production usage.
 

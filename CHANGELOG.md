@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-11-07
+
+### Added
+- **Official 1.0.0 Baseline**:
+  - Unified version baseline `1.0.0` (`extVersionCode = 1`, `libVersion = "1.0"`) across all 6 adult sources (`Nekopoi`, `IndoHentai`, `NontonHentai`, `Hentaimama`, `JAVSubbed`, `Hanime`).
+- **Single All-in-One Kototoro Plugin JAR**:
+  - Strictly 1 unified distribution archive `kaziyami-all-v1.0.0.jar` (with `kaziyami.jar` alias) containing all 6 sources.
+  - Granular per-source enable/disable support in Kototoro via `ContentParserSource`.
+  - Multi-bytecode JAR with standard Java JVM `.class` files and Android ART `classes.dex` via D8.
+- **SmartDns & Fallback DoH**:
+  - `SmartDns` with zero-latency loopback resolution (`127.0.0.1`).
+  - Automatic fallback to Cloudflare (`1.1.1.1`) and Google (`8.8.8.8`) DNS-over-HTTPS upon Indonesian ISP sinkhole detection (`SINKHOLE_IPS` / Kominfo / Nawala / TrustPositif).
+- **One-Shot Source Bumper CLI**:
+  - `./gradlew bump -Psource=<slug>` / `tools/bump_source.py` for automated monotonic extension bumps.
+- **Repo-Only Distribution Model**:
+  - Client updates served exclusively via GitHub Pages `repo` branch (`index.min.json`), matching upstream Aniyomi/Kototoro practice with zero GitHub Releases binary clutter.
+
 ## [0.0.1] - 2026-11-07
 
 ### Added

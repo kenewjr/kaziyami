@@ -53,6 +53,7 @@ class VersionConsistencyContractTest {
             assertTrue(buildFile.exists(), "Source build file must exist: ${buildFile.path}")
 
             val content = buildFile.readText()
+            val extMatch = Regex("""val\s+extVersion\s*=\s*"([^"]+)"""").find(content)
             val codeMatch = Regex("""val\s+extVersionCode\s*=\s*(\d+)""").find(content)
             val libMatch = Regex("""val\s+libVersion\s*=\s*"([^"]+)"""").find(content)
 
@@ -67,7 +68,7 @@ class VersionConsistencyContractTest {
             val aniyomiEntry = aniyomiMap[aniyomiPkg]?.jsonObject
             assertNotNull(aniyomiEntry, "Aniyomi index must contain entry for $aniyomiPkg")
 
-            val expectedAniyomiVersion = "$rawLibVersion.$extVersionCode"
+            val expectedAniyomiVersion = extMatch?.groupValues?.get(1) ?: "$rawLibVersion.$extVersionCode"
             val actualAniyomiVersion = aniyomiEntry!!["version"]?.jsonPrimitive?.content
             assertEquals(expectedAniyomiVersion, actualAniyomiVersion, "Aniyomi index version mismatch for $slug")
 
@@ -84,7 +85,7 @@ class VersionConsistencyContractTest {
                 it.jsonObject["name"]?.jsonPrimitive?.content
             } ?: emptyList()
             assertTrue(suiteSources.contains(name), "Kototoro unified suite must contain source $name")
-            assertEquals("0.0.1", suiteEntry["version"]?.jsonPrimitive?.content, "Kototoro version must match suite version")
+            assertEquals("1.0.0", suiteEntry["version"]?.jsonPrimitive?.content, "Kototoro version must match suite version")
             assertEquals(1, suiteEntry["code"]?.jsonPrimitive?.content?.toInt(), "Kototoro code must match suite code")
         }
     }

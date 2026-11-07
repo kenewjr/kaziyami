@@ -120,6 +120,18 @@ tasks.register<Exec>("bumpChanged") {
     commandLine("python", "tools/bump_changed.py", "--bump")
 }
 
+tasks.register("bump") {
+    group = "versioning"
+    description = "Bumps a single extension version: ./gradlew bump -Psource=<slug>"
+    doLast {
+        val src = project.findProperty("source") as? String
+            ?: throw GradleException("Specify source: ./gradlew bump -Psource=<slug>")
+        project.exec {
+            commandLine("python", "tools/bump_source.py", src)
+        }
+    }
+}
+
 tasks.register<Exec>("checkBump") {
     group = "versioning"
     description = "Verifies that extensions affected by changes had their version bumped."
@@ -194,7 +206,8 @@ val verifyJars by tasks.registering(Exec::class) {
     dependsOn(":samples:kototoro-hello:packageHelloJar")
     doFirst {
         val jarDir = file("repo/jar/apk")
-        val suiteJar = jarDir.listFiles { _, name -> name.startsWith("kaziyami-all-v") && name.endsWith(".jar") }?.firstOrNull()
+        val suiteJar = jarDir.listFiles { _, name -> name.startsWith("kaziyami-all-v") && name.endsWith(".jar") }
+            ?.sortedByDescending { it.name }?.firstOrNull()
             ?: throw GradleException("kaziyami-all-v*.jar not found in $jarDir")
         commandLine(
             "python", "tools/verify_jars.py",

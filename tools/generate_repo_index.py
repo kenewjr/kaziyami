@@ -70,12 +70,14 @@ def get_source_version(src_dir: str):
     with open(build_file, "r", encoding="utf-8") as f:
         content = f.read()
     code_m = re.search(r'val\s+extVersionCode\s*=\s*(\d+)', content)
-    version_code = int(code_m.group(1)) if code_m else 2
-    lib_m = re.search(r'val\s+libVersion\s*=\s*"([^"]+)"', content)
-    lib_ver = lib_m.group(1) if lib_m else "1.4"
-    if lib_ver == "14":
-        lib_ver = "1.4"
-    version_name = f"{lib_ver}.{version_code}"
+    version_code = int(code_m.group(1)) if code_m else 1
+    ext_ver_m = re.search(r'val\s+extVersion\s*=\s*"([^"]+)"', content)
+    if ext_ver_m:
+        version_name = ext_ver_m.group(1)
+    else:
+        lib_m = re.search(r'val\s+libVersion\s*=\s*"([^"]+)"', content)
+        lib_ver = lib_m.group(1) if lib_m else "1.0"
+        version_name = f"{lib_ver}.{version_code}"
     return {
         "versionCode": version_code,
         "versionName": version_name

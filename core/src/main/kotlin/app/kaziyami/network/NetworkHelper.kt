@@ -3,6 +3,7 @@ package app.kaziyami.network
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.Dns
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
@@ -11,6 +12,10 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.URL
+import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -408,6 +413,103 @@ class SimpleCookieJar : CookieJar {
 }
 
 /**
+ * Smart DNS resolver with automatic DNS-over-HTTPS (DoH) fallback.
+ * Bypasses ISP sinkhole blocking (TrustPositif/Kominfo/Indihome) and NXDOMAIN errors
+ * by querying Cloudflare (1.1.1.1) and Google (8.8.8.8) DoH endpoints over HTTPS.
+ */
+class SmartDns(
+    private val systemDns: Dns = Dns.SYSTEM,
+    private val enableDohFallback: Boolean = true
+) : Dns {
+
+    private val cache = ConcurrentHashMap<String, List<InetAddress>>()
+
+    override fun lookup(hostname: String): List<InetAddress> {
+        cache[hostname]?.let { return it }
+
+        // Localhost and loopback IPv4 explicitly bypass any DNS overhead or IPv6 SYN delays
+        if (hostname.equals("localhost", ignoreCase = true) || hostname == "127.0.0.1") {
+            val loopback = listOf(InetAddress.getByName("127.0.0.1"))
+            cache[hostname] = loopback
+            return loopback
+        }
+
+        // Direct IP literals resolve directly via system DNS
+        if (hostname.matches(Regex("""^\d+\.\d+\.\d+\.\d+$""")) || hostname.contains(":")) {
+            return systemDns.lookup(hostname)
+        }
+
+        try {
+            val systemAddresses = systemDns.lookup(hostname)
+            val isLoopback = systemAddresses.any { it.isLoopbackAddress || it.hostAddress == "127.0.0.1" }
+            val isSinkholed = systemAddresses.any { it.hostAddress in SINKHOLE_IPS }
+            if ((isLoopback || !isSinkholed) && systemAddresses.isNotEmpty()) {
+                cache[hostname] = systemAddresses
+                return systemAddresses
+            }
+        } catch (_: UnknownHostException) {
+            // System DNS failed, fallback to DoH
+        } catch (_: SecurityException) {
+            // Android sandbox constraint
+        }
+
+        if (!enableDohFallback) {
+            throw UnknownHostException("Unable to resolve host: $hostname (system DNS failed)")
+        }
+
+        val dohAddresses = resolveDoh(hostname)
+        if (dohAddresses.isNotEmpty()) {
+            cache[hostname] = dohAddresses
+            return dohAddresses
+        }
+
+        throw UnknownHostException("Unable to resolve host: $hostname (System & DoH failed)")
+    }
+
+    private fun resolveDoh(hostname: String): List<InetAddress> {
+        val providers = listOf(
+            "https://1.1.1.1/dns-query?name=$hostname&type=A",
+            "https://8.8.8.8/resolve?name=$hostname&type=A"
+        )
+
+        for (urlStr in providers) {
+            try {
+                val conn = URL(urlStr).openConnection() as HttpURLConnection
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                conn.setRequestProperty("Accept", "application/dns-json")
+                conn.setRequestProperty("User-Agent", BrowserHeaders.DEFAULT_USER_AGENT)
+                if (conn.responseCode == 200) {
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    val ips = Regex(""""data"\s*:\s*"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"""")
+                        .findAll(body)
+                        .map { it.groupValues[1] }
+                        .filter { it !in SINKHOLE_IPS }
+                        .toList()
+
+                    if (ips.isNotEmpty()) {
+                        return ips.map { InetAddress.getByName(it) }
+                    }
+                }
+            } catch (_: Exception) {
+                // Try next DoH provider
+            }
+        }
+        return emptyList()
+    }
+
+    companion object {
+        val SINKHOLE_IPS = setOf(
+            "36.86.63.181",
+            "36.86.63.182",
+            "180.250.247.3",
+            "118.98.117.130",
+            "10.10.10.10"
+        )
+    }
+}
+
+/**
  * Builds compliant OkHttpClient instances configured with connection pooling, rate limits, and challenge detection.
  */
 object NetworkFactory {
@@ -416,7 +518,8 @@ object NetworkFactory {
         permitsPerSecond: Double = NetworkConfig.DEFAULT_REQUESTS_PER_PERIOD.toDouble(),
         maxRetries: Int = NetworkConfig.MAX_RETRIES_ON_429.coerceAtLeast(2),
         cookieJar: CookieJar = SimpleCookieJar(),
-        circuitBreaker: HostCircuitBreaker = HostCircuitBreaker()
+        circuitBreaker: HostCircuitBreaker = HostCircuitBreaker(),
+        dns: Dns = SmartDns()
     ): OkHttpClient {
         val rateLimiter = TokenBucketRateLimiter(
             defaultCapacity = permitsPerSecond.coerceAtLeast(1.0),
@@ -425,6 +528,7 @@ object NetworkFactory {
         val pool = ConnectionPool(5, 5, TimeUnit.MINUTES)
 
         return baseClient.newBuilder()
+            .dns(dns)
             .connectionPool(pool)
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
             .cookieJar(cookieJar)

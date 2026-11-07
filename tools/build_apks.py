@@ -69,6 +69,8 @@ def parse_extension_metadata(dir_path):
     ext_class = re.search(r'val\s+extClass\s*=\s*"([^"]+)"', content).group(1)
     ext_version_code = int(re.search(r'val\s+extVersionCode\s*=\s*(\d+)', content).group(1))
     lib_version = re.search(r'val\s+libVersion\s*=\s*"([^"]+)"', content).group(1)
+    ext_ver_m = re.search(r'val\s+extVersion\s*=\s*"([^"]+)"', content)
+    version = ext_ver_m.group(1) if ext_ver_m else f"{lib_version}.{ext_version_code}"
     is_nsfw = "true" in re.search(r'val\s+isNsfw\s*=\s*(true|false)', content).group(1)
 
     return {
@@ -76,7 +78,7 @@ def parse_extension_metadata(dir_path):
         "extClass": ext_class,
         "extVersionCode": ext_version_code,
         "libVersion": lib_version,
-        "version": f"{lib_version}.{ext_version_code}",
+        "version": version,
         "isNsfw": is_nsfw
     }
 
