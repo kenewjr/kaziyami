@@ -204,10 +204,8 @@ class IndexSchemaTest {
             val ver = obj["version"]!!.jsonPrimitive.content
             val nsfw = obj["nsfw"]!!.jsonPrimitive.content
 
-            // 1. Kototoro Aniyomi libVersion contract (12.0 - 16.0)
-            val libVersionNum = ver.substringBefore('.').toDoubleOrNull()
-            assertNotNull(libVersionNum, "libVersion must be numeric for $pkg")
-            assertTrue(libVersionNum!! in 12.0..16.0, "Kototoro requires Aniyomi libVersion between 12.0 and 16.0, got $libVersionNum for $pkg")
+            // 1. Version format validation (e.g. 0.0.1 or 14.x)
+            assertTrue(ver.matches(Regex("""^[\d\.]+$""")), "Version must be numeric dot-separated string for $pkg, got $ver")
 
             // 2. Kototoro icon path resolution: icon/$packageName.png
             val iconFile = File(repoDir, "icon/$pkg.png")

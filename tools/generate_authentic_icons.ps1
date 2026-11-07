@@ -66,3 +66,4 @@ $jav.Dispose()
 $hanime = [System.Drawing.Image]::FromFile("$rawDir\hanime_touch_pre.png")
 Create-Icon -name "hanime" -srcImg $hanime -maxBox 192
 $hanime.Dispose()
+

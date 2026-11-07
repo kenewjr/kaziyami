@@ -21,7 +21,7 @@ import app.kaziyami.engine.PreferenceStore
  */
 object KototoroPlugin {
 
-    const val PLUGIN_VERSION = "1.4.1"
+    const val PLUGIN_VERSION = "0.0.1"
     const val PLUGIN_NAME = "Kaziyami Kototoro Suite"
 
     private val registeredSources = mutableListOf<KaziyamiSource>()

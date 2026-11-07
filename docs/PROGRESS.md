@@ -77,6 +77,10 @@
   - [x] 13.2 Unified Kototoro Repository Index: Configured `tools/generate_repo_index.py` so `repo/jar/index.min.json` exposes strictly the unified all-in-one suite (`app.kaziyami.kototoro` / `kaziyami-all-v1.4.2.jar`) containing all 6 sources, matching official Kototoro parser repositories (`k-parsers-r`).
   - [x] 13.3 Update & Verification Suite: Updated `tools/test_update_simulation.py` to validate single-suite Kototoro schema and monotonic update policy. Passed full test suite (unit, contract, bytecode, update simulation, preflight, secrets).
   - [x] 13.4 Authentic Website Logos Pipeline: Sourced authentic official icons and logos directly from all 6 platforms (Nekopoi cat emblem, IndoHentai favicon, NontonHentai 300x300 icon, Hentaimama mark, JAVSubbed 100x100 icon, Hanime 152x152 Apple touch icon). Archived raw assets in `art/raw_icons/` and synchronized 192x192 PNGs to APK launchers and repository catalogs.
+- [x] **Phase 14: Baseline v0.0.1 Alignment & Unified Release**
+  - [x] 14.1 Reset Extension Versioning to `0.0.1`: Set `libVersion = "0.0"` and `extVersionCode = 1` across all 6 sources (`Nekopoi`, `IndoHentai`, `NontonHentai`, `Hentaimama`, `JAVSubbed`, `Hanime`).
+  - [x] 14.2 Artifact & Repo Index Alignment: Assembled and verified `kaziyami-*-v0.0.1.apk` and `kaziyami-all-v0.0.1.jar`. Updated repo indexes (`repo/index.min.json` and `repo/jar/index.min.json`) with version code 1 and version string `"0.0.1"`.
+  - [x] 14.3 Full Suite Verification: All tests and verification scripts 100% green. Ready for remote push and release tag.
 
 ---
 

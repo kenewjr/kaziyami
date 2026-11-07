@@ -48,7 +48,7 @@ class VersionConsistencyContractTest {
         val kototoroArray = json.parseToJsonElement(kototoroIndexFile.readText()).jsonArray
         val kototoroMap = kototoroArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
 
-        for ((lang, slug, _) in sources) {
+        for ((lang, slug, name) in sources) {
             val buildFile = File(rootDir, "src/$lang/$slug/build.gradle.kts")
             assertTrue(buildFile.exists(), "Source build file must exist: ${buildFile.path}")
 
@@ -76,18 +76,16 @@ class VersionConsistencyContractTest {
             assertEquals(expectedApkName, actualApkName, "Aniyomi APK filename mismatch for $slug")
 
             // 2. Variant B (Kototoro JAR) Invariants
-            val kototoroEntry = kototoroMap[aniyomiPkg]?.jsonObject
-            assertNotNull(kototoroEntry, "Kototoro index must contain entry for $aniyomiPkg")
+            // Kototoro uses unified suite (app.kaziyami.kototoro) containing all sources
+            val suiteEntry = kototoroMap["app.kaziyami.kototoro"]?.jsonObject
+            assertNotNull(suiteEntry, "Kototoro index must contain unified suite app.kaziyami.kototoro")
 
-            val expectedKototoroVersion = "1.4.$extVersionCode"
-            val actualKototoroVersion = kototoroEntry!!["version"]?.jsonPrimitive?.content
-            val actualKototoroCode = kototoroEntry["code"]?.jsonPrimitive?.content?.toInt()
-            assertEquals(expectedKototoroVersion, actualKototoroVersion, "Kototoro version mismatch for $slug")
-            assertEquals(extVersionCode, actualKototoroCode, "Kototoro code mismatch for $slug")
-
-            val expectedJarApk = "kaziyami-$slug-v$expectedKototoroVersion.jar"
-            val actualJarApk = kototoroEntry["apk"]?.jsonPrimitive?.content
-            assertEquals(expectedJarApk, actualJarApk, "Kototoro apk field mismatch for $slug")
+            val suiteSources = suiteEntry!!["sources"]?.jsonArray?.map {
+                it.jsonObject["name"]?.jsonPrimitive?.content
+            } ?: emptyList()
+            assertTrue(suiteSources.contains(name), "Kototoro unified suite must contain source $name")
+            assertEquals("0.0.1", suiteEntry["version"]?.jsonPrimitive?.content, "Kototoro version must match suite version")
+            assertEquals(1, suiteEntry["code"]?.jsonPrimitive?.content?.toInt(), "Kototoro code must match suite code")
         }
     }
 }

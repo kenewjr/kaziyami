@@ -209,7 +209,7 @@ def package():
     all_classes.update(all_source_classes)
 
     max_code = max(get_source_version(s["src_dir"])["versionCode"] for s in SOURCES)
-    all_version_name = f"1.4.{max_code}"
+    all_version_name = get_source_version(SOURCES[0]["src_dir"])["versionName"]
     all_jar_name = f"kaziyami-all-v{all_version_name}.jar"
     all_jar_path = os.path.join(REPO_JAR_DIR, all_jar_name)
 

@@ -239,5 +239,6 @@ jobs:
             repo/apk/*.apk
             repo/jar/*.jar
             repo/sha256sums.txt
+            repo/jar/sha256sums.txt
           generate_release_notes: false
 

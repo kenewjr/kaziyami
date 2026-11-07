@@ -192,13 +192,18 @@ val verifyJars by tasks.registering(Exec::class) {
     description = "Validates Kototoro plugin JARs and repository index against the format contract."
     dependsOn(tasks.named("packageJar"))
     dependsOn(":samples:kototoro-hello:packageHelloJar")
-    commandLine(
-        "python", "tools/verify_jars.py",
-        "--jars",
-        "samples/kototoro-hello/build/libs/kaziyami-hello.jar",
-        "repo/jar/apk/kaziyami-all-v1.4.2.jar",
-        "--repo-dir", "repo/jar"
-    )
+    doFirst {
+        val jarDir = file("repo/jar/apk")
+        val suiteJar = jarDir.listFiles { _, name -> name.startsWith("kaziyami-all-v") && name.endsWith(".jar") }?.firstOrNull()
+            ?: throw GradleException("kaziyami-all-v*.jar not found in $jarDir")
+        commandLine(
+            "python", "tools/verify_jars.py",
+            "--jars",
+            "samples/kototoro-hello/build/libs/kaziyami-hello.jar",
+            suiteJar.relativeTo(projectDir).path.replace('\\', '/'),
+            "--repo-dir", "repo/jar"
+        )
+    }
 }
 
 tasks.register("check") {

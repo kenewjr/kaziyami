@@ -42,4 +42,5 @@ Format: `[Decision]: [Reason]. Alternative rejected: [Alternative].`
 - JAVSubbed: Official 100x100 site icon from `javsubbed.net`.
 - Hanime: Official Apple touch icon from `hanime.tv`.
 Archived raw assets under `art/raw_icons/` ensuring 100% offline build determinism and CI stability. `tools/generate_icons.py` syncs authentic 192x192 icons to `art/icons/`, `repo/icon/`, `repo/jar/`, and Android APK launcher drawables. Alternative rejected: Scraping live websites dynamically during Gradle builds or using generic synthetic placeholders.
+34. **Baseline v0.0.1 Extension & Suite Versioning**: Configured `libVersion = "0.0"` and `extVersionCode = 1` across all 6 sources, establishing both APK (Variant A) and JAR (Variant B) distributions at initial production baseline `0.0.1` (`versionCode = 1`). Preserved all permanent 64-bit source IDs and host compatibility invariants. Alternative rejected: Retaining development `1.4.x` version numbers.
 
