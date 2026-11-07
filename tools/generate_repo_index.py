@@ -288,7 +288,7 @@ def generate_kototoro_repo():
         "code": suite_code,
         "version": suite_ver,
         "nsfw": 1,
-        "icon": "kaziyami.png",
+        "icon": "app.kaziyami.kototoro.png",
         "sha256": all_jar_sha,
         "size": all_jar_size,
         "sources": all_sources

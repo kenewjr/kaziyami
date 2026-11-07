@@ -162,6 +162,7 @@ EXT_PACKAGES = {
     "hentaimama": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
     "javsubbed": "eu.kanade.tachiyomi.animeextension.en.javsubbed",
     "hanime": "eu.kanade.tachiyomi.animeextension.en.hanime",
+    "kaziyami": "app.kaziyami.kototoro",
 }
 
 def main():

@@ -91,11 +91,15 @@
   - [x] 16.2 SmartDns & Fallback DoH: Implemented `SmartDns` with Cloudflare `1.1.1.1` and Google `8.8.8.8` DoH fallback on Indonesian ISP sinkholes (`SINKHOLE_IPS`) and zero-latency loopback fast-path (`127.0.0.1`, MockWebServer).
   - [x] 16.3 One-Shot Source Bumper: Created `tools/bump_source.py` and Gradle task `bump -Psource=<slug>`.
   - [x] 16.4 Full Verification: `./gradlew check` (185 tests green), `verify_jars.py`, `test_update_simulation.py`, `test_preflight.py`, `test_collect_diagnostics.py`, and `scan_secrets.py` (0 leaks) 100% green.
+- [x] **Phase 17: Aniyomi Framework ABI Fix (libVersion 14) & Kototoro JAR Icon Embedding**
+  - [x] 17.1 Restore Aniyomi ABI Contract: Restored `val libVersion = "14"` across all 6 sources while keeping `extVersion = "1.0.0"` and bumping `extVersionCode = 2`. Fixes Kototoro rejection: `1.00 cannot be installed because its library version 1.0 is outside kototoro supported range`.
+  - [x] 17.2 Kototoro JAR Icon Integration: Added `app.kaziyami.kototoro.png` mapping in `tools/generate_icons.py`. Embedded `icon.png`, `kaziyami.png`, `app.kaziyami.kototoro.png`, and `res/drawable/ic_launcher.png` inside `kaziyami-all-v1.0.0.jar`. Added `android:icon="@drawable/ic_launcher"` to plugin manifest.
+  - [x] 17.3 Contract & Update Verification: Dynamic version code contract check in `VersionConsistencyContractTest.kt`. All 185 tests and verification tools 100% green.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 16 complete. Official 1.0.0 baseline established across all 6 Aniyomi APKs and the single unified Kototoro JAR suite (`kaziyami-all-v1.0.0.jar`). SmartDns DoH fallback active. Verification 100% green.
+- **Overall Status**: Phase 17 complete. `libVersion` pinned to ABI level `14` (`versionCode = 2`, `versionName = 1.0.0`). Kototoro JAR icon embedded. Full verification suite 100% green.
 - **Last Green Run**: `./gradlew check` (all 185 tests passing), `verify_jars.py` (1 valid entry), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for production usage.
 

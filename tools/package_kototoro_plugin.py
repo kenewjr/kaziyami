@@ -64,11 +64,14 @@ def make_manifest_xml(package_name: str, ext_class: str, display_name: str, vers
     package="{package_name}"
     android:versionName="{version_name}"
     android:versionCode="{version_code}">
-    <application>
+    <application
+        android:label="{display_name}"
+        android:icon="@drawable/ic_launcher">
         <meta-data android:name="tachiyomi.animeextension.class" android:value="{ext_class}" />
         <meta-data android:name="tachiyomi.animeextension.nsfw" android:value="1" />
         <meta-data android:name="tachiyomix.name" android:value="{display_name}" />
-        <meta-data android:name="tachiyomix.extensionLib" android:value="1.4" />
+        <meta-data android:name="tachiyomix.extensionLib" android:value="14" />
+        <meta-data android:name="tachiyomi.animeextension.version" android:value="14" />
     </application>
 </manifest>
 """
@@ -230,6 +233,15 @@ def package():
         with zipfile.ZipFile(all_jar_path, "w", zipfile.ZIP_DEFLATED) as zout:
             # AndroidManifest.xml
             zout.writestr("AndroidManifest.xml", manifest_xml.strip())
+            # Embed icons for host UI and local inspection
+            icon_path = os.path.join(ROOT_DIR, "art", "icons", "kaziyami.png")
+            if os.path.exists(icon_path):
+                with open(icon_path, "rb") as f_icon:
+                    icon_bytes = f_icon.read()
+                zout.writestr("icon.png", icon_bytes)
+                zout.writestr("kaziyami.png", icon_bytes)
+                zout.writestr("app.kaziyami.kototoro.png", icon_bytes)
+                zout.writestr("res/drawable/ic_launcher.png", icon_bytes)
             # classes.dex if generated
             if dex_path and os.path.exists(dex_path):
                 zout.write(dex_path, "classes.dex")
