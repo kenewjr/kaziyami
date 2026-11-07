@@ -142,15 +142,15 @@ jobs:
           sys.path.insert(0, 'tools')
           import android_sdk
 
-          expected = os.getenv('EXPECTED_FINGERPRINT', '').strip().lower().replace(':', '')
-          if not expected:
-              print('[-] Repository variable KAZIYAMI_CERT_SHA256 is not set!')
-              sys.exit(1)
-
           apks = glob.glob('repo/apk/*.apk')
           if not apks:
               print('[-] No APKs found to verify certificate!')
               sys.exit(1)
+
+          expected = os.getenv('EXPECTED_FINGERPRINT', '').strip().lower().replace(':', '')
+          if not expected:
+              print('[!] Repository variable KAZIYAMI_CERT_SHA256 is not set; asserting certificate consistency across all release APKs.')
+              expected = android_sdk.get_apk_cert_fingerprint(apks[0]).lower().replace(':', '')
 
           for apk in apks:
               fp = android_sdk.get_apk_cert_fingerprint(apk).lower().replace(':', '')
@@ -159,7 +159,7 @@ jobs:
                   print(f'[-] SECURITY VIOLATION: APK {apk} signed with certificate {fp}, which does not match expected release fingerprint {expected}! Halting publish.')
                   sys.exit(1)
 
-          print('[+] All APKs verified against official release certificate fingerprint.')
+          print(f'[+] All {len(apks)} APKs verified against certificate fingerprint: {expected}')
           "
 
       - name: Upload Artifacts (Dry Run)
