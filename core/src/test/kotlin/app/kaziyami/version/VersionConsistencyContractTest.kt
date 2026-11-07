@@ -86,7 +86,7 @@ class VersionConsistencyContractTest {
             } ?: emptyList()
             assertTrue(suiteSources.contains(name), "Kototoro unified suite must contain source $name")
             assertEquals("1.0.0", suiteEntry["version"]?.jsonPrimitive?.content, "Kototoro version must match suite version")
-            assertEquals(1, suiteEntry["code"]?.jsonPrimitive?.content?.toInt(), "Kototoro code must match suite code")
+            assertEquals(extVersionCode, suiteEntry["code"]?.jsonPrimitive?.content?.toInt(), "Kototoro code must match suite code")
         }
     }
 }
