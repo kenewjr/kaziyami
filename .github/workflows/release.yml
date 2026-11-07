@@ -140,7 +140,7 @@ jobs:
           python -c "
           import os, sys, glob
           sys.path.insert(0, 'tools')
-          import android_sdk
+          from get_apk_fingerprint import get_apk_fingerprint
 
           apks = glob.glob('repo/apk/*.apk')
           if not apks:
@@ -150,10 +150,18 @@ jobs:
           expected = os.getenv('EXPECTED_FINGERPRINT', '').strip().lower().replace(':', '')
           if not expected:
               print('[!] Repository variable KAZIYAMI_CERT_SHA256 is not set; asserting certificate consistency across all release APKs.')
-              expected = android_sdk.get_apk_cert_fingerprint(apks[0]).lower().replace(':', '')
+              raw_fp = get_apk_fingerprint(apks[0])
+              if not raw_fp:
+                  print(f'[-] Failed to extract fingerprint from {apks[0]}')
+                  sys.exit(1)
+              expected = raw_fp.lower().replace(':', '')
 
           for apk in apks:
-              fp = android_sdk.get_apk_cert_fingerprint(apk).lower().replace(':', '')
+              raw_fp = get_apk_fingerprint(apk)
+              if not raw_fp:
+                  print(f'[-] Failed to extract fingerprint from {apk}')
+                  sys.exit(1)
+              fp = raw_fp.lower().replace(':', '')
               print(f'[+] {os.path.basename(apk)} cert fingerprint: {fp}')
               if fp != expected:
                   print(f'[-] SECURITY VIOLATION: APK {apk} signed with certificate {fp}, which does not match expected release fingerprint {expected}! Halting publish.')
