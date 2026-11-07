@@ -23,11 +23,17 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def fetch_url(url, retries=5, delay=5):
     last_err = None
+    sep = "&" if "?" in url else "?"
     for attempt in range(1, retries + 1):
         try:
+            busted_url = f"{url}{sep}_={int(time.time() * 1000)}"
             req = urllib.request.Request(
-                url,
-                headers={"User-Agent": "Kaziyami-Repo-Verifier/1.0", "Cache-Control": "no-cache"}
+                busted_url,
+                headers={
+                    "User-Agent": "Kaziyami-Repo-Verifier/1.0",
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                }
             )
             with urllib.request.urlopen(req, timeout=30) as resp:
                 if resp.status == 200:
@@ -71,7 +77,10 @@ def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5):
         if line:
             parts = line.split(None, 1)
             if len(parts) == 2:
-                sha_map[parts[1].strip()] = parts[0].strip()
+                file_hash = parts[0].strip()
+                file_path = parts[1].strip()
+                sha_map[file_path] = file_hash
+                sha_map[os.path.basename(file_path)] = file_hash
 
     # 4. Verify each extension entry
     print(f"[+] Verifying {len(index_data)} extensions in index...")
@@ -89,7 +98,7 @@ def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5):
             raise ValueError(f"APK {apk_name} has invalid ZIP magic: {apk_bytes[:4].hex()}")
 
         actual_sha = hashlib.sha256(apk_bytes).hexdigest()
-        expected_sha = sha_map.get(apk_name)
+        expected_sha = sha_map.get(apk_name) or sha_map.get(f"apk/{apk_name}")
         if not expected_sha:
             raise ValueError(f"APK {apk_name} missing from sha256sums.txt")
         if actual_sha != expected_sha:
@@ -146,12 +155,16 @@ def verify_published_kototoro_repo(owner_repo, branch="repo", retries=5, delay=5
         if line:
             parts = line.split(None, 1)
             if len(parts) == 2:
-                sha_map[parts[1].strip()] = parts[0].strip()
+                file_hash = parts[0].strip()
+                file_path = parts[1].strip()
+                sha_map[file_path] = file_hash
+                sha_map[os.path.basename(file_path)] = file_hash
 
-    # 4. Verify each JAR listed in sha256sums
-    print(f"[+] Verifying {len(sha_map)} JARs in Kototoro repo...")
-    for jar_name, expected_sha in sha_map.items():
-        jar_url = f"{base_raw}/{jar_name}"
+    # 4. Verify each JAR listed in Kototoro index
+    print(f"[+] Verifying {len(index_data)} packages in Kototoro index...")
+    for entry in index_data:
+        jar_name = entry["apk"]
+        jar_url = f"{base_raw}/apk/{jar_name}"
         print(f"  -> Verifying JAR: {jar_name} ...")
         jar_bytes, status = fetch_url(jar_url, retries=retries, delay=delay)
         if status != 200:
@@ -160,10 +173,15 @@ def verify_published_kototoro_repo(owner_repo, branch="repo", retries=5, delay=5
             raise ValueError(f"JAR {jar_name} has invalid ZIP magic: {jar_bytes[:4].hex()}")
 
         actual_sha = hashlib.sha256(jar_bytes).hexdigest()
+        expected_sha = sha_map.get(jar_name) or sha_map.get(f"apk/{jar_name}")
+        if not expected_sha:
+            raise ValueError(f"JAR {jar_name} missing from sha256sums.txt")
         if actual_sha != expected_sha:
             raise ValueError(f"SHA-256 mismatch for {jar_name}: got {actual_sha}, expected {expected_sha}")
 
-        local_jar = os.path.join(ROOT_DIR, "repo", "jar", jar_name)
+        local_jar = os.path.join(ROOT_DIR, "repo", "jar", "apk", jar_name)
+        if not os.path.exists(local_jar):
+            local_jar = os.path.join(ROOT_DIR, "repo", "jar", jar_name)
         if os.path.exists(local_jar):
             local_size = os.path.getsize(local_jar)
             if len(jar_bytes) != local_size:
