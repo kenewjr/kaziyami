@@ -292,37 +292,8 @@ def generate_kototoro_repo():
         "sources": all_sources
     })
 
-    # 2. Individual source entries
-    for s in SOURCES_DEF:
-        name, lang, slug = s["name"], s["lang"], s["slug"]
-        sid = source_ids.get((name, lang), "0")
-        s_ver = get_source_version(f"src/{lang}/{slug}")
-        s_jar = f"kaziyami-{slug}-v{s_ver['versionName']}.jar"
-        s_jar_path = os.path.join(jar_apk_dir, s_jar)
-        if not os.path.exists(s_jar_path):
-            s_jar_path = os.path.join(JAR_DIR, s_jar)
-        s_jar_size = os.path.getsize(s_jar_path) if os.path.exists(s_jar_path) else 0
-        s_jar_sha = sha256_file(s_jar_path) if os.path.exists(s_jar_path) else ""
-
-        extensions.append({
-            "name": f"Kaziyami: {name}",
-            "pkg": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}",
-            "apk": s_jar,
-            "lang": lang,
-            "code": s_ver["versionCode"],
-            "version": s_ver["versionName"],
-            "nsfw": 1,
-            "icon": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}.png",
-            "sha256": s_jar_sha,
-            "size": s_jar_size,
-            "sources": [
-                {
-                    "name": name,
-                    "id": sid,
-                    "lang": lang
-                }
-            ]
-        })
+    # Note: Kototoro repository index exposes unified suite (app.kaziyami.kototoro)
+    # containing all sources, identical to official Kototoro parser repositories.
 
     # 1. repo/jar/index.json
     jar_index_path = os.path.join(JAR_DIR, "index.json")

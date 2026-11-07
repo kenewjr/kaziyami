@@ -39,7 +39,9 @@ class TestUpdateSimulation(unittest.TestCase):
 
         # In verified Kototoro schema, index is a direct List<ExtensionIndexDto> array
         jar_extensions = jar_data
-        self.assertEqual(len(jar_extensions), 7)  # Suite + 6 individual sources
+        self.assertEqual(len(jar_extensions), 1)  # Unified suite app.kaziyami.kototoro
+        self.assertEqual(jar_extensions[0]["pkg"], "app.kaziyami.kototoro")
+        self.assertEqual(len(jar_extensions[0]["sources"]), 6)
         self.assertEqual(len(apk_data), 6)  # 6 extensions
 
         # Verify versionCode (field 'code') and sha256 presence

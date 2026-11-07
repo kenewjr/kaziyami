@@ -22,10 +22,16 @@ abstract class AnimeHttpSource : AnimeSource {
     open val client: OkHttpClient = network.client
     open val headers: Headers by lazy { BrowserHeaders.defaultHeaders(baseUrl) }
 
-    fun GET(url: String, headers: Headers = this.headers): Request =
+    open fun GET(url: String): Request =
         Request.Builder().url(url).headers(headers).build()
 
-    fun POST(url: String, headers: Headers = this.headers, body: okhttp3.RequestBody): Request =
+    open fun GET(url: String, headers: Headers): Request =
+        Request.Builder().url(url).headers(headers).build()
+
+    open fun POST(url: String, body: okhttp3.RequestBody): Request =
+        Request.Builder().url(url).headers(headers).post(body).build()
+
+    open fun POST(url: String, headers: Headers, body: okhttp3.RequestBody): Request =
         Request.Builder().url(url).headers(headers).post(body).build()
 
     fun Response.asJsoup(): org.jsoup.nodes.Document =

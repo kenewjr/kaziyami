@@ -72,6 +72,10 @@
   - [x] 12.3 Logo Index Integration: Added `"icon"` metadata pointing to `${pkg}.png` in both `repo/index.min.json` and `repo/jar/index.min.json`.
   - [x] 12.4 GitHub Release Filename Collision Fix: Fixed `softprops/action-gh-release@v2` step in `.github/workflows/release.yml` by removing duplicated paths (`repo/jar/apk/*.jar`, duplicate `sha256sums.txt`).
   - [x] 12.5 Issues & PR Triage: Analyzed and closed Dependabot PRs (#2, #4, #5, #6, #3) to protect Aniyomi/Kototoro ClassLoader stability per Decision 20; closed Issue #7 with false-positive explanation.
+- [x] **Phase 13: Unified Kototoro Suite & Host ABI Compatibility (`GET$default` Fix)**
+  - [x] 13.1 `GET$default` ABI Fix: Replaced Kotlin default parameters in `AnimeHttpSource.GET` and `POST` with explicit Java/Kotlin overloads. Verified via `javap` bytecode disassembly that invocations emit direct `invokevirtual` rather than synthetic `GET$default`, preventing runtime crash against Kototoro's host classloader `classes3.dex`.
+  - [x] 13.2 Unified Kototoro Repository Index: Configured `tools/generate_repo_index.py` so `repo/jar/index.min.json` exposes strictly the unified all-in-one suite (`app.kaziyami.kototoro` / `kaziyami-all-v1.4.2.jar`) containing all 6 sources, matching official Kototoro parser repositories (`k-parsers-r`).
+  - [x] 13.3 Update & Verification Suite: Updated `tools/test_update_simulation.py` to validate single-suite Kototoro schema and monotonic update policy. Passed full test suite (unit, contract, bytecode, update simulation, preflight, secrets).
 
 ---
 
