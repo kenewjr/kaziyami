@@ -81,6 +81,12 @@
   - [x] 14.1 Reset Extension Versioning to `0.0.1`: Set `libVersion = "0.0"` and `extVersionCode = 1` across all 6 sources (`Nekopoi`, `IndoHentai`, `NontonHentai`, `Hentaimama`, `JAVSubbed`, `Hanime`).
   - [x] 14.2 Artifact & Repo Index Alignment: Assembled and verified `kaziyami-*-v0.0.1.apk` and `kaziyami-all-v0.0.1.jar`. Updated repo indexes (`repo/index.min.json` and `repo/jar/index.min.json`) with version code 1 and version string `"0.0.1"`.
   - [x] 14.3 Full Suite Verification: All tests and verification scripts 100% green. Ready for remote push and release tag.
+- [x] **Phase 15: Streamlined Repo Branch Distribution & Single JAR Kototoro Suite**
+  - [x] 15.1 Aligned with Upstream Distribution Pattern: Followed Aniyomi (`aniyomiorg/aniyomi-extensions`) and Kototoro (`skepsun/k-parsers-r`) standards by eliminating GitHub Releases asset uploads; distribution is handled 100% via the `repo` branch.
+  - [x] 15.2 Purged GitHub Releases: Cleaned uploaded binary assets and release wrappers on GitHub while preserving git tags (`v0.0.1`, `v1.4.2`).
+  - [x] 15.3 Single Unified JAR Architecture: Replaced separate per-source JAR generation in `tools/package_kototoro_plugin.py` with strictly the single suite JAR `kaziyami-all-v*.jar`. In Kototoro, all 6 sources are enumerated under Sources with individual enable/disable toggles.
+  - [x] 15.4 Synchronized Versioning Contract: All extensions sync with the Kototoro suite JAR code and version metadata.
+
 
 ---
 

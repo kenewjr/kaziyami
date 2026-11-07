@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
 package_kototoro_plugin.py:
-Packages Kaziyami adult anime extensions into Kototoro-compatible unified plugin JARs:
-- repo/jar/kaziyami-all-v1.4.1.jar (all 6 adult anime sources)
-- repo/jar/kaziyami-<source>-v1.4.1.jar (individual per-source JARs)
+Packages Kaziyami adult anime extensions into a Kototoro-compatible unified plugin JAR:
+- repo/jar/apk/kaziyami-all-v0.0.1.jar (unified suite containing all 6 adult anime sources)
 
 Bytecode layout:
 - Standard Java .class files for Desktop JVM (Windows, macOS, Linux)
@@ -242,49 +241,11 @@ def package():
     shutil.copy2(all_jar_path, os.path.join(BUILD_LIBS_DIR, all_jar_name))
     print(f"[+] Packaged {all_jar_name} ({len(all_classes)} classes, {os.path.getsize(all_jar_path)} bytes)")
 
-    # 3. Package individual per-source JARs
-    for src in SOURCES:
-        slug = src["slug"]
-        src_ver = get_source_version(src["src_dir"])
-        single_jar_name = f"kaziyami-{slug}-v{src_ver['versionName']}.jar"
-        single_jar_path = os.path.join(REPO_JAR_DIR, single_jar_name)
-
-        src_specific_classes = {}
-        src_specific_classes.update(core_classes)
-        # Add required multisrc
-        msrc_dir = os.path.join(ROOT_DIR, src["multisrc"])
-        src_specific_classes.update(collect_classes_from_dir(msrc_dir))
-        # Add source classes
-        src_specific_classes.update(per_source_classes[slug])
-
-        single_manifest = make_manifest_xml(
-            package_name=f"eu.kanade.tachiyomi.animeextension.{src['lang']}.{slug}",
-            ext_class=f"eu.kanade.tachiyomi.animeextension.{src['lang']}.{slug}.{src['name']}",
-            display_name=f"Kaziyami: {src['name']}",
-            version_name=src_ver["versionName"],
-            version_code=src_ver["versionCode"],
-        )
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            single_file_list = list(src_specific_classes.values())
-            dex_path = run_d8_on_classes(single_file_list, tmp_dir)
-
-            with zipfile.ZipFile(single_jar_path, "w", zipfile.ZIP_DEFLATED) as zout:
-                zout.writestr("AndroidManifest.xml", single_manifest.strip())
-                if dex_path and os.path.exists(dex_path):
-                    zout.write(dex_path, "classes.dex")
-                for rel_path, full_path in src_specific_classes.items():
-                    zout.write(full_path, rel_path)
-
-        shutil.copy2(single_jar_path, os.path.join(REPO_JAR_APK_DIR, single_jar_name))
-        shutil.copy2(single_jar_path, os.path.join(BUILD_LIBS_DIR, single_jar_name))
-        print(f"[+] Packaged {single_jar_name} ({os.path.getsize(single_jar_path)} bytes)")
-
-    # 4. Prune older versions (keep newest 3)
+    # 3. Prune older versions (keep newest 3)
     prune_old_artifacts(REPO_JAR_DIR, ".jar", keep=3)
     prune_old_artifacts(REPO_JAR_APK_DIR, ".jar", keep=3)
 
-    # 5. Generate sha256sums.txt for JARs
+    # 4. Generate sha256sums.txt for JARs
     sums_path = os.path.join(REPO_JAR_DIR, "sha256sums.txt")
     with open(sums_path, "w", encoding="utf-8") as f:
         for fname in sorted(os.listdir(REPO_JAR_DIR)):
