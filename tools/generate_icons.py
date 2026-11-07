@@ -177,17 +177,28 @@ def main():
 
     bg_color = (18, 19, 26)  # Dark theme #12131A
 
+    art_icons_dir = os.path.join(root_dir, "art", "icons")
+
     for name, accent in EXT_COLORS.items():
-        png_bytes = create_png(192, 192, bg_color, accent, name=name)
+        art_src = os.path.join(art_icons_dir, f"{name}.png")
+        if os.path.exists(art_src) and name != "kaziyami":
+            with open(art_src, "rb") as f:
+                png_bytes = f.read()
+            source_type = "authentic"
+        else:
+            png_bytes = create_png(192, 192, bg_color, accent, name=name)
+            source_type = "procedural"
+
         for d in icon_dirs:
             target = os.path.join(d, f"{name}.png")
-            with open(target, "wb") as f:
-                f.write(png_bytes)
+            if os.path.abspath(target) != os.path.abspath(art_src) or source_type == "procedural":
+                with open(target, "wb") as f:
+                    f.write(png_bytes)
             if name in EXT_PACKAGES:
                 pkg_target = os.path.join(d, f"{EXT_PACKAGES[name]}.png")
                 with open(pkg_target, "wb") as f:
                     f.write(png_bytes)
-        print(f"[+] Generated unique 192x192 logo icon: {name}.png")
+        print(f"[+] Synced {source_type} 192x192 logo icon: {name}.png")
 
 if __name__ == "__main__":
     main()

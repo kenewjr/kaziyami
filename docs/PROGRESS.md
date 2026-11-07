@@ -76,6 +76,7 @@
   - [x] 13.1 `GET$default` ABI Fix: Replaced Kotlin default parameters in `AnimeHttpSource.GET` and `POST` with explicit Java/Kotlin overloads. Verified via `javap` bytecode disassembly that invocations emit direct `invokevirtual` rather than synthetic `GET$default`, preventing runtime crash against Kototoro's host classloader `classes3.dex`.
   - [x] 13.2 Unified Kototoro Repository Index: Configured `tools/generate_repo_index.py` so `repo/jar/index.min.json` exposes strictly the unified all-in-one suite (`app.kaziyami.kototoro` / `kaziyami-all-v1.4.2.jar`) containing all 6 sources, matching official Kototoro parser repositories (`k-parsers-r`).
   - [x] 13.3 Update & Verification Suite: Updated `tools/test_update_simulation.py` to validate single-suite Kototoro schema and monotonic update policy. Passed full test suite (unit, contract, bytecode, update simulation, preflight, secrets).
+  - [x] 13.4 Authentic Website Logos Pipeline: Sourced authentic official icons and logos directly from all 6 platforms (Nekopoi cat emblem, IndoHentai favicon, NontonHentai 300x300 icon, Hentaimama mark, JAVSubbed 100x100 icon, Hanime 152x152 Apple touch icon). Archived raw assets in `art/raw_icons/` and synchronized 192x192 PNGs to APK launchers and repository catalogs.
 
 ---
 
