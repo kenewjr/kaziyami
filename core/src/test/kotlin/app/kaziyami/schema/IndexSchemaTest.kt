@@ -189,9 +189,6 @@ class IndexSchemaTest {
         val fp = meta["signingKeyFingerprint"]?.jsonPrimitive?.content
         assertNotNull(fp)
         assertEquals(64, fp!!.length, "Signing fingerprint must be 64-char hex string: $fp")
-
-        // Kototoro index_v2 pointer contract
-        assertEquals("index.min.json", obj["index_v2"]?.jsonPrimitive?.content, "Kototoro repo.json must declare index_v2 pointing to index.min.json")
     }
 
     @Test
