@@ -115,8 +115,7 @@ def build():
             "shortName": "kaziyami-demo",
             "website": "https://github.com/kenewjr/kaziyami",
             "signingKeyFingerprint": "0" * 64
-        },
-        "index_v2": "index.min.json"
+        }
     }
     with open(os.path.join(HELLO_REPO_DIR, "repo.json"), "w", encoding="utf-8") as f:
         json.dump(repo_meta, f, indent=2)

@@ -222,8 +222,7 @@ def generate_aniyomi_repo(fingerprint=None):
             "shortName": "kaziyami",
             "website": "https://github.com/kenewjr/kaziyami",
             "signingKeyFingerprint": fp
-        },
-        "index_v2": "index.min.json"
+        }
     }
     with open(os.path.join(REPO_DIR, "repo.json"), "w", encoding="utf-8") as f:
         json.dump(repo_meta, f, indent=2)
@@ -338,8 +337,7 @@ def generate_kototoro_repo():
             "shortName": "kaziyami-jar",
             "website": "https://github.com/kenewjr/kaziyami",
             "signingKeyFingerprint": ""
-        },
-        "index_v2": "index.min.json"
+        }
     }
     with open(os.path.join(JAR_DIR, "repo.json"), "w", encoding="utf-8") as f:
         json.dump(jar_repo_meta, f, indent=2)

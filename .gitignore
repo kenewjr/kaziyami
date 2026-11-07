@@ -36,3 +36,19 @@ __pycache__/
 
 # Diagnostics & Reports
 reports/
+
+# AI Assistant Memory, Scratchpad & Session Artifacts
+.gemini/
+.antigravity/
+.system_generated/
+brain/
+scratch/
+.cursor/
+.aider*
+.claude/
+*.transcript.jsonl
+transcript*.jsonl
+task-*.log
+*.chat
+*.llm
+

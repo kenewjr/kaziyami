@@ -73,7 +73,7 @@ Kototoro supports Kaziyami through two distribution variants:
 9. Switch to the **Aniyomi** extensions section, select any Kaziyami extension (e.g. `Kaziyami: Nekopoi`), and tap **Install**.
 
 #### Variant B: Kototoro JAR Parser Plugin (JAR)
-- **Adding the JAR Repository**:
+- **Adding the JAR Repository (Recommended for Auto-Updates)**:
   1. Open **Kototoro** -> **Explore** -> **Manage** (top-right icon) -> **Repositories** tab.
   2. Tap **+** (floating action button).
   3. In the repository type chooser, select **JAR**.
@@ -82,11 +82,18 @@ Kototoro supports Kaziyami through two distribution variants:
      https://raw.githubusercontent.com/kenewjr/kaziyami/repo/jar/index.min.json
      ```
   5. Tap **Add**. Kototoro fetches the index and displays packages under the **Packages** tab. Tap **Install** / **Update** on `kaziyami-all` or individual packages.
+  6. **Auto-Updates**: When new versions are published, Kototoro automatically detects newer `versionCode` values from the repository index, badges the package with an **Update** button, and seamlessly downloads the updated `.jar` directly into `files/plugins/`.
 - **Direct Local JAR Import**:
   1. Download `kaziyami-all-v1.4.2.jar` (or per-source JAR) from the repository releases.
   2. In Kototoro, go to **Explore** -> **Manage** -> **Packages** tab.
   3. Tap **Import local JAR** (chip button with `+` icon at top).
   4. Select the downloaded `.jar` file from device storage. Kototoro verifies the package and registers parsers under **Sources**.
+
+> [!TIP]
+> **Troubleshooting: Extensions Not Showing in Kototoro?**
+> - **NSFW Filter**: Kototoro defaults to hiding 18+ sources. Tap the filter/funnel icon at the top of the **Packages** or **Sources** screen and switch **NSFW Filter** to **All** or **NSFW**.
+> - **Language Filter**: All Kaziyami sources are tagged as Indonesian (`id`) or English (`en`). In Kototoro filter settings, ensure **Indonesian** and **English** are checked in active extension languages.
+> - **Clean Base URL**: Both `https://raw.githubusercontent.com/kenewjr/kaziyami/repo` and `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json` are fully supported. `repo.json` is optimized to prevent recursive 404 lookup errors.
 
 For detailed update workflows, troubleshooting, and rollback steps, see [docs/UPDATING.md](docs/UPDATING.md).
 
