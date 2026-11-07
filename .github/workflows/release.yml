@@ -238,14 +238,6 @@ jobs:
           files: |
             repo/apk/*.apk
             repo/jar/*.jar
-            repo/jar/apk/*.jar
             repo/sha256sums.txt
-            repo/jar/sha256sums.txt
-            repo/index.json
-            repo/index.min.json
-            repo/repo.json
-            repo/jar/index.json
-            repo/jar/index.min.json
-            repo/jar/repo.json
           generate_release_notes: false
 

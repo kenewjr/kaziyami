@@ -66,6 +66,12 @@
   - [x] 11.3 Publish Ordering, Integrity & Rollback: Artifacts published before indexes; kept latest 3 versions of all APKs and JARs; SHA-256 and byte sizes embedded in index metadata; `verifyPublishedRepo` validates both variants over HTTPS; automatic rollback reverts index on verification failure.
   - [x] 11.4 Release CI/CD Automation: Configured `.github/workflows/release.yml`, `.github/workflows/bump-and-release.yml`, and updated `.github/workflows/monitor.yml` with deduplicated issue alerts.
   - [x] 11.5 User Documentation: Authored `docs/UPDATING.md` and updated `README.md` and `CHANGELOG.md` ([1.4.2]).
+- [x] **Phase 12: Modern Android Privacy Protection (Target SDK 34) & Distinct Extension Logos**
+  - [x] 12.1 Target SDK 34 Upgrade: Upgraded `targetSdkVersion` to 34 and added `android.permission.INTERNET` in `tools/build_apks.py`. Updated `ALLOWED_TARGET_SDK` to (33, 35) in `tools/verify_apks.py`. Updated `docs/STACK.md`. Eliminates Android 14/15 Play Protect "Unsafe app blocked" warnings.
+  - [x] 12.2 Distinct Extension Logos: Updated `tools/generate_icons.py` with unique procedural vector logo emblems for each extension (Nekopoi cat & 'N', IndoHentai flame & 'IH', NontonHentai TV screen & play button, Hentaimama crown & 'M', JAVSubbed monitor & subtitles, Hanime hexagonal TV 'H', Kaziyami crowned 'K').
+  - [x] 12.3 Logo Index Integration: Added `"icon"` metadata pointing to `${pkg}.png` in both `repo/index.min.json` and `repo/jar/index.min.json`.
+  - [x] 12.4 GitHub Release Filename Collision Fix: Fixed `softprops/action-gh-release@v2` step in `.github/workflows/release.yml` by removing duplicated paths (`repo/jar/apk/*.jar`, duplicate `sha256sums.txt`).
+  - [x] 12.5 Issues & PR Triage: Analyzed and closed Dependabot PRs (#2, #4, #5, #6, #3) to protect Aniyomi/Kototoro ClassLoader stability per Decision 20; closed Issue #7 with false-positive explanation.
 
 ---
 

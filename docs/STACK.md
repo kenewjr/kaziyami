@@ -9,8 +9,8 @@
 | **Kotlin** | `1.8.22` | Upstream Aniyomi extension compiler baseline. Major upgrades (e.g. Kotlin 2.x) risk metadata format incompatibilities with host classloaders. |
 | **JaCoCo** | `0.8.8` | Code coverage reporting (`>80%` on core & multisrc bases). |
 | **Android minSdk** | `21` | Supported Android 7–15 devices. Allowed range: `21` – `26`. |
-| **Android targetSdk** | `33` | Modern Android 14+ compatible without deprecated SDK blocking (`targetSdk < 23` blocked on Android 14, `< 24` on Android 15). Allowed range: `33` – `34`. |
-| **Android compileSdk**| `33` | Android 13 framework baseline for resource and manifest linking. |
+| **Android targetSdk** | `34` | Modern Android 14+ compatible without deprecated SDK blocking (`targetSdk < 23` blocked on Android 14, `< 24` on Android 15). Allowed range: `33` – `35`. |
+| **Android compileSdk**| `34` | Android 14 framework baseline for resource and manifest linking. |
 | **CI Runner OS** | `ubuntu-24.04` (Noble Numbat) | Pinned runner image across all workflows. Moving to `ubuntu-24.04` is a deliberate step to eliminate non-deterministic glibc/Node/runner drifts inherent in floating `ubuntu-latest`. |
 
 ---

@@ -162,6 +162,7 @@ def generate_aniyomi_repo(fingerprint=None):
                 "nsfw": manifest["nsfw"],
                 "hasReadme": 0,
                 "hasChangelog": 0,
+                "icon": f"{pkg}.png",
                 "sha256": sha256_file(apk_full_path),
                 "size": os.path.getsize(apk_full_path),
                 "sources": [
@@ -190,6 +191,7 @@ def generate_aniyomi_repo(fingerprint=None):
                 "nsfw": 1,
                 "hasReadme": 0,
                 "hasChangelog": 0,
+                "icon": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}.png",
                 "sha256": "",
                 "size": 0,
                 "sources": [
@@ -284,6 +286,7 @@ def generate_kototoro_repo():
         "code": suite_code,
         "version": suite_ver,
         "nsfw": 1,
+        "icon": "kaziyami.png",
         "sha256": all_jar_sha,
         "size": all_jar_size,
         "sources": all_sources
@@ -309,6 +312,7 @@ def generate_kototoro_repo():
             "code": s_ver["versionCode"],
             "version": s_ver["versionName"],
             "nsfw": 1,
+            "icon": f"eu.kanade.tachiyomi.animeextension.{lang}.{slug}.png",
             "sha256": s_jar_sha,
             "size": s_jar_size,
             "sources": [

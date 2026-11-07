@@ -167,7 +167,8 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
     package="{pkg_name}"
     android:versionCode="{meta['extVersionCode']}"
     android:versionName="{meta['version']}">
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-feature android:name="tachiyomi.animeextension" />
     <application
         android:label="Kaziyami: {meta['extName']}"

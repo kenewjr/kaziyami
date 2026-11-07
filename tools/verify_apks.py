@@ -8,7 +8,7 @@ Enforces:
 3. Android binary XML manifest (magic 0x0003, no raw text '<' character).
 4. Compiled classes.dex Dalvik bytecode presence.
 5. apksigner v2/v3 scheme verification and release signature checking.
-6. minSdk (21-26) and targetSdk (33-34) compliance with docs/STACK.md.
+6. minSdk (21-26) and targetSdk (33-35) compliance with docs/STACK.md.
 7. Metadata agreement with docs/SOURCE_IDS.md and repo/index.min.json.
 """
 
@@ -26,7 +26,7 @@ import android_sdk
 
 MIN_APK_SIZE = 50 * 1024  # 50 KB
 ALLOWED_MIN_SDK = (21, 26)
-ALLOWED_TARGET_SDK = (33, 34)
+ALLOWED_TARGET_SDK = (33, 35)
 
 def load_source_ids():
     source_ids_file = os.path.join(ROOT_DIR, "docs", "SOURCE_IDS.md")
