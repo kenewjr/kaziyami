@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Official 1.0.0 Baseline**:
   - Unified version baseline `1.0.0` (`extVersionCode = 2`, `libVersion = "14"`) across all 6 adult sources (`Nekopoi`, `IndoHentai`, `NontonHentai`, `Hentaimama`, `JAVSubbed`, `Hanime`).
-  - Restored `libVersion = "14"` Aniyomi framework ABI contract (`12..16` range) ensuring clean installation in Kototoro without loader errors.
+  - Restored `libVersion = "14"` Aniyomi framework ABI contract (`12..16` range) and formatted APK `versionName` to `14.2` with `<meta-data android:name="aniyomix.extensionLib" />`, ensuring clean installation in both official Aniyomi and Kototoro without loader errors.
+- **Kototoro Injekt Decoupling**:
+  - Decoupled `GenericThemeSource` from host `Injekt` dependency by explicitly overriding `client` and `headersBuilder()`, eliminating crashes during Kototoro's `SourceTester` execution in `JarExtensionLoader`.
 - **Single All-in-One Kototoro Plugin JAR**:
   - Strictly 1 unified distribution archive `kaziyami-all-v1.0.0.jar` (with `kaziyami.jar` alias) containing all 6 sources.
   - Embedded `android:icon="@drawable/ic_launcher"` and raw icon assets directly into the JAR archive and repo metadata for native Kototoro package browser display.

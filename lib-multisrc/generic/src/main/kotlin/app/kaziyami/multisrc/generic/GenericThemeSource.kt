@@ -49,6 +49,8 @@ open class GenericThemeSource(
     override val name: String = config.name
     override val lang: String = config.lang
     override val supportsLatest: Boolean = true
+    override val client: okhttp3.OkHttpClient = app.kaziyami.network.NetworkHelper().client
+    override fun headersBuilder(): okhttp3.Headers.Builder = BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
 
     val mirrorManager = MirrorManager(
         defaultBaseUrl = config.baseUrl,

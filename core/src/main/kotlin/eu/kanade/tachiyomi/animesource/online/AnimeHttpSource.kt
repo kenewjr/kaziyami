@@ -20,7 +20,8 @@ abstract class AnimeHttpSource : AnimeSource {
     open val supportsLatest: Boolean = true
     open val network: NetworkHelper = NetworkHelper()
     open val client: OkHttpClient = network.client
-    open val headers: Headers by lazy { BrowserHeaders.defaultHeaders(baseUrl) }
+    open fun headersBuilder(): Headers.Builder = BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
+    open val headers: Headers by lazy { headersBuilder().build() }
 
     open fun GET(url: String): Request =
         Request.Builder().url(url).headers(headers).build()

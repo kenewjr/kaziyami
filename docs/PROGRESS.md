@@ -95,11 +95,15 @@
   - [x] 17.1 Restore Aniyomi ABI Contract: Restored `val libVersion = "14"` across all 6 sources while keeping `extVersion = "1.0.0"` and bumping `extVersionCode = 2`. Fixes Kototoro rejection: `1.00 cannot be installed because its library version 1.0 is outside kototoro supported range`.
   - [x] 17.2 Kototoro JAR Icon Integration: Added `app.kaziyami.kototoro.png` mapping in `tools/generate_icons.py`. Embedded `icon.png`, `kaziyami.png`, `app.kaziyami.kototoro.png`, and `res/drawable/ic_launcher.png` inside `kaziyami-all-v1.0.0.jar`. Added `android:icon="@drawable/ic_launcher"` to plugin manifest.
   - [x] 17.3 Contract & Update Verification: Dynamic version code contract check in `VersionConsistencyContractTest.kt`. All 185 tests and verification tools 100% green.
+- [x] **Phase 18: Kototoro Injekt Decoupling & Aniyomi APK VersionName Alignment**
+  - [x] 18.1 Host Injekt Decoupling: Overrode `client` and `headersBuilder()` in `GenericThemeSource` and declared `open fun headersBuilder()` in `core/AnimeHttpSource.kt`. Prevents Kototoro host `AnimeHttpSource` from throwing uninitialized `Injekt` exceptions when running `SourceTester` inside `JarExtensionLoader`.
+  - [x] 18.2 Aniyomi APK Version & Metadata Alignment: Set `extVersion = "14.2"` (`"${libVersion}.${extVersionCode}"`) across all 6 sources and added `<meta-data android:name="aniyomix.extensionLib" android:value="{meta['libVersion']}" />` in `tools/build_apks.py`. Satisfies both official Aniyomi loader (`aniyomix.extensionLib`) and Kototoro loader (`versionName.substringBefore('.') >= 12.0`). Kototoro JAR suite pinned to `1.0.0`.
+  - [x] 18.3 Verification & Contract Integrity: Passed all 185 tests, Kototoro JAR verification, update simulation, preflight, and secret scanner.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 17 complete. `libVersion` pinned to ABI level `14` (`versionCode = 2`, `versionName = 1.0.0`). Kototoro JAR icon embedded. Full verification suite 100% green.
+- **Overall Status**: Phase 18 complete. Kototoro JAR decoupled from host Injekt (`SourceTester` green). APK `versionName` formatted to `14.2` with `aniyomix.extensionLib` metadata. All verification suites 100% green.
 - **Last Green Run**: `./gradlew check` (all 185 tests passing), `verify_jars.py` (1 valid entry), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for production usage.
 

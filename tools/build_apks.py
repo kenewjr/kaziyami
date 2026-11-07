@@ -183,6 +183,9 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
             android:name="tachiyomi.animeextension.version"
             android:value="{meta['libVersion']}" />
         <meta-data
+            android:name="aniyomix.extensionLib"
+            android:value="{meta['libVersion']}" />
+        <meta-data
             android:name="tachiyomix.extensionLib"
             android:value="{meta['libVersion']}" />
         <meta-data

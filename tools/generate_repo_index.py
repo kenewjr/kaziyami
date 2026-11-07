@@ -261,7 +261,7 @@ def generate_kototoro_repo():
 
     # 1. Main all-in-one suite entry
     suite_code = max(get_source_version(f"src/{s['lang']}/{s['slug']}")["versionCode"] for s in SOURCES_DEF)
-    suite_ver = get_source_version(f"src/{SOURCES_DEF[0]['lang']}/{SOURCES_DEF[0]['slug']}")["versionName"]
+    suite_ver = "1.0.0"
     all_jar = f"kaziyami-all-v{suite_ver}.jar"
 
     all_sources = []
