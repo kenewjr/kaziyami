@@ -21,7 +21,10 @@ class Hentaimama : DooPlayTheme(
         detailsTitle = "h1, .data h1",
         detailsThumbnail = ".poster img, .thumb img",
         detailsDescription = ".wp-content p, #info .wp-content",
-        episodeList = "#episodes ul.episodios li, .episodios li",
+        episodeList = "#episodes a.dt-se-item, .dt-se-list a.dt-se-item, a.dt-se-item, #episodes ul.episodios li, .episodios li",
+        episodeName = ".dt-se-title, b.dt-se-title, .episodiotitle a, .numerando, .dt-se-num",
+        episodeDate = ".dt-se-date, span.dt-se-date, .date",
+        episodeUrl = "a[href], a",
         playerIframes = ".playex iframe, .source-box iframe, iframe.metaframe, iframe[src]"
     ),
     customQuirks = QuirksConfig(

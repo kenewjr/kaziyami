@@ -229,7 +229,7 @@ class Hanime : GenericThemeSource(
         if (deduped.isEmpty()) {
             throw app.kaziyami.core.SourceParseException(
                 source = name,
-                pageType = "video streams",
+                pageType = "video streams (requires Cloudflare Turnstile verification in WebView)",
                 selectorName = config.selectors.playerIframes,
                 urlPath = UrlUtils.getPath(response.request.url.toString())
             )

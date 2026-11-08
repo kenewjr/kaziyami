@@ -143,6 +143,7 @@ class VideoExtractorsTest {
         val ext = StreamPoiExtractor()
         assertTrue(ext.canExtract("https://streampoi.com/e/poi123"))
         assertTrue(ext.canExtract("https://streamruby.net/e/ruby456"))
+        assertTrue(ext.canExtract("https://playmogo.com/e/mogo789"))
 
         // Packed jwplayer script setting sources
         val packed = """
@@ -154,6 +155,26 @@ class VideoExtractorsTest {
         assertEquals(2, videos.size)
         assertEquals("https://streamruby.net/hls/master.m3u8", videos[0].videoUrl)
         assertTrue(videos[0].quality.contains("1080p"))
+    }
+
+    @Test
+    fun hentaiCopExtractorParsesSources() {
+        val ext = HentaiCopExtractor()
+        assertTrue(ext.canExtract("https://hentaicop.com/play.php?id=xyz"))
+        assertTrue(ext.canExtract("https://hepidrive.com/play.php?id=xyz"))
+        assertTrue(ext.canExtract("https://gdplayer.top/embed.php?id=xyz"))
+
+        val html = """
+            <html><body>
+                <script>sources: [{"file":"https://hentaicop.com/stream/video.mp4","label":"720p"}]</script>
+            </body></html>
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(html))
+
+        val videos = ext.extract(server.url("/play.php?id=xyz").toString(), "https://nontonhentai.net/", client)
+        assertEquals(1, videos.size)
+        assertEquals("https://hentaicop.com/stream/video.mp4", videos[0].videoUrl)
+        assertEquals("HentaiCop 720p", videos[0].quality)
     }
 }
 

@@ -91,8 +91,19 @@ open class AnimeStreamTheme(
             }
         }
 
-        val videos = ExtractorRegistry.extractAll(videoUrls.distinct(), client)
-        if (videos.isEmpty() && videoUrls.isNotEmpty()) {
+        val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
+        val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
+        val referer = response.request.url.toString()
+        val filteredUrls = videoUrls.filter { isVideoCandidateUrl(it) }.distinct()
+        val videos = ExtractorRegistry.resolveSequential(
+            urls = filteredUrls,
+            preferredHost = preferredHost,
+            referer = referer,
+            client = client
+        ).let {
+            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+        }
+        if (videos.isEmpty() && filteredUrls.isNotEmpty()) {
             throw app.kaziyami.core.SourceParseException(
                 source = name,
                 pageType = "video streams",

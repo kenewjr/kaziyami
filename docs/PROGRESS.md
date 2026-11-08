@@ -127,11 +127,15 @@
   - [x] 13.3 Video Stream Resolution & Nuxt Escaping: In `Hanime.kt`, unescaped JSON forward slashes (`\/`) to enable regex extraction on Astro/Nuxt pages, added public API fallback (`/api/v8/video?id=$slug`), and handled `data-src` in `AnimeStreamTheme` for NontonHentai.
   - [x] 13.4 ISP Sinkhole Classification: Added Indonesian ISP sinkhole `103.10.223.15` to `SmartDns.SINKHOLE_IPS` and classified as `ISP_BLOCK` in `ChallengeClassifier` and `ErrorClassifier`. Documented Android Private DNS configuration in `docs/TROUBLESHOOTING.md`.
   - [x] 13.5 Kototoro Local Self-Test Runner: Created `tools/KototoroTestRunner.java`, `tools/kototoro_self_test.py`, and registered `./gradlew kototoroSelfTest` running exact 7-step test harness against built APK artifacts and fixtures (100% green across all 6 sources).
+  - [x] 13.6 PlayMogo Unpacker & Non-Video Iframe Filtering: Extended `StreamPoiExtractor` to match PlayMogo hosts (`playmogo.com`, `mogo`). Added `isVideoCandidateUrl` in `GenericThemeSource`, `AnimeStreamTheme`, and `DooPlayTheme` to filter non-video iframes (Discord widgets, ad/tracking tags) to prevent sequential resolution aborts.
+  - [x] 13.7 Hentaimama Modern Selectors: Added `#episodes a.dt-se-item` and `dt-se-title` to DooPlay/Hentaimama selectors; updated `episodeFromElement` to support direct `<a>` elements and fallback to single episode on `/episodes/` URLs.
+  - [x] 13.8 HentaiCop Video Extractor: Added `HentaiCopExtractor` in `VideoExtractors.kt` matching `hentaicop.com` / `hepidrive.com` / `gdplayer`, and registered in `ExtractorRegistry.kt`.
+  - [x] 13.9 Version Bump: Bumped all 6 extension APKs to version 14.6 (`extVersionCode = 6`).
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 13 complete. Kototoro in-app source test replicated in `./gradlew kototoroSelfTest` and passing 100% across all 6 sources. Single-episode DETAILS parsing fixed. Hanime and NontonHentai video stream extraction resolved. Indonesian ISP sinkhole `103.10.223.15` classified as `ISP_BLOCK` and Android Private DNS setup documented.
+- **Overall Status**: Phase 13 remediation complete. All 6 extension APKs assembled and verified at version 14.6 (code 6). PlayMogo embed extraction and non-video iframe filtering fixed for Nekopoi. Hentaimama modern episode container selectors and direct link parsing fixed. HentaiCop / GDPlayer video stream extraction added for NontonHentai.
 - **Last Green Run**: `./gradlew check` (including `kototoroSelfTest`, `testSourceInstantiation`, host API binding, and unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
-- **Open Items**: None. All tests green. Ready for on-device testing with Android Private DNS configured.
+- **Open Items**: None. Ready for on-device testing. Ensure Android Private DNS (`dns.google` or `one.one.one.one`) is enabled on device to clear ISP DNS sinkhole blocks on port 443.
 

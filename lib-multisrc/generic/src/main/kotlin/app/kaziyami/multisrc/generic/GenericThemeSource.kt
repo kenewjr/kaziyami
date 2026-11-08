@@ -362,7 +362,8 @@ open class GenericThemeSource(
 
     override fun episodeFromElement(element: Element): SEpisode {
         val ep = SEpisode.create()
-        val linkEl = element.selectFirst(config.selectors.episodeUrl) ?: element.selectFirst("a[href]")
+        val linkEl = if (element.tagName() == "a" && element.hasAttr("href")) element
+            else element.selectFirst(config.selectors.episodeUrl) ?: element.selectFirst("a[href]")
         val href = linkEl?.attr("href") ?: ""
         // Library safety: store clean relative path
         ep.url = UrlUtils.getPath(href)
@@ -391,7 +392,10 @@ open class GenericThemeSource(
             // Check if page represents a single-episode or movie video release
             val hasVideoPlayer = selectFirstMatching(document, "player_iframes", config.selectors.playerIframesCandidates).second.isNotEmpty() ||
                 document.select("video, iframe, #player, .player, .play-box, .player-container, #stream, .stream, .video-content, .embed, [id*=player], [class*=player], [id*=stream], [class*=stream]").isNotEmpty() ||
-                document.select("a[href*='download'], a[href*='drive'], a[href*='mega.'], a[href*='mediafire'], .linksbt, .dlx, .download, .box-download").isNotEmpty()
+                document.select("a[href*='download'], a[href*='drive'], a[href*='mega.'], a[href*='mediafire'], .linksbt, .dlx, .download, .box-download").isNotEmpty() ||
+                document.select("#playex, .playex, [id*=play], [class*=play], .sist_player, #playeroptionsul, .playeroptions").isNotEmpty() ||
+                response.request.url.encodedPath.contains("/episodes/") ||
+                response.request.url.encodedPath.contains("/episode/")
 
             if (hasVideoPlayer) {
                 val ep = SEpisode.create().apply {
@@ -439,13 +443,13 @@ open class GenericThemeSource(
                         element.attr("src")
                     }
                 }
-                if (src.isNotBlank()) src else null
+                if (src.isNotBlank() && isVideoCandidateUrl(src)) src else null
             }
         }.toMutableList()
 
         document.select("video source[src], video[src], video source[data-src], video[data-src]").forEach { el ->
             val src = el.attr("data-src").ifEmpty { el.attr("src") }
-            if (src.isNotBlank()) iframeUrls.add(src)
+            if (src.isNotBlank() && isVideoCandidateUrl(src)) iframeUrls.add(src)
         }
 
         val resolvedUrls = iframeUrls.distinct().map { UrlUtils.resolve(baseUrl, it) }
@@ -629,6 +633,19 @@ open class GenericThemeSource(
     }
 
     companion object {
+        fun isVideoCandidateUrl(url: String): Boolean {
+            val lower = url.lowercase().trim()
+            if (lower.isEmpty() || lower.startsWith("javascript:") || lower.startsWith("about:") || lower.startsWith("data:")) return false
+            val nonVideo = listOf(
+                "discord.com", "discordapp.com",
+                "facebook.com", "twitter.com", "x.com", "instagram.com",
+                "google.com", "googletagmanager.com", "google-analytics.com",
+                "histats.com", "disqus.com", "doubleclick.net", "adservice",
+                "/widget", "recaptcha", "hcaptcha"
+            )
+            return nonVideo.none { lower.contains(it) }
+        }
+
         fun SAnime.toKaziyamiMedia(): KaziyamiMedia {
             val resolvedUrl = try { url } catch (_: Exception) { "" }
             return KaziyamiMedia(

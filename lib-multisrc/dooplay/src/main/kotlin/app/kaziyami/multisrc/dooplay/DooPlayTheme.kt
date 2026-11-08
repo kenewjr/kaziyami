@@ -60,16 +60,17 @@ open class DooPlayTheme(
 ) {
     public override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
+        val candidateUrls = mutableListOf<String>()
 
         // 1. Direct page iframes
-        val iframeUrls = document.select(config.selectors.playerIframes)
-            .mapNotNull { element: org.jsoup.nodes.Element ->
-                val src = element.attr("src")
-                if (src.isNotBlank()) src else null
+        document.select(config.selectors.playerIframes).forEach { element ->
+            val src = element.attr("data-src").ifEmpty {
+                element.attr("data-lazy-src").ifEmpty {
+                    element.attr("src")
+                }
             }
-            .map { UrlUtils.resolve(baseUrl, it) }
-        videoList.addAll(ExtractorRegistry.extractAll(iframeUrls, client))
+            if (src.isNotBlank()) candidateUrls.add(UrlUtils.resolve(baseUrl, src))
+        }
 
         // 2. DooPlay AJAX player tabs (#playeroptionsul li)
         val playerTabs = document.select("#playeroptionsul li[data-post][data-nume]")
@@ -98,21 +99,40 @@ open class DooPlayTheme(
                     if (ajaxResponse.isSuccessful) {
                         val body = ajaxResponse.body?.string().orEmpty()
                         val ajaxDoc = Jsoup.parse(body)
-                        val ajaxIframes = ajaxDoc.select("iframe[src]")
-                            .mapNotNull { element: org.jsoup.nodes.Element ->
-                                val src = element.attr("src")
-                                if (src.isNotBlank()) src else null
-                            }
-                            .map { UrlUtils.resolve(baseUrl, it) }
-
-                        videoList.addAll(ExtractorRegistry.extractAll(ajaxIframes, client))
+                        ajaxDoc.select("iframe[src], iframe[data-src]").forEach { element ->
+                            val src = element.attr("data-src").ifEmpty { element.attr("src") }
+                            if (src.isNotBlank()) candidateUrls.add(UrlUtils.resolve(baseUrl, src))
+                        }
                     }
                 }
             } catch (_: Exception) {
             }
         }
 
-        return videoList.distinctBy { it.videoUrl }
+        val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
+        val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
+        val referer = response.request.url.toString()
+        val filteredUrls = candidateUrls.filter { isVideoCandidateUrl(it) }.distinct()
+
+        val videos = ExtractorRegistry.resolveSequential(
+            urls = filteredUrls,
+            preferredHost = preferredHost,
+            referer = referer,
+            client = client
+        ).let {
+            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+        }
+
+        if (videos.isEmpty() && filteredUrls.isNotEmpty()) {
+            throw app.kaziyami.core.SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = config.selectors.playerIframes,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+
+        return videos
     }
 
     override fun getFilterList(): AnimeFilterList {

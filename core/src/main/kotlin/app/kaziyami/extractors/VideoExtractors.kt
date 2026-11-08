@@ -255,7 +255,7 @@ class FilemoonExtractor : VideoExtractor {
 
 class StreamPoiExtractor : VideoExtractor {
     override val name = "StreamPoi"
-    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)", Pattern.CASE_INSENSITIVE)
+    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)|playmogo\\.(?:com|net|org)|mogo(?:stream)?\\.", Pattern.CASE_INSENSITIVE)
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
@@ -269,20 +269,21 @@ class StreamPoiExtractor : VideoExtractor {
         }
 
         val unpacked = unpack(html)
-        val fileMatch = Pattern.compile("sources:\\s*\\[\\{file:\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
+        val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "StreamPoi"
+        val fileMatch = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
         if (fileMatch.find()) {
             val masterUrl = fileMatch.group(1)
             val headers = Headers.Builder().set("Referer", url).build()
             return listOf(
-                Video(url, "StreamPoi 1080p (HLS)", masterUrl, headers),
-                Video(url, "StreamPoi 720p (HLS)", masterUrl, headers)
+                Video(url, "$hostName 1080p (HLS)", masterUrl, headers),
+                Video(url, "$hostName 720p (HLS)", masterUrl, headers)
             )
         }
-        val directMatch = Pattern.compile("file:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
+        val directMatch = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
         if (directMatch.find()) {
             val masterUrl = directMatch.group(1)
             val headers = Headers.Builder().set("Referer", url).build()
-            return listOf(Video(url, "StreamPoi HD (HLS)", masterUrl, headers))
+            return listOf(Video(url, "$hostName HD (HLS)", masterUrl, headers))
         }
 
         return emptyList()
@@ -307,5 +308,65 @@ class StreamPoiExtractor : VideoExtractor {
             }
         }
         return payload
+    }
+}
+
+class HentaiCopExtractor : VideoExtractor {
+    override val name = "HentaiCop"
+    private val hostRegex = Pattern.compile("hentaicop\\.com|hepidrive\\.com|gdplayer\\.(?:top|to|co|xyz)", Pattern.CASE_INSENSITIVE)
+
+    override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
+
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val effectiveRef = if (referer.isNotBlank()) referer else "https://nontonhentai.net/"
+        val req = Request.Builder()
+            .url(url)
+            .header("Referer", effectiveRef)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .build()
+        val html = try {
+            client.newCall(req).execute().use { it.body?.string().orEmpty() }
+        } catch (_: Exception) {
+            return emptyList()
+        }
+
+        val videos = mutableListOf<Video>()
+        val headers = Headers.Builder().set("Referer", url).build()
+
+        val sourcesPattern = Pattern.compile("sources:\\s*\\[(.*?)\\]", Pattern.DOTALL)
+        val sourcesMatcher = sourcesPattern.matcher(html)
+        if (sourcesMatcher.find()) {
+            val block = sourcesMatcher.group(1)
+            val itemPattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL)
+            val itemMatcher = itemPattern.matcher(block)
+            while (itemMatcher.find()) {
+                val item = itemMatcher.group(1)
+                val fileM = Pattern.compile("['\"]?(?:file|src)['\"]?\\s*:\\s*['\"]([^'\"]+)['\"]").matcher(item)
+                if (fileM.find()) {
+                    val streamUrl = fileM.group(1)
+                    val labelM = Pattern.compile("['\"]?label['\"]?\\s*:\\s*['\"]([^'\"]+)['\"]").matcher(item)
+                    val label = if (labelM.find()) labelM.group(1) else "HD"
+                    videos.add(Video(url, "HentaiCop $label", streamUrl, headers))
+                }
+            }
+        }
+
+        if (videos.isEmpty()) {
+            val directPattern = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.(?:m3u8|mp4)[^'\"]*)['\"]")
+            val directMatcher = directPattern.matcher(html)
+            if (directMatcher.find()) {
+                videos.add(Video(url, "HentaiCop HD", directMatcher.group(1), headers))
+            }
+        }
+
+        if (videos.isEmpty()) {
+            val videoTagPattern = Pattern.compile("<source[^>]+src=['\"]([^'\"]+)['\"]")
+            val videoTagMatcher = videoTagPattern.matcher(html)
+            if (videoTagMatcher.find()) {
+                videos.add(Video(url, "HentaiCop HD", videoTagMatcher.group(1), headers))
+            }
+        }
+
+        return videos
     }
 }

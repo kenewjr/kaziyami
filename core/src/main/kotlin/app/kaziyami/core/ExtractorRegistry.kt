@@ -4,7 +4,9 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import app.kaziyami.extractors.DirectVideoExtractor
 import app.kaziyami.extractors.DoodExtractor
 import app.kaziyami.extractors.FilemoonExtractor
+import app.kaziyami.extractors.HentaiCopExtractor
 import app.kaziyami.extractors.Mp4UploadExtractor
+import app.kaziyami.extractors.StreamPoiExtractor
 import app.kaziyami.extractors.StreamTapeExtractor
 import app.kaziyami.extractors.StreamWishExtractor
 import app.kaziyami.extractors.VideoExtractor
@@ -26,7 +28,8 @@ object ExtractorRegistry {
         Mp4UploadExtractor(),
         StreamWishExtractor(),
         FilemoonExtractor(),
-        app.kaziyami.extractors.StreamPoiExtractor()
+        StreamPoiExtractor(),
+        HentaiCopExtractor()
     )
 
     /**
