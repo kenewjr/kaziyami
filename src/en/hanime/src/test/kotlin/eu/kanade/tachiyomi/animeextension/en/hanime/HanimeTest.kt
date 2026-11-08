@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.hanime
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -12,7 +13,9 @@ import java.io.InputStreamReader
 
 class HanimeTest {
 
-    private val source = Hanime()
+    private val source = Hanime().apply {
+        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
+    }
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/hanime/$path")
@@ -98,5 +101,43 @@ class HanimeTest {
 
         assertTrue(page.animes.isEmpty())
         assertFalse(page.hasNextPage)
+    }
+
+    @Test
+    fun testFiltersAndSearchRequest() {
+        val filterList = source.getFilterList()
+        val sortFilter = filterList.filterIsInstance<Hanime.HanimeSortFilter>().first()
+        val genreFilter = filterList.filterIsInstance<Hanime.HanimeGenreFilter>().first()
+
+        assertTrue(genreFilter.values.size > 50)
+        assertTrue(genreFilter.values.contains("Yuri"))
+        assertTrue(genreFilter.values.contains("Big Boobs"))
+
+        // Default request: Trending
+        val reqDefault = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hanime.tv/browse/trending?page=1", reqDefault.url.toString())
+
+        // Sort = Latest
+        sortFilter.state = 1
+        val reqLatest = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://hanime.tv/?page=2", reqLatest.url.toString())
+
+        // Genre = Yuri
+        val yuriIndex = genreFilter.values.indexOf("Yuri")
+        assertTrue(yuriIndex >= 0)
+        genreFilter.state = yuriIndex
+        val reqGenre = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hanime.tv/browse/tags/yuri?page=1", reqGenre.url.toString())
+
+        // Genre = Big Boobs (URL-encoded space)
+        val boobsIndex = genreFilter.values.indexOf("Big Boobs")
+        assertTrue(boobsIndex >= 0)
+        genreFilter.state = boobsIndex
+        val reqBoobs = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hanime.tv/browse/tags/big%20boobs?page=1", reqBoobs.url.toString())
+
+        // Genre + Search Query
+        val reqWithQuery = source.searchAnimeRequest(1, "ramune", filterList)
+        assertEquals("https://hanime.tv/browse/tags/big%20boobs?page=1&q=ramune", reqWithQuery.url.toString())
     }
 }
