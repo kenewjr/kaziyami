@@ -43,6 +43,9 @@ jobs:
       - name: Grant Execute Permission
         run: chmod +x gradlew
 
+      - name: Bootstrap Android SDK Build Tools
+        run: python tools/android_sdk.py
+
       - name: Generate Extension Icons
         run: python tools/generate_icons.py
 

@@ -15,6 +15,25 @@ allprojects {
     }
 }
 
+fun findAndroidJar(): File {
+    val localJar = file("$rootDir/build/android-sdk/platforms/android-33/android.jar")
+    if (localJar.exists()) return localJar
+
+    val envRoots = listOfNotNull(
+        System.getenv("ANDROID_HOME"),
+        System.getenv("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+        "/opt/android-sdk"
+    )
+    for (root in envRoots) {
+        for (api in listOf("android-33", "android-34", "android-32", "android-31")) {
+            val f = File(root, "platforms/$api/android.jar")
+            if (f.exists()) return f
+        }
+    }
+    return localJar
+}
+
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
@@ -25,14 +44,15 @@ subprojects {
     }
 
     dependencies {
+        val androidJar = findAndroidJar()
         add("compileOnly", files("$rootDir/libs/extensions-lib-14.jar"))
-        add("compileOnly", files("$rootDir/build/android-sdk/platforms/android-33/android.jar"))
+        add("compileOnly", files(androidJar))
         add("compileOnly", "io.reactivex:rxjava:1.3.8")
         add("compileOnly", "uy.kohesive.injekt:injekt-core:1.16.1")
 
         add("testImplementation", files("$rootDir/core/build/classes/kotlin/test"))
         add("testImplementation", files("$rootDir/libs/extensions-lib-14.jar"))
-        add("testImplementation", files("$rootDir/build/android-sdk/platforms/android-33/android.jar"))
+        add("testImplementation", files(androidJar))
         add("testImplementation", "io.reactivex:rxjava:1.3.8")
         add("testImplementation", "uy.kohesive.injekt:injekt-core:1.16.1")
     }

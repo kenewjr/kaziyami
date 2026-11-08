@@ -125,6 +125,13 @@ def get_sdk_tools():
             plat_jar = local_jar
         else:
             _, plat_jar = bootstrap_sdk()
+    elif not os.path.exists(local_jar):
+        # Mirror system android.jar to local build dir for Gradle classpath consistency
+        os.makedirs(os.path.dirname(local_jar), exist_ok=True)
+        try:
+            shutil.copy2(plat_jar, local_jar)
+        except Exception:
+            pass
 
     aapt2 = os.path.join(bt_path, f"aapt2{exe_suffix}")
     zipalign = os.path.join(bt_path, f"zipalign{exe_suffix}")
@@ -212,3 +219,9 @@ def parse_apk_manifest(apk_path):
         "nsfw": nsfw,
         "extClass": ext_class
     }
+
+if __name__ == "__main__":
+    tools = get_sdk_tools()
+    print("[+] Android SDK tools ready:")
+    for k, v in tools.items():
+        print(f"    - {k}: {v} (exists: {os.path.exists(v)})")
