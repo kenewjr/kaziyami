@@ -13,8 +13,9 @@ class Hentaimama : DooPlayTheme(
     latestPath = "/episodes/page/%d/",
     searchPath = "/?s=%s&page=%d",
     customSelectors = SelectorsConfig(
-        item = "article.item.tvshows, article.item, .items article",
-        itemTitle = ".data h3 a, h3 a",
+        item = "article.item.tvshows, article.item, .items article, article.series-card, .series-card",
+        itemTitle = "h3.sc-title a, .sc-title a, .data h3 a, h3 a, h2 a, a[title]",
+        itemUrl = "a.sc-poster, .data h3 a, a[href]",
         itemThumbnail = "img",
         nextPage = ".pagination a.next, a.next",
         detailsTitle = "h1, .data h1",

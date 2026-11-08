@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.animeextension.en.hanime
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.ExtractorRegistry
@@ -13,7 +16,13 @@ import app.kaziyami.multisrc.generic.GenericThemeSource
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.generic.SourceConfig
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Request
 import okhttp3.Response
+import java.net.URLEncoder
 import java.util.regex.Pattern
 
 class Hanime : GenericThemeSource(
@@ -26,17 +35,17 @@ class Hanime : GenericThemeSource(
         latestPath = "/browse/recent?page=%d",
         searchPath = "/search?q=%s&page=%d",
         selectors = SelectorsConfig(
-            item = "a[href*='/hentai/video/'], div.card, a.card, div.video-card",
+            item = "a[href*='/videos/hentai/'], a[href*='/hentai/video/'], div.card, a.card, div.video-card",
             itemTitle = "h3, .title, a[title]",
             itemUrl = "a[href]",
             itemThumbnail = "img",
             nextPage = ".pagination a.next, a.next",
-            detailsTitle = "h1, .video-details h1",
+            detailsTitle = "h1, .video-details h1, h1.entry-title",
             detailsThumbnail = "meta[property='og:image'], .poster img, img",
             detailsDescription = ".description, .video-description, p",
             detailsGenre = "a[href*='/genre/'], a[href*='/tag/'], .tags a",
             detailsAuthor = ".brand, .studio",
-            episodeList = ".playlist-item, a[href*='/hentai/video/']",
+            episodeList = ".playlist-item, a[href*='/videos/hentai/'], a[href*='/hentai/video/']",
             playerIframes = "iframe[src], video source"
         ),
         quirks = QuirksConfig(
@@ -48,6 +57,64 @@ class Hanime : GenericThemeSource(
     companion object {
         private val M3U8_REGEX = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE)
         private val MP4_REGEX = Pattern.compile("""(https?://[^\s"'<>]+\.mp4[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val encoded = URLEncoder.encode(query, "UTF-8")
+        val url = "https://guest.freeanimehentai.net/api/v11/search_hvs?q=$encoded&page=${(page - 1).coerceAtLeast(0)}"
+        return GET(url, headers)
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val body = response.body?.string().orEmpty()
+        if (body.trimStart().startsWith("{")) {
+            return try {
+                val json = Json.parseToJsonElement(body).jsonObject
+                val data = json["data"]?.jsonArray ?: return AnimesPage(emptyList(), false)
+                val animes = data.mapNotNull { item ->
+                    val obj = item.jsonObject
+                    val slug = obj["slug"]?.jsonPrimitive?.content ?: return@mapNotNull null
+                    val name = obj["name"]?.jsonPrimitive?.content ?: ""
+                    val cover = obj["cover_url"]?.jsonPrimitive?.content
+                        ?: obj["poster_url"]?.jsonPrimitive?.content.orEmpty()
+                    SAnime.create().apply {
+                        this.title = HtmlText.clean(name)
+                        this.url = "/videos/hentai/$slug"
+                        this.thumbnail_url = cover
+                    }
+                }
+                val query = response.request.url.queryParameter("q").orEmpty().lowercase()
+                val filtered = if (query.isNotBlank()) {
+                    animes.filter { it.title.lowercase().contains(query) }
+                } else {
+                    animes
+                }
+                val pageSize = 24
+                val pageIndex = (response.request.url.queryParameter("page")?.toIntOrNull() ?: 0)
+                val paged = filtered.drop(pageIndex * pageSize).take(pageSize)
+                val hasNext = (pageIndex + 1) * pageSize < filtered.size
+                AnimesPage(paged, hasNext)
+            } catch (_: Exception) {
+                AnimesPage(emptyList(), false)
+            }
+        }
+
+        val doc = org.jsoup.Jsoup.parse(body, baseUrl)
+        val (_, elements) = selectFirstMatching(doc, "search_item", config.selectors.itemCandidates)
+        if (elements.isEmpty()) {
+            if (isEmptyState(doc)) return AnimesPage(emptyList(), false)
+            throw app.kaziyami.core.SourceParseException(
+                source = name,
+                pageType = "search results",
+                selectorName = config.selectors.item,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+        val animeList = elements.map { searchAnimeFromElement(it) }
+        val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
+            doc.selectFirst(selector) != null
+        } ?: false
+        return AnimesPage(animeList, hasNextPage)
     }
 
     public override fun episodeListParse(response: Response): List<SEpisode> {

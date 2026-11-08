@@ -74,7 +74,7 @@ open class GenericThemeSource(
 
     init {
         try {
-            Log.i("Kaziyami", "Kaziyami $name v14.4 loaded, libVersion 14")
+            Log.i("Kaziyami", "Kaziyami $name v14.5 loaded, libVersion 14")
         } catch (_: Throwable) {
             // Logging failure must never break source construction
         }
@@ -205,9 +205,10 @@ open class GenericThemeSource(
         val titleEl = element.selectFirst(config.selectors.itemTitle)
         val title = titleEl?.attr("title")?.takeIf { it.isNotBlank() }
             ?: titleEl?.text()?.takeIf { it.isNotBlank() }
+            ?: element.attr("title").takeIf { it.isNotBlank() }
             ?: element.selectFirst("a[title]")?.attr("title")
             ?: element.selectFirst("img")?.attr("alt")
-            ?: ""
+            ?: element.attr("alt")
 
         anime.title = if (config.quirks.stripTitleBoilerplate) {
             HtmlText.stripBoilerplate(title)
@@ -215,12 +216,14 @@ open class GenericThemeSource(
             HtmlText.clean(title)
         }
 
-        val linkEl = element.selectFirst(config.selectors.itemUrl) ?: element.selectFirst("a[href]")
+        val linkEl = if (element.tagName() == "a" && element.hasAttr("href")) element
+            else element.selectFirst(config.selectors.itemUrl) ?: element.selectFirst("a[href]")
         val href = linkEl?.attr("href") ?: ""
         // Library safety: store clean relative path
         anime.url = UrlUtils.getPath(href)
 
         val imgEl = element.selectFirst(config.selectors.itemThumbnail)
+            ?: if (element.tagName() == "img" || element.hasAttr("style") || element.className().contains("thumb")) element else null
         anime.thumbnail_url = LazyImage.extractUrl(imgEl, baseUrl)
         return anime
     }

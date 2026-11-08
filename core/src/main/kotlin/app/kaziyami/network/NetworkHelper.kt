@@ -66,9 +66,8 @@ object BrowserHeaders {
             HeaderType.IMAGE -> builder.set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
         }
 
-        // 3. Accept-Language & Encoding
+        // 3. Accept-Language (Accept-Encoding left to OkHttp BridgeInterceptor for transparent decompression)
         builder.set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
-        builder.set("Accept-Encoding", "gzip, deflate, br")
 
         // 4. Referer (if present)
         if (referer != null) {

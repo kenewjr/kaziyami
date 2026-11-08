@@ -63,8 +63,8 @@ class BrowserProfileTest {
 
         assertEquals(names1, names2, "Header order must be 100% deterministic across all requests of the same type")
 
-        // Assert expected exact canonical header ordering
-        val expectedPrefix = listOf("User-Agent", "Accept", "Accept-Language", "Accept-Encoding", "Referer", "Sec-Ch-Ua")
+        // Assert expected exact canonical header ordering (Accept-Encoding left to OkHttp BridgeInterceptor)
+        val expectedPrefix = listOf("User-Agent", "Accept", "Accept-Language", "Referer", "Sec-Ch-Ua")
         for (i in expectedPrefix.indices) {
             assertEquals(expectedPrefix[i], names1[i])
         }

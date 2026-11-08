@@ -114,11 +114,18 @@
   - [x] 20.5 Artifact Instantiation Verification Task: Created `tools/test_source_instantiation.py` and `tools/SourceInstantiationRunner.java` verifying reflectively that all built APK artifacts instantiate cleanly on the JVM and validate all 64-bit permanent IDs against `docs/SOURCE_IDS.md`. Connected task `testSourceInstantiation` into `build.gradle.kts` and `./gradlew check`.
   - [x] 20.6 Documentation: Documented Kototoro loading pipeline and 5 filter gates in `docs/KOTOTORO.md` and added troubleshooting and cache clearing guide in `docs/TROUBLESHOOTING.md`, `README.md`, and `docs/QA_CHECKLIST.md`.
   - [x] 20.7 Version Bump: Bumped all 6 extensions to `extVersionCode = 4`, `extVersion = "14.4"`.
+- [x] **Phase 21: Transparent Decompression & Selector Drift Resolution (Fix SourceParseException on Hanime, Hentaimama, Nekopoi)**
+  - [x] 21.1 Root Cause Diagnostics: Discovered `Accept-Encoding: gzip, deflate, br` in `BrowserHeaders.kt` prevented OkHttp `BridgeInterceptor` from performing transparent decompression. Jsoup parsed raw GZIP binary data as empty DOM, failing `selectFirstMatching()` and throwing `SourceParseException`. Purged explicit header.
+  - [x] 21.2 Hanime Selector & Search Drift: Updated `selectors.item` to `a[href*='/videos/hentai/']` (matching current Astro SSR routes). Implemented JSON search parser querying `guest.freeanimehentai.net/api/v11/search_hvs` with query filtering and pagination.
+  - [x] 21.3 Hentaimama Search Card Support: Added `article.series-card, .series-card` to item selector and `h3.sc-title a, .sc-title a` to title candidates.
+  - [x] 21.4 Nekopoi Theme 2.8.1 Support: Updated card selector to `.nk-search-results li, a.nk-search-item, .nk-search-item` and thumbnail selector to `.nk-search-thumb, img`.
+  - [x] 21.5 Element-as-Link Normalization: In `GenericThemeSource`, updated `popularAnimeFromElement` to use `element` directly when tag is `<a>` with `href` attribute, avoiding descendant link query failures.
+  - [x] 21.6 Version Bump: Bumped all 6 sources to `extVersionCode = 5`, `extVersion = "14.5"`.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 20 complete. Extension entry-point classes verified in `classes.dex`. Reflective source instantiation verified against built artifacts with permanent IDs. 100% binary compatibility against official `extensions-lib:14`. 0 host classes bundled into APKs.
+- **Overall Status**: Phase 21 complete. OkHttp transparent decompression restored. Selector drift fixed for Hanime, Hentaimama, and Nekopoi. Extension version bumped to 14.5 (code 5). Permanent 64-bit source IDs preserved.
 - **Last Green Run**: `./gradlew check` (all tasks, binding verifier, instantiation tests, and unit tests passing), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_source_instantiation.py` (all 6 sources verified), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for production release upon user approval.
 

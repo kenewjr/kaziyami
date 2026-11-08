@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.5] - 2026-11-08
+
+### Fixed
+- **Transparent Response Decompression (OkHttp BridgeInterceptor Fix)**:
+  - Root cause resolved: Purged manual `Accept-Encoding: gzip, deflate, br` from `BrowserHeaders.kt`. When `Accept-Encoding` is explicitly supplied by an application, OkHttp disables its transparent `GzipSource` decompression and returns raw binary GZIP bytes. When parsed as text by `response.asJsoup()`, Jsoup produced an empty DOM tree, triggering false `SourceParseException` errors across source listings.
+- **Hanime (en) Selector & Search Drift**:
+  - Aligned popular and latest item selectors to current Astro SSR route `a[href*='/videos/hentai/']`.
+  - Added JSON-backed search parsing via `guest.freeanimehentai.net/api/v11/search_hvs` with client-side query filtering and pagination.
+- **Hentaimama (en) Search Card Support**:
+  - Added `article.series-card` and `.series-card` to item selectors to parse DooPlay search card layouts.
+  - Added `h3.sc-title a, .sc-title a` to title candidates and `a.sc-poster` to link selectors.
+- **Nekopoi (id) Theme 2.8.1 Card Support**:
+  - Updated card selectors to `.nk-search-results li, a.nk-search-item, .nk-search-item`.
+  - Added `.nk-search-thumb` to thumbnail selectors with CSS `background-image` resolution via `LazyImage`.
+- **Version Bump**:
+  - Bumped all 6 sources to `extVersionCode = 5`, `extVersion = "14.5"`.
+
 ## [14.3] - 2026-11-08
 
 ### Fixed
