@@ -15,7 +15,6 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REQUIRED_MODULES = [
     ("core", "core"),
     ("lib-multisrc:generic", "lib-multisrc/generic"),
-    ("lib-multisrc:kvs", "lib-multisrc/kvs"),
     ("src:en:hanime", "src/en/hanime"),
     ("src:en:hentaimama", "src/en/hentaimama"),
     ("src:en:rulevid", "src/en/rulevid"),
