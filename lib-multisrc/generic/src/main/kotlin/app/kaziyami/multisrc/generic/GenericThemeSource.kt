@@ -1,5 +1,11 @@
 package app.kaziyami.multisrc.generic
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -7,10 +13,15 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.EpisodeNumberParser
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
+import app.kaziyami.core.InMemorySharedPreferences
 import app.kaziyami.core.LazyImage
 import app.kaziyami.core.MirrorManager
 import app.kaziyami.core.SourceParseException
@@ -24,6 +35,8 @@ import app.kaziyami.engine.KaziyamiVideo
 import app.kaziyami.network.BrowserHeaders
 import app.kaziyami.network.NetworkConfig
 import app.kaziyami.network.TtlCache
+import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -39,8 +52,16 @@ import java.util.concurrent.ConcurrentHashMap
  */
 open class GenericThemeSource(
     val config: SourceConfig,
-    val preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
-) : ParsedAnimeHttpSource(), eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource, KaziyamiSource {
+    customPreferences: SharedPreferences? = null
+) : ParsedAnimeHttpSource(), ConfigurableAnimeSource, KaziyamiSource {
+
+    val preferences: SharedPreferences by lazy {
+        customPreferences ?: runCatching {
+            Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        }.getOrElse {
+            InMemorySharedPreferences()
+        }
+    }
 
     val pageCache = TtlCache<String, AnimesPage>(defaultTtlMs = NetworkConfig.POPULAR_CACHE_TTL_MS)
     val detailCache = TtlCache<String, SAnime>(defaultTtlMs = NetworkConfig.DETAIL_PAGE_CACHE_TTL_MS)
@@ -49,8 +70,14 @@ open class GenericThemeSource(
     override val name: String = config.name
     override val lang: String = config.lang
     override val supportsLatest: Boolean = true
-    override val client: okhttp3.OkHttpClient = app.kaziyami.network.NetworkHelper().client
-    override fun headersBuilder(): okhttp3.Headers.Builder = BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
+
+    override val client: OkHttpClient by lazy {
+        runCatching { network.cloudflareClient }
+            .recoverCatching { network.client }
+            .getOrElse { app.kaziyami.network.NetworkHelper().client }
+    }
+
+    override fun headersBuilder(): Headers.Builder = BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
 
     val mirrorManager = MirrorManager(
         defaultBaseUrl = config.baseUrl,
@@ -64,53 +91,50 @@ open class GenericThemeSource(
     private val matchedSelectorCache = ConcurrentHashMap<String, String>()
 
     open fun getDomainPreference(): String? {
-        val custom = preferences.getString("custom_domain_override", "").trim()
+        val custom = preferences.getString("custom_domain_override", "")?.trim().orEmpty()
         if (custom.isNotBlank()) return custom
-        return preferences.getString("preferred_domain", "").takeIf { it.isNotBlank() }
+        return preferences.getString("preferred_domain", "")?.takeIf { it.isNotBlank() }
     }
 
-    override fun setupPreferenceScreen(screen: eu.kanade.tachiyomi.animesource.SourcePreferences) {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val context = screen.context
         val mirrorsList = (listOf(config.baseUrl) + config.mirrors).distinct().toTypedArray()
-        screen.addListPreference(
-            key = "preferred_domain",
-            title = "Preferred domain",
-            summary = "Select domain to use for browsing and streams",
-            entries = mirrorsList,
-            entryValues = mirrorsList,
-            defaultValue = config.baseUrl
-        )
-        screen.addEditTextPreference(
-            key = "custom_domain_override",
-            title = "Custom domain override",
-            summary = "Enter custom domain or mirror URL (leave blank to use defaults)",
-            defaultValue = ""
-        )
-        screen.addListPreference(
-            key = "preferred_quality",
-            title = "Preferred quality",
-            summary = "Choose preferred stream resolution",
-            entries = arrayOf("1080p", "720p", "480p", "360p"),
-            entryValues = arrayOf("1080p", "720p", "480p", "360p"),
-            defaultValue = "1080p"
-        )
-        screen.addEditTextPreference(
-            key = "preferred_host",
-            title = "Preferred video host",
-            summary = "Prioritize specific video embed host (e.g. streamtape, voe, doodstream)",
-            defaultValue = ""
-        )
-        screen.addSwitchPreference(
-            key = "show_raw_titles",
-            title = "Show raw titles",
-            summary = "Keep original untranslated titles when available",
-            defaultValue = false
-        )
-        screen.addSwitchPreference(
-            key = "enable_remote_mirrors",
-            title = "Auto-update mirror list",
-            summary = "Fetch verified mirror updates from repo branch (no tracking, disabled by default)",
-            defaultValue = false
-        )
+
+        val domainPref = ListPreference(context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain"
+            summary = "%s"
+            entries = mirrorsList
+            entryValues = mirrorsList
+            setDefaultValue(config.baseUrl)
+        }
+        screen.addPreference(domainPref)
+
+        val customDomainPref = EditTextPreference(context).apply {
+            key = "custom_domain_override"
+            title = "Custom domain override"
+            summary = "Enter custom domain or mirror URL (leave blank to use defaults)"
+            setDefaultValue("")
+        }
+        screen.addPreference(customDomainPref)
+
+        val qualityPref = ListPreference(context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            summary = "%s"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080p", "720p", "480p", "360p")
+            setDefaultValue("1080p")
+        }
+        screen.addPreference(qualityPref)
+
+        val hostPref = EditTextPreference(context).apply {
+            key = "preferred_host"
+            title = "Preferred video host"
+            summary = "Prioritize specific video embed host (e.g. streamtape, voe, doodstream)"
+            setDefaultValue("")
+        }
+        screen.addPreference(hostPref)
     }
 
     /**
@@ -135,15 +159,15 @@ open class GenericThemeSource(
 
     // ============================= Popular Anime =============================
 
-    override fun popularAnimeRequest(page: Int): Request {
+    public override fun popularAnimeRequest(page: Int): Request {
         val path = String.format(config.popularPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
-        return GET(url)
+        return GET(url, headers)
     }
 
     override fun popularAnimeSelector(): String = config.selectors.item
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
+    public override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val (_, elements) = selectFirstMatching(document, "popular_item", config.selectors.itemCandidates)
 
@@ -196,15 +220,15 @@ open class GenericThemeSource(
 
     // ============================= Latest Updates =============================
 
-    override fun latestUpdatesRequest(page: Int): Request {
+    public override fun latestUpdatesRequest(page: Int): Request {
         val path = String.format(config.latestPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
-        return GET(url)
+        return GET(url, headers)
     }
 
     override fun latestUpdatesSelector(): String = config.selectors.item
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
+    public override fun latestUpdatesParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val (_, elements) = selectFirstMatching(document, "latest_item", config.selectors.itemCandidates)
 
@@ -234,16 +258,16 @@ open class GenericThemeSource(
 
     // ============================= Search & Filters =============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    public override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
         val path = String.format(config.searchPath, encodedQuery, page)
         val url = UrlUtils.resolve(baseUrl, path)
-        return GET(url)
+        return GET(url, headers)
     }
 
     override fun searchAnimeSelector(): String = config.selectors.item
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
+    public override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val (_, elements) = selectFirstMatching(document, "search_item", config.selectors.itemCandidates)
 
@@ -273,11 +297,13 @@ open class GenericThemeSource(
 
     // ============================= Anime Details =============================
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET(UrlUtils.resolve(baseUrl, anime.url))
+    public override fun animeDetailsRequest(anime: SAnime): Request {
+        return GET(UrlUtils.resolve(baseUrl, anime.url), headers)
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
+    public override fun animeDetailsParse(response: Response): SAnime = super.animeDetailsParse(response)
+
+    public override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val titleEl = config.selectors.detailsTitleCandidates.asSequence()
             .mapNotNull { document.selectFirst(it) }
@@ -316,8 +342,8 @@ open class GenericThemeSource(
 
     // ============================= Episode List =============================
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET(UrlUtils.resolve(baseUrl, anime.url))
+    public override fun episodeListRequest(anime: SAnime): Request {
+        return GET(UrlUtils.resolve(baseUrl, anime.url), headers)
     }
 
     override fun episodeListSelector(): String = config.selectors.episodeList
@@ -342,7 +368,7 @@ open class GenericThemeSource(
         return ep
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
+    public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val (_, elements) = selectFirstMatching(document, "episode_list", config.selectors.episodeListCandidates)
 
@@ -370,11 +396,11 @@ open class GenericThemeSource(
 
     // ============================= Video List =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(UrlUtils.resolve(baseUrl, episode.url))
+    public override fun videoListRequest(episode: SEpisode): Request {
+        return GET(UrlUtils.resolve(baseUrl, episode.url), headers)
     }
 
-    override fun videoListParse(response: Response): List<Video> {
+    public override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val iframeUrls = config.selectors.playerIframesCandidates.flatMap { selector ->
             document.select(selector).mapNotNull { element: Element ->
@@ -383,8 +409,8 @@ open class GenericThemeSource(
             }
         }.distinct().map { UrlUtils.resolve(baseUrl, it) }
 
-        val preferredQuality = preferences.getString("preferred_quality", "1080p")
-        val preferredHost = preferences.getString("preferred_host", "").takeIf { it.isNotBlank() }
+        val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
+        val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
         val referer = response.request.url.toString()
         return ExtractorRegistry.resolveSequential(
             urls = iframeUrls,

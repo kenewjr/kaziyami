@@ -14,6 +14,3 @@ include(":src:id:nontonhentai")
 include(":src:en:hentaimama")
 include(":src:en:javsubbed")
 include(":src:en:hanime")
-
-include(":samples:kototoro-hello")
-project(":samples:kototoro-hello").projectDir = file("samples/kototoro-hello")

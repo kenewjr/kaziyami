@@ -25,9 +25,11 @@ This document enumerates the immutable interfaces, package naming conventions, a
    The host application scans installed packages matching `eu.kanade.tachiyomi.animeextension.*`. Changing this prefix hides extensions from the manager.
 2. **Classloader Resolution**:
    The host creates a `PathClassLoader` for the extension APK and loads the class defined in `tachiyomi.animeextension.class`.
-3. **Type Casting**:
+3. **Type Casting & ABI Binding**:
    The loaded instance is cast to `eu.kanade.tachiyomi.animesource.AnimeSource`. Any custom package for these base interfaces results in a `ClassCastException`.
-4. **Internal Modularity (Kaziyami Scope)**:
+4. **Compile-Only Host ABI & Zero Vendored Classes**:
+   Extensions compile against official `extensions-lib:14` as `compileOnly`. Host packages (`eu.kanade.*`, `okhttp3.*`, `okio.*`, `kotlin.*`, `kotlinx.*`, `uy.kohesive.injekt.*`, `androidx.*`) MUST NEVER be bundled inside extension APKs. Bundling private stubs causes `NoSuchMethodError` (e.g., `GET(String)` resolved virtually on `GenericThemeSource` instead of `eu.kanade.tachiyomi.network.GET`). Verified at build time via `verifyNoHostClassesPackaged` and `verifyHostApiBinding`.
+5. **Internal Modularity (Kaziyami Scope)**:
    All internal helpers (`app.kaziyami.core`, `app.kaziyami.multisrc.*`, `app.kaziyami.extractors.*`, `app.kaziyami.network`, `app.kaziyami.filters`) reside entirely within the extension DEX and are completely independent of host reflection.
 
 ---
@@ -36,7 +38,8 @@ This document enumerates the immutable interfaces, package naming conventions, a
 
 | Client / Fork | Status | Evidence & Verification Notes |
 |---|---|---|
-| **Aniyomi (Stable & Preview)** | **Supported** | Primary reference implementation. Verified against Aniyomi bytecode contract (`AnimeExtensionLoader` / `AnimeHttpSource`). |
+| **Aniyomi (Stable & Preview)** | **Supported** | Primary reference implementation. Verified against Aniyomi bytecode contract (`AnimeExtensionLoader` / `AnimeHttpSource`). Verified on device. |
 | **Kuukiyomi** | *Untested* | Downstream fork sharing Aniyomi extension architecture. Not tested on physical device with Kaziyami APKs. |
 | **Dantotsu** | *Untested* | Anime/Manga tracker client supporting extension APIs. Not directly verified in test harness. |
-| **Kototoro** | **Supported** | Multi-media reader/player (v2.3.2 verified). Natively ingests Aniyomi anime extension repositories (`index.min.json` / `repo.json`) and APKs via `AniyomiExtensionLoader` (Android) and `dex-convert` (desktop/iOS). Fully supports video playback and adult tags (see [docs/KOTOTORO.md](KOTOTORO.md)). |
+| **Kototoro (Variant A: APK)** | **Supported** | Multi-media reader/player (v2.3+). Natively ingests Aniyomi anime extension repositories (`index.min.json` / `repo.json`) and APKs via `AniyomiExtensionLoader` (Android) and `dex-convert` (desktop/iOS). Fully supports video playback and adult tags (see [docs/KOTOTORO.md](KOTOTORO.md)). |
+| **Kototoro (Variant B: JAR)** | **Not Supported** | Discontinued for video. Kototoro's `ContentParser` interface only supports manga pages and novel text; Kototoro video routes strictly through Aniyomi APKs (see [docs/KOTOTORO_JAR_FORMAT.md](KOTOTORO_JAR_FORMAT.md)). |

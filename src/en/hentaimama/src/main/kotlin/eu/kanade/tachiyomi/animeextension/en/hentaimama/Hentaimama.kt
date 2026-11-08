@@ -1,15 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.hentaimama
 
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
-import eu.kanade.tachiyomi.animesource.SourcePreferences
 import app.kaziyami.multisrc.dooplay.DooPlayTheme
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 
-class Hentaimama(
-    preferences: SourcePreferences = InMemorySourcePreferences()
-) : DooPlayTheme(
+class Hentaimama : DooPlayTheme(
     name = "Hentaimama",
     lang = "en",
     baseUrl = "https://hentaimama.io",
@@ -31,6 +26,5 @@ class Hentaimama(
     customQuirks = QuirksConfig(
         usesAjaxPlayer = true,
         customReferer = "https://hentaimama.io/"
-    ),
-    preferences = preferences
+    )
 )

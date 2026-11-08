@@ -1,12 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.hanime
 
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
-import eu.kanade.tachiyomi.animesource.SourcePreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
@@ -18,9 +16,7 @@ import app.kaziyami.multisrc.generic.SourceConfig
 import okhttp3.Response
 import java.util.regex.Pattern
 
-class Hanime(
-    preferences: SourcePreferences = InMemorySourcePreferences()
-) : GenericThemeSource(
+class Hanime : GenericThemeSource(
     config = SourceConfig(
         name = "Hanime",
         lang = "en",
@@ -46,8 +42,7 @@ class Hanime(
         quirks = QuirksConfig(
             customReferer = "https://hanime.tv/"
         )
-    ),
-    preferences = preferences
+    )
 ) {
 
     companion object {
@@ -55,7 +50,7 @@ class Hanime(
         private val MP4_REGEX = Pattern.compile("""(https?://[^\s"'<>]+\.mp4[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE)
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
+    public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val playlistItems = document.select(".playlist a, .series-episodes a")
         if (playlistItems.isNotEmpty()) {
@@ -83,7 +78,7 @@ class Hanime(
         return listOf(ep)
     }
 
-    override fun videoListParse(response: Response): List<Video> {
+    public override fun videoListParse(response: Response): List<Video> {
         val body = response.body?.string().orEmpty()
         val videoList = mutableListOf<Video>()
 

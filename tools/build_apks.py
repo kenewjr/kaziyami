@@ -241,12 +241,18 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
         # 3. Compile classes into classes.dex using D8
         class_dirs = [
             os.path.join(ROOT_DIR, ext["dir"], "build", "classes", "kotlin", "main"),
-            os.path.join(ROOT_DIR, "core", "build", "classes", "kotlin", "main")
+            os.path.join(ROOT_DIR, "core", "build", "classes", "kotlin", "main"),
+            os.path.join(ROOT_DIR, "lib-multisrc", "generic", "build", "classes", "kotlin", "main")
         ]
-        if ext.get("multisrc"):
+        if ext.get("multisrc") and ext["multisrc"] != "lib-multisrc/generic":
             class_dirs.append(os.path.join(ROOT_DIR, ext["multisrc"], "build", "classes", "kotlin", "main"))
 
         # Bundle class files into a temporary jar for D8 input
+        # Filter out any host-provided packages to preserve ClassLoader isolation
+        HOST_PACKAGES = (
+            "eu/kanade/", "okhttp3/", "okio/", "kotlin/", "kotlinx/",
+            "androidx/", "uy/kohesive/", "org/skepsun/", "org/jsoup/"
+        )
         input_jar = os.path.join(tmp_dir, "input.jar")
         with zipfile.ZipFile(input_jar, "w") as zf:
             for c_dir in class_dirs:
@@ -255,16 +261,20 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
                         for file in files:
                             if file.endswith(".class"):
                                 full_p = os.path.join(root, file)
-                                rel_p = os.path.relpath(full_p, c_dir)
+                                rel_p = os.path.relpath(full_p, c_dir).replace('\\', '/')
+                                if any(rel_p.startswith(hp) for hp in HOST_PACKAGES):
+                                    continue
                                 if rel_p not in zf.namelist():
                                     zf.write(full_p, rel_p)
 
+        ext_lib_jar = os.path.join(ROOT_DIR, "libs", "extensions-lib-14.jar")
         dex_out_dir = os.path.join(tmp_dir, "dex")
         os.makedirs(dex_out_dir, exist_ok=True)
         d8_cmd = [
             "java", "-cp", sdk_tools["d8_jar"], "com.android.tools.r8.D8",
             "--release", "--min-api", "21",
             "--lib", sdk_tools["android_jar"],
+            "--lib", ext_lib_jar,
             "--output", dex_out_dir,
             input_jar
         ]

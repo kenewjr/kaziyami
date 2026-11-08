@@ -98,3 +98,38 @@ When reporting an issue, sanitize all logcat output before submitting:
 8. [ ] **Video Playback**: Tap an episode. Verify video stream plays smoothly in Kototoro's player. Test at least two stream hosts / qualities where available (e.g. 1080p, 720p).
 9. [ ] **Cloudflare / Turnstile Clearance**: If a challenge prompt occurs, trigger the in-app WebView clearance flow, complete challenge, and verify cookies persist.
 10. [ ] **Domain Override**: In source settings, enter a mirror domain from `docs/SOURCES.md`. Confirm catalog updates to fetch via the new domain.
+
+---
+
+## 6. Binary Compatibility & Logcat Diagnostic Runbook
+
+To catch runtime ClassLoader or ABI binding regressions (`NoSuchMethodError`, `ClassNotFoundException`):
+
+### 6.1 Real-Time ADB Logcat Filter
+Run the following filter while launching the app, installing the extension, and opening a catalog:
+
+```bash
+# Capture crashes and linkage exceptions across Aniyomi and Kototoro
+adb logcat -s AndroidRuntime:E Kototoro:V Aniyomi:V | grep -E "(NoSuchMethodError|ClassNotFoundException|GenericThemeSource|AnimeHttpSource|RequestsKt)"
+```
+
+### 6.2 Manual Verification Sequence in Real Aniyomi
+1. Connect physical device via ADB (`adb devices`).
+2. Build and install release or debug APK:
+   ```bash
+   python scripts/install_debug.py --source nekopoi
+   ```
+3. Open **Aniyomi** -> **Browse** -> **Extensions** -> tap **Trust** if prompted.
+4. Open **Kaziyami: Nekopoi** -> load Popular anime -> open details -> tap Episode 1 -> select 720p/1080p stream.
+5. If a crash occurs:
+   - Check `adb logcat` output.
+   - Verify whether the missing method originates from host API (`eu.kanade.*`) or internal code (`app.kaziyami.*`).
+   - If it references `NoSuchMethodError: ... GET(...)`, ensure top-level `eu.kanade.tachiyomi.network.GET` is imported and no vendored stubs exist.
+
+### 6.3 Manual Verification Sequence in Kototoro (v2.3+)
+1. Ensure Kaziyami is installed via **Variant A (Aniyomi APK repository)**, NOT JAR:
+   - URL: `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json`
+2. In Kototoro, open **Explore** -> **Sources** -> **Anime** / **Video** tab.
+3. Open any Kaziyami source (e.g., `Kaziyami: IndoHentai`).
+4. Verify catalog loads without `"manga is not supported"` or `"This video source is not supported"` error dialogs.
+5. Tap an entry and verify video stream launches in Kototoro player.

@@ -188,12 +188,17 @@ def check_repository_artifacts(root_dir: str = None) -> dict:
             results["variant_a_aniyomi"]["status"] = "FAIL"
             results["variant_a_aniyomi"]["errors"].append(f"Failed to parse Aniyomi repo metadata: {e}")
 
-    # Variant B: Kototoro JAR repo
+    # Variant B: Kototoro JAR repo (Discontinued for video per Phase 12)
     index_b_path = os.path.join(jar_dir, "index.json")
     repo_json_b = os.path.join(jar_dir, "repo.json")
     sums_b_path = os.path.join(jar_dir, "sha256sums.txt")
 
-    if not (os.path.exists(index_b_path) and os.path.exists(repo_json_b) and os.path.exists(sums_b_path)):
+    if not os.path.exists(jar_dir):
+        results["variant_b_kototoro"]["status"] = "DISCONTINUED"
+        results["variant_b_kototoro"]["details"].append(
+            "Kototoro JAR variant discontinued for video (Kototoro uses AniyomiExtensionLoader APKs for video)"
+        )
+    elif not (os.path.exists(index_b_path) and os.path.exists(repo_json_b) and os.path.exists(sums_b_path)):
         results["variant_b_kototoro"]["status"] = "WARN"
         results["variant_b_kototoro"]["errors"].append("Missing repository index or sha256sums.txt in repo/jar/")
     else:

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.3] - 2026-11-08
+
+### Fixed
+- **Host ABI Binary Compatibility (`NoSuchMethodError: GET(String)` Fix)**:
+  - Root cause resolved: Purged all vendored/stub copies of host classes (`eu.kanade.*`, `org.skepsun.*`) from production sources (`main`).
+  - Compiled directly against official `com.github.aniyomiorg:extensions-lib:14` as `compileOnly` with `android.jar` (API 33).
+  - Replaced invalid virtual member calls (`GenericThemeSource.GET(url)`) with real top-level extension functions `eu.kanade.tachiyomi.network.GET` and `eu.kanade.tachiyomi.util.asJsoup`.
+  - Isolated working test doubles strictly to test source sets (`core/src/test/kotlin`), ensuring 0 host classes are bundled into release APKs.
+
+### Added
+- **Automated Host ABI Linkage Verification in CI**:
+  - `verifyNoHostClassesPackaged`: Enforces strict ClassLoader isolation by asserting 0 host classes are bundled into built extension APKs.
+  - `verifyHostApiBinding`: Scans APK DEX bytecode and verifies that 100% of method/field calls resolve against the host classpath (walking superclass and interface inheritance chains).
+  - Fixture unit tests in `tools/test_verify_host_api_binding.py` validating that missing methods fail the build and valid calls pass.
+  - Integrated verification directly into `./gradlew check`.
+
+### Changed
+- **Kototoro Video Architecture Realignment**:
+  - Discontinued Kototoro JAR parser distribution for video sources. Verified from Kototoro source code that `ContentParser` only models manga pages and novel text; Kototoro delegates all video streaming exclusively to its built-in `AniyomiExtensionLoader`.
+  - Designated Variant A (Aniyomi APK repository) as the sole supported distribution path for Kototoro video.
+  - Bumped all 6 adult sources to `extVersionCode = 3`, `extVersion = "14.3"`.
+
 ## [1.0.0] - 2026-11-07
 
 ### Added

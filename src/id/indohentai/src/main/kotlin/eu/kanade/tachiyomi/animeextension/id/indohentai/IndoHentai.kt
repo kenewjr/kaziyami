@@ -1,8 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.id.indohentai
 
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
-import eu.kanade.tachiyomi.animesource.SourcePreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import app.kaziyami.multisrc.generic.GenericThemeSource
@@ -10,9 +7,7 @@ import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.generic.SourceConfig
 
-class IndoHentai(
-    preferences: SourcePreferences = InMemorySourcePreferences()
-) : GenericThemeSource(
+class IndoHentai : GenericThemeSource(
     config = SourceConfig(
         name = "IndoHentai",
         lang = "id",
@@ -42,8 +37,7 @@ class IndoHentai(
         quirks = QuirksConfig(
             customReferer = "https://indohentai.net/"
         )
-    ),
-    preferences = preferences
+    )
 ) {
 
     override fun getFilterList(): AnimeFilterList {

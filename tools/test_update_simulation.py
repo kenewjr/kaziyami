@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
 tools/test_update_simulation.py:
-Automated test simulating Release N vs Release N+1 for both distribution variants:
-- Variant A: Aniyomi APK repo (repo/index.json)
-- Variant B: Kototoro JAR repo (repo/jar/index.json)
+Automated test simulating Release N vs Release N+1 for:
+- Variant A: Aniyomi APK repo (repo/index.json) for Aniyomi & Kototoro (AniyomiExtensionLoader)
 
 Verifies:
 1. Strict integer comparison: only packages with remote.code > installed.code get flagged.
@@ -26,31 +25,14 @@ def is_newer_than_installed(installed_code, remote_code):
 class TestUpdateSimulation(unittest.TestCase):
 
     def test_live_indexes_exist_and_conform(self):
-        jar_index_path = os.path.join(ROOT_DIR, "repo", "jar", "index.json")
         apk_index_path = os.path.join(ROOT_DIR, "repo", "index.json")
 
-        self.assertTrue(os.path.exists(jar_index_path), "repo/jar/index.json must exist")
         self.assertTrue(os.path.exists(apk_index_path), "repo/index.json must exist")
 
-        with open(jar_index_path, "r", encoding="utf-8") as f:
-            jar_data = json.load(f)
         with open(apk_index_path, "r", encoding="utf-8") as f:
             apk_data = json.load(f)
 
-        # In verified Kototoro schema, index is a direct List<ExtensionIndexDto> array
-        jar_extensions = jar_data
-        self.assertEqual(len(jar_extensions), 1)  # Unified suite app.kaziyami.kototoro
-        self.assertEqual(jar_extensions[0]["pkg"], "app.kaziyami.kototoro")
-        self.assertEqual(len(jar_extensions[0]["sources"]), 6)
         self.assertEqual(len(apk_data), 6)  # 6 extensions
-
-        # Verify versionCode (field 'code') and sha256 presence
-        for ext in jar_extensions:
-            self.assertIn("code", ext)
-            self.assertIn("version", ext)
-            self.assertIn("sha256", ext)
-            self.assertIn("size", ext)
-            self.assertGreater(ext["code"], 0)
 
         for entry in apk_data:
             self.assertIn("code", entry)

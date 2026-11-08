@@ -29,24 +29,19 @@ class VersionConsistencyContractTest {
             ?: File(".")
 
         val aniyomiIndexFile = File(rootDir, "repo/index.json")
-        val kototoroIndexFile = File(rootDir, "repo/jar/index.json")
 
-        if (!aniyomiIndexFile.exists() || !kototoroIndexFile.exists()) {
+        if (!aniyomiIndexFile.exists()) {
             val script = File(rootDir, "tools/generate_repo_index.py")
-            val pb = ProcessBuilder("python", script.absolutePath, "--mode", "all")
+            val pb = ProcessBuilder("python", script.absolutePath, "--mode", "aniyomi")
             pb.directory(rootDir)
             pb.redirectErrorStream(true)
             pb.start().waitFor()
         }
 
         assertTrue(aniyomiIndexFile.exists(), "repo/index.json must exist")
-        assertTrue(kototoroIndexFile.exists(), "repo/jar/index.json must exist")
 
         val aniyomiArray = json.parseToJsonElement(aniyomiIndexFile.readText()).jsonArray
         val aniyomiMap = aniyomiArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
-
-        val kototoroArray = json.parseToJsonElement(kototoroIndexFile.readText()).jsonArray
-        val kototoroMap = kototoroArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
 
         for ((lang, slug, name) in sources) {
             val buildFile = File(rootDir, "src/$lang/$slug/build.gradle.kts")
@@ -63,7 +58,7 @@ class VersionConsistencyContractTest {
             val extVersionCode = codeMatch!!.groupValues[1].toInt()
             val rawLibVersion = libMatch!!.groupValues[1]
 
-            // 1. Variant A (Aniyomi APK) Invariants
+            // Variant A (Aniyomi APK) Invariants
             val aniyomiPkg = "eu.kanade.tachiyomi.animeextension.$lang.$slug"
             val aniyomiEntry = aniyomiMap[aniyomiPkg]?.jsonObject
             assertNotNull(aniyomiEntry, "Aniyomi index must contain entry for $aniyomiPkg")
@@ -75,18 +70,6 @@ class VersionConsistencyContractTest {
             val expectedApkName = "kaziyami-$lang.$slug-v$expectedAniyomiVersion.apk"
             val actualApkName = aniyomiEntry["apk"]?.jsonPrimitive?.content
             assertEquals(expectedApkName, actualApkName, "Aniyomi APK filename mismatch for $slug")
-
-            // 2. Variant B (Kototoro JAR) Invariants
-            // Kototoro uses unified suite (app.kaziyami.kototoro) containing all sources
-            val suiteEntry = kototoroMap["app.kaziyami.kototoro"]?.jsonObject
-            assertNotNull(suiteEntry, "Kototoro index must contain unified suite app.kaziyami.kototoro")
-
-            val suiteSources = suiteEntry!!["sources"]?.jsonArray?.map {
-                it.jsonObject["name"]?.jsonPrimitive?.content
-            } ?: emptyList()
-            assertTrue(suiteSources.contains(name), "Kototoro unified suite must contain source $name")
-            assertEquals("1.0.0", suiteEntry["version"]?.jsonPrimitive?.content, "Kototoro version must match suite version")
-            assertEquals(extVersionCode, suiteEntry["code"]?.jsonPrimitive?.content?.toInt(), "Kototoro code must match suite code")
         }
     }
 }

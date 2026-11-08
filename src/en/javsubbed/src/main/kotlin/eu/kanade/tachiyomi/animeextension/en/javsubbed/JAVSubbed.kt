@@ -1,15 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.javsubbed
 
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
-import eu.kanade.tachiyomi.animesource.SourcePreferences
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.retrotube.RetroTubeTheme
 
-class JAVSubbed(
-    preferences: SourcePreferences = InMemorySourcePreferences()
-) : RetroTubeTheme(
+class JAVSubbed : RetroTubeTheme(
     name = "JAVSubbed",
     lang = "en",
     baseUrl = "https://javsubbed.net",
@@ -31,6 +26,5 @@ class JAVSubbed(
     ),
     customQuirks = QuirksConfig(
         customReferer = "https://javsubbed.net/"
-    ),
-    preferences = preferences
+    )
 )

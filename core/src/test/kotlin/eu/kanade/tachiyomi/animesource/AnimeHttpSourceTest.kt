@@ -6,9 +6,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -19,7 +20,6 @@ import org.jsoup.nodes.Element
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -43,8 +43,9 @@ class AnimeHttpSourceTest {
         override val name: String = "TestHttpSource"
         override val lang: String = "en"
         override val baseUrl: String = serverUrl
+        override val supportsLatest: Boolean = true
 
-        override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/popular?page=$page")
+        override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/popular?page=$page", headers)
         override fun popularAnimeSelector(): String = "div.anime-card"
         override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
             title = element.selectFirst(".title")?.text() ?: ""
@@ -52,13 +53,13 @@ class AnimeHttpSourceTest {
         }
         override fun popularAnimeNextPageSelector(): String = "a.next"
 
-        override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest?page=$page")
+        override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest?page=$page", headers)
         override fun latestUpdatesSelector(): String = "div.anime-card"
         override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
         override fun latestUpdatesNextPageSelector(): String = "a.next"
 
         override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-            GET("$baseUrl/search?q=$query&page=$page")
+            GET("$baseUrl/search?q=$query&page=$page", headers)
         override fun searchAnimeSelector(): String = "div.anime-card"
         override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
         override fun searchAnimeNextPageSelector(): String = "a.next"
@@ -85,10 +86,10 @@ class AnimeHttpSourceTest {
         val testSource = TestParsedSource(server.url("/").toString().removeSuffix("/"))
 
         // Test GET and POST helpers
-        val getReq = testSource.GET("${testSource.baseUrl}/get")
+        val getReq = GET("${testSource.baseUrl}/get")
         assertEquals("GET", getReq.method)
 
-        val postReq = testSource.POST("${testSource.baseUrl}/post", body = "test".toRequestBody("text/plain".toMediaType()))
+        val postReq = POST("${testSource.baseUrl}/post", body = "test".toRequestBody("text/plain".toMediaType()))
         assertEquals("POST", postReq.method)
 
         // Popular Anime

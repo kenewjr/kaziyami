@@ -330,18 +330,13 @@ def generate_kototoro_repo():
     print(f"[+] Mode B: Wrote Kototoro JAR repo index files ({len(extensions)} extensions)")
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate Kaziyami repository indexes (Modes A and B).")
-    parser.add_argument("--mode", choices=["all", "aniyomi", "kototoro"], default="all",
-                        help="Repository mode to generate: aniyomi, kototoro, or all (default: all)")
+    parser = argparse.ArgumentParser(description="Generate Kaziyami repository index (Aniyomi APK format).")
+    parser.add_argument("--mode", choices=["all", "aniyomi"], default="aniyomi",
+                        help="Repository mode to generate (default: aniyomi)")
     parser.add_argument("--fingerprint", help="Signing certificate SHA-256 fingerprint for repo.json")
     args = parser.parse_args()
 
-    if args.mode in ("all", "aniyomi"):
-        generate_aniyomi_repo(fingerprint=args.fingerprint)
-
-    if args.mode in ("all", "kototoro"):
-        generate_kototoro_repo()
-
+    generate_aniyomi_repo(fingerprint=args.fingerprint)
     return 0
 
 if __name__ == "__main__":

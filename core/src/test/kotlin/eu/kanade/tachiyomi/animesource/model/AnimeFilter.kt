@@ -26,3 +26,4 @@ sealed class AnimeFilter<T>(val name: String, var state: T) {
 class AnimeFilterList(val list: List<AnimeFilter<*>>) : List<AnimeFilter<*>> by list {
     constructor(vararg fs: AnimeFilter<*>) : this(if (fs.isNotEmpty()) fs.asList() else emptyList())
 }
+

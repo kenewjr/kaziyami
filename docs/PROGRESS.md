@@ -99,11 +99,18 @@
   - [x] 18.1 Host Injekt Decoupling: Overrode `client` and `headersBuilder()` in `GenericThemeSource` and declared `open fun headersBuilder()` in `core/AnimeHttpSource.kt`. Prevents Kototoro host `AnimeHttpSource` from throwing uninitialized `Injekt` exceptions when running `SourceTester` inside `JarExtensionLoader`.
   - [x] 18.2 Aniyomi APK Version & Metadata Alignment: Set `extVersion = "14.2"` (`"${libVersion}.${extVersionCode}"`) across all 6 sources and added `<meta-data android:name="aniyomix.extensionLib" android:value="{meta['libVersion']}" />` in `tools/build_apks.py`. Satisfies both official Aniyomi loader (`aniyomix.extensionLib`) and Kototoro loader (`versionName.substringBefore('.') >= 12.0`). Kototoro JAR suite pinned to `1.0.0`.
   - [x] 18.3 Verification & Contract Integrity: Passed all 185 tests, Kototoro JAR verification, update simulation, preflight, and secret scanner.
+- [x] **Phase 19: Real Extension API Binary Compatibility & Verification (`NoSuchMethodError` Fix)**
+  - [x] 19.1 Diagnose & Root Cause: Traced `NoSuchMethodError: No virtual method GET(Ljava/lang/String;)Lokhttp3/Request; in class GenericThemeSource` to vendored `AnimeHttpSource` stubs in `core/src/main/kotlin/eu/kanade`. Kotlin compiled calls to virtual member calls rather than extension functions. 55 host classes were bundled into APKs.
+  - [x] 19.2 Real Extension Library & Clean compileOnly: Purged all vendored host classes from production source sets. Linked official `com.github.aniyomiorg:extensions-lib:14` as `compileOnly`. Replaced calls with real top-level functions `eu.kanade.tachiyomi.network.GET` and `eu.kanade.tachiyomi.util.asJsoup`.
+  - [x] 19.3 Automated CI Verification Tasks: Implemented `tools/verify_no_host_classes.py` (0 host classes in APKs) and `tools/verify_host_api_binding.py` (full bytecode method/field resolution against host classpath walking superclass and interface trees). Created unit tests in `tools/test_verify_host_api_binding.py`. Wired into `./gradlew check`.
+  - [x] 19.4 Kototoro Video Architecture Realignment: Proved from Kototoro source that JAR plugins cannot support video (`ContentParser` only models manga pages and novel text). Removed JAR artifacts and index. Designated Variant A (Aniyomi APK repo) as the sole supported video distribution for Kototoro.
+  - [x] 19.5 Isolated Test Doubles: Rebuilt test doubles strictly in `core/src/test/kotlin` so offline unit tests pass 100% without `Stub!` exceptions and without leaking into production APKs.
+  - [x] 19.6 Extension Version Bump: Bumped all 6 sources to `extVersionCode = 3`, `extVersion = "14.3"`.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 18 complete. Kototoro JAR decoupled from host Injekt (`SourceTester` green). APK `versionName` formatted to `14.2` with `aniyomix.extensionLib` metadata. All verification suites 100% green.
-- **Last Green Run**: `./gradlew check` (all 185 tests passing), `verify_jars.py` (1 valid entry), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
-- **Open Items**: None. Ready for production usage.
+- **Overall Status**: Phase 19 complete. 100% binary compatibility against official `extensions-lib:14`. 0 host classes bundled into APKs. All DEX calls verified to link against host classpath. Offline unit tests 100% green. Kototoro video aligned to Aniyomi APK repository.
+- **Last Green Run**: `./gradlew check` (all tasks and unit tests passing), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Open Items**: None. Ready for production release upon user approval.
 

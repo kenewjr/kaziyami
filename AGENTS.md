@@ -18,21 +18,19 @@ Mandatory instruction document for AI assistants and automated coding agents mod
 
 ---
 
-## 2. Host Compatibility Invariants (Dual-Variant Contract)
+## 2. Host Compatibility Invariants (Aniyomi & Kototoro)
 
-This repository produces and distributes two variants from a single core engine:
+This repository produces and distributes video extensions targeting Aniyomi and Kototoro:
 
 ### Variant A: Aniyomi Extension (APK)
 - **Root Package**: Must maintain the `eu.kanade.tachiyomi.animesource.*` and `eu.kanade.tachiyomi.animeextension.*` namespaces.
-- **Manifest**: Must include metadata `tachiyomi.animeextension.class` and `tachiyomi.animeextension.nsfw=1`.
+- **Manifest**: Must include metadata `tachiyomi.animeextension.class`, `tachiyomi.animeextension.nsfw=1`, and `aniyomix.extensionLib="14"`.
 - **Repository Index**: Aniyomi extension array schema at `repo/index.min.json`.
+- **Compile-Only Host ABI & Zero Vendored Classes**: Extensions compile against official `extensions-lib:14` as `compileOnly`. Host packages (`eu.kanade.*`, `okhttp3.*`, `okio.*`, `kotlin.*`, `kotlinx.*`, `uy.kohesive.injekt.*`, `androidx.*`) MUST NEVER be bundled inside extension APKs (`verifyNoHostClassesPackaged`).
+- **Test Doubles Isolation**: Working test doubles for host interfaces exist strictly in test source sets (`core/src/test/kotlin`), never in `main`.
 
-### Variant B: Kototoro Plugin (JAR)
-- **Reflection Entrypoint**: Must provide `org.skepsun.kototoro.parsers.ContentParserFactoryKt.newParser(ContentParserSource, ContentLoaderContext): ContentParser`.
-- **Source Enum**: Enum constants of `org.skepsun.kototoro.parsers.model.ContentParserSource`.
-- **Mandatory Dual-Bytecode**: Every plugin JAR must bundle both `classes.dex` (via D8 for Android ART) and standard JVM `.class` files (for Desktop JVM hosts).
-- **Repository Index**: Direct JSON array `List<ExtensionIndexDto>` at `repo/jar/index.min.json` with download path `<repo>/apk/<file.jar>`.
-- **ClassLoader Isolation**: Never bundle host `parser-api` classes into plugin JARs.
+### Variant B: Kototoro JAR Discontinuation
+- Kototoro's native JAR parser interface (`ContentParser`) only models static manga page images and novel text. Kototoro delegates all video playback to its built-in `AniyomiExtensionLoader` (Variant A APK). JAR parser plugins cannot support video (see `docs/KOTOTORO_JAR_FORMAT.md`).
 
 ---
 
@@ -64,11 +62,12 @@ Before modifying code, follow this sequence:
 3. **Execute Verification Suite (Must Be 100% Green)**:
    Run the full verification suite in the terminal:
    ```bash
-   # 1. Unit & Contract Tests + Bytecode Checks
+   # 1. Unit & Contract Tests + Host API Binding Checks + APK Verification
    ./gradlew check
 
-   # 2. Kototoro JAR Structure & Bytecode Verification
-   python tools/verify_jars.py
+   # 2. Host Class Exclusion & Bytecode Linkage Verification
+   python tools/verify_no_host_classes.py
+   python tools/verify_host_api_binding.py
 
    # 3. Monotonic Auto-Update Simulation
    python tools/test_update_simulation.py

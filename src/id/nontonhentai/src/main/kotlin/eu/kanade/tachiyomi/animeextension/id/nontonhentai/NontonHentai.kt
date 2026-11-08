@@ -1,15 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.id.nontonhentai
 
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.InMemorySourcePreferences
-import eu.kanade.tachiyomi.animesource.SourcePreferences
 import app.kaziyami.multisrc.animestream.AnimeStreamTheme
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 
-class NontonHentai(
-    preferences: SourcePreferences = InMemorySourcePreferences()
-) : AnimeStreamTheme(
+class NontonHentai : AnimeStreamTheme(
     name = "NontonHentai",
     lang = "id",
     baseUrl = "https://nontonhentai.net",
@@ -30,6 +25,5 @@ class NontonHentai(
     ),
     customQuirks = QuirksConfig(
         customReferer = "https://nontonhentai.net/"
-    ),
-    preferences = preferences
+    )
 )

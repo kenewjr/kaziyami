@@ -1,9 +1,11 @@
 package app.kaziyami.multisrc.retrotube
 
+import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
@@ -13,7 +15,6 @@ import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.generic.SourceConfig
 import okhttp3.Response
-import org.jsoup.nodes.Document
 
 open class RetroTubeTheme(
     name: String,
@@ -25,9 +26,9 @@ open class RetroTubeTheme(
     searchPath: String = "/?s=%s&page=%d",
     customSelectors: SelectorsConfig = SelectorsConfig(),
     customQuirks: QuirksConfig = QuirksConfig(),
-    preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
+    customPreferences: SharedPreferences? = null
 ) : GenericThemeSource(
-    SourceConfig(
+    config = SourceConfig(
         name = name,
         lang = lang,
         baseUrl = baseUrl,
@@ -55,9 +56,9 @@ open class RetroTubeTheme(
         ),
         quirks = customQuirks
     ),
-    preferences = preferences
+    customPreferences = customPreferences
 ) {
-    override fun episodeListParse(response: Response): List<SEpisode> {
+    public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val parts = document.select(".video-parts a, .parts-list a")
         if (parts.isNotEmpty()) {
@@ -85,7 +86,7 @@ open class RetroTubeTheme(
         return listOf(ep)
     }
 
-    override fun videoListParse(response: Response): List<Video> {
+    public override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val embedUrls = mutableListOf<String>()
 

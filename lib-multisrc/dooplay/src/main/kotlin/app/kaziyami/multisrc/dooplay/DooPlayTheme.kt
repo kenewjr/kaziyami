@@ -1,8 +1,10 @@
 package app.kaziyami.multisrc.dooplay
 
+import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.UrlUtils
 import app.kaziyami.multisrc.generic.GenericThemeSource
@@ -13,7 +15,6 @@ import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 
 open class DooPlayTheme(
     name: String,
@@ -25,9 +26,9 @@ open class DooPlayTheme(
     searchPath: String = "/?s=%s&page=%d",
     customSelectors: SelectorsConfig = SelectorsConfig(),
     customQuirks: QuirksConfig = QuirksConfig(),
-    preferences: eu.kanade.tachiyomi.animesource.SourcePreferences = eu.kanade.tachiyomi.animesource.InMemorySourcePreferences()
+    customPreferences: SharedPreferences? = null
 ) : GenericThemeSource(
-    SourceConfig(
+    config = SourceConfig(
         name = name,
         lang = lang,
         baseUrl = baseUrl,
@@ -55,9 +56,9 @@ open class DooPlayTheme(
         ),
         quirks = customQuirks
     ),
-    preferences = preferences
+    customPreferences = customPreferences
 ) {
-    override fun videoListParse(response: Response): List<Video> {
+    public override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 

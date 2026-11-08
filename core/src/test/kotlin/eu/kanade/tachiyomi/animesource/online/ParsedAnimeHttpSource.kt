@@ -9,6 +9,10 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
+/**
+ * Headless test double for ParsedAnimeHttpSource for unit tests on desktop JVM.
+ * Resides exclusively in test source set; never packaged into APKs.
+ */
 abstract class ParsedAnimeHttpSource : AnimeHttpSource() {
 
     abstract fun popularAnimeSelector(): String
@@ -31,39 +35,40 @@ abstract class ParsedAnimeHttpSource : AnimeHttpSource() {
     abstract fun videoFromElement(element: Element): Video
     abstract fun videoUrlParse(document: Document): String
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
+    public override fun popularAnimeParse(response: Response): AnimesPage {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         val animes = document.select(popularAnimeSelector()).map { popularAnimeFromElement(it) }
         val hasNextPage = popularAnimeNextPageSelector()?.let { document.selectFirst(it) != null } ?: false
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
+    public override fun latestUpdatesParse(response: Response): AnimesPage {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         val animes = document.select(latestUpdatesSelector()).map { latestUpdatesFromElement(it) }
         val hasNextPage = latestUpdatesNextPageSelector()?.let { document.selectFirst(it) != null } ?: false
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
+    public override fun searchAnimeParse(response: Response): AnimesPage {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         val animes = document.select(searchAnimeSelector()).map { searchAnimeFromElement(it) }
         val hasNextPage = searchAnimeNextPageSelector()?.let { document.selectFirst(it) != null } ?: false
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun animeDetailsParse(response: Response): SAnime {
+    public override fun animeDetailsParse(response: Response): SAnime {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         return animeDetailsParse(document)
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
+    public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         return document.select(episodeListSelector()).map { episodeFromElement(it) }
     }
 
-    override fun videoListParse(response: Response): List<Video> {
+    public override fun videoListParse(response: Response): List<Video> {
         val document = Jsoup.parse(response.body?.string() ?: "", baseUrl)
         return document.select(videoListSelector()).map { videoFromElement(it) }
     }
 }
+

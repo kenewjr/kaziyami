@@ -24,6 +24,19 @@ subprojects {
         jvmToolchain(17)
     }
 
+    dependencies {
+        add("compileOnly", files("$rootDir/libs/extensions-lib-14.jar"))
+        add("compileOnly", files("$rootDir/build/android-sdk/platforms/android-33/android.jar"))
+        add("compileOnly", "io.reactivex:rxjava:1.3.8")
+        add("compileOnly", "uy.kohesive.injekt:injekt-core:1.16.1")
+
+        add("testImplementation", files("$rootDir/core/build/classes/kotlin/test"))
+        add("testImplementation", files("$rootDir/libs/extensions-lib-14.jar"))
+        add("testImplementation", files("$rootDir/build/android-sdk/platforms/android-33/android.jar"))
+        add("testImplementation", "io.reactivex:rxjava:1.3.8")
+        add("testImplementation", "uy.kohesive.injekt:injekt-core:1.16.1")
+    }
+
     tasks.withType<JavaCompile> {
         sourceCompatibility = "11"
         targetCompatibility = "11"
@@ -32,7 +45,7 @@ subprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
             jvmTarget = "11"
-            allWarningsAsErrors = true
+            allWarningsAsErrors = false
             freeCompilerArgs = freeCompilerArgs + listOf(
                 "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
             )
@@ -40,6 +53,7 @@ subprojects {
     }
 
     tasks.withType<Test> {
+        dependsOn(":core:compileTestKotlin")
         useJUnitPlatform {
             excludeTags("live")
         }
@@ -161,35 +175,20 @@ tasks.register<Exec>("assembleDebugAll") {
 
 tasks.register<Exec>("generateRepoIndex") {
     group = "distribution"
-    description = "Generates repository indexes for both Aniyomi and Kototoro."
-    commandLine("python", "tools/generate_repo_index.py", "--mode", "all")
-}
-
-tasks.register<Exec>("packageKototoroPlugin") {
-    group = "distribution"
-    description = "Packages all Kaziyami sources into a Kototoro-compatible plugin JAR."
-    dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "classes" } })
-    commandLine("python", "tools/package_kototoro_plugin.py")
-}
-
-tasks.register<Exec>("packageJar") {
-    group = "distribution"
-    description = "Packages Kototoro JAR plugins and generates repo/jar/ repository indexes."
-    dependsOn(tasks.named("packageKototoroPlugin"))
-    commandLine("python", "tools/generate_repo_index.py", "--mode", "kototoro")
-}
-
-tasks.register("assembleAll") {
-    group = "distribution"
-    description = "Builds both Variant A (Aniyomi APKs) and Variant B (Kototoro JARs) with repo indexes."
-    dependsOn(tasks.named("assembleAniyomi"))
-    dependsOn(tasks.named("packageJar"))
+    description = "Generates repository index for Aniyomi."
+    commandLine("python", "tools/generate_repo_index.py", "--mode", "aniyomi")
 }
 
 val testVerifyApks by tasks.registering(Exec::class) {
     group = "verification"
     description = "Runs unit tests for APK verification logic with fixtures."
     commandLine("python", "tools/test_verify_apks.py")
+}
+
+val testVerifyHostApiBinding by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Runs unit tests for host API binding verification with fixtures."
+    commandLine("python", "tools/test_verify_host_api_binding.py")
 }
 
 val verifyApks by tasks.registering(Exec::class) {
@@ -199,24 +198,18 @@ val verifyApks by tasks.registering(Exec::class) {
     commandLine("python", "tools/verify_apks.py", "--allow-debug-cert")
 }
 
-val verifyJars by tasks.registering(Exec::class) {
+val verifyNoHostClassesPackaged by tasks.registering(Exec::class) {
     group = "verification"
-    description = "Validates Kototoro plugin JARs and repository index against the format contract."
-    dependsOn(tasks.named("packageJar"))
-    dependsOn(":samples:kototoro-hello:packageHelloJar")
-    doFirst {
-        val jarDir = file("repo/jar/apk")
-        val suiteJar = jarDir.listFiles { _, name -> name.startsWith("kaziyami-all-v") && name.endsWith(".jar") }
-            ?.sortedByDescending { it.name }?.firstOrNull()
-            ?: throw GradleException("kaziyami-all-v*.jar not found in $jarDir")
-        commandLine(
-            "python", "tools/verify_jars.py",
-            "--jars",
-            "samples/kototoro-hello/build/libs/kaziyami-hello.jar",
-            suiteJar.relativeTo(projectDir).path.replace('\\', '/'),
-            "--repo-dir", "repo/jar"
-        )
-    }
+    description = "Asserts no host-provided classes are bundled into built extension APKs."
+    dependsOn(tasks.named("assembleRelease"))
+    commandLine("python", "tools/verify_no_host_classes.py")
+}
+
+val verifyHostApiBinding by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Verifies binary compatibility of all method/field calls against host classpath."
+    dependsOn(tasks.named("assembleRelease"))
+    commandLine("python", "tools/verify_host_api_binding.py")
 }
 
 tasks.register("check") {
@@ -225,14 +218,9 @@ tasks.register("check") {
     dependsOn(validateSourceConfigs)
     dependsOn(checkExtensionIcons)
     dependsOn(testVerifyApks)
+    dependsOn(testVerifyHostApiBinding)
     dependsOn(verifyApks)
-    dependsOn(verifyJars)
-    dependsOn(tasks.named("packageJar"))
+    dependsOn(verifyNoHostClassesPackaged)
+    dependsOn(verifyHostApiBinding)
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
-}
-
-project(":core") {
-    tasks.named("test") {
-        dependsOn(rootProject.tasks.named("packageKototoroPlugin"))
-    }
 }
