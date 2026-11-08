@@ -88,14 +88,21 @@ When reporting an issue, sanitize all logcat output before submitting:
 
 ## 5. Kototoro (v2.3+) Verification Checklist
 
-1. [ ] **Add Repository**: In Kototoro, open **Settings** -> **Extension management** -> **Repositories** -> **Add repository** (+). Select **ANIYOMI** type, enter `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json`, and confirm.
-2. [ ] **Trust Prompt**: Confirm trust for the repository when the signing key prompt appears.
-3. [ ] **Repository Listing**: Verify all 6 extensions display with package-qualified icons and labels formatted as `Kaziyami: <Site>`.
-4. [ ] **Installation**: Tap **Install** for each extension. Confirm successful installation via package manager without error.
-5. [ ] **Browse Catalog**: Open each source from Explore / Sources list. Confirm popular and latest anime items display with cover images.
-6. [ ] **Search & Filters**: Perform search query with filters (genres / sorting). Verify results match and return without exceptions.
-7. [ ] **Anime Details**: Open an entry. Verify title, synopsis, status, genres, and chapter/episode list populate accurately.
-8. [ ] **Video Playback**: Tap an episode. Verify video stream plays smoothly in Kototoro's player. Test at least two stream hosts / qualities where available (e.g. 1080p, 720p).
+Follow this exact verification sequence in order:
+
+1. [ ] **Add Repository**: In Kototoro, open **Settings** -> **Extension management** -> **Repositories** -> **Add repository** (+). Select **ANIYOMI** type, enter `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json`, and confirm trust.
+2. [ ] **Installation**: In **Packages** tab, tap **Install** for each extension. Confirm installation finishes.
+3. [ ] **Package Version Verification**: Under **Settings** -> **Extension management** -> **Packages**, verify each Kaziyami package is listed as **INSTALLED** with version `14.4`.
+4. [ ] **Source Visibility & Filter Check**:
+   - Switch to **Explore** -> **Sources** (or the **Sources** tab).
+   - Ensure the active Space is **Anime** (or Content Type is set to **All** or **Hentai Video**).
+   - Ensure the adult / NSFW filter is set to **ALL** or **NSFW**.
+   - Ensure your language filter includes **Indonesian** (`id`) and **English** (`en`).
+   - Confirm all 6 Kaziyami sources appear in the list.
+5. [ ] **Source Enabled State**: If sources appear in the "Disabled" section, toggle them **ON**.
+6. [ ] **Browse Popular**: Open a source (e.g. `Kaziyami: Nekopoi`). Confirm popular anime items load with cover images and titles.
+7. [ ] **Episode List**: Open an entry. Verify title, synopsis, status, and episode list populate accurately.
+8. [ ] **Video Playback**: Tap an episode. Verify video stream plays smoothly in Kototoro's player on at least one server/quality.
 9. [ ] **Cloudflare / Turnstile Clearance**: If a challenge prompt occurs, trigger the in-app WebView clearance flow, complete challenge, and verify cookies persist.
 10. [ ] **Domain Override**: In source settings, enter a mirror domain from `docs/SOURCES.md`. Confirm catalog updates to fetch via the new domain.
 

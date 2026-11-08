@@ -24,7 +24,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
     override val id: Long by lazy {
         val key = "${name.lowercase()}/$lang/1"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
-        (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF) }
+        (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF) } and Long.MAX_VALUE
     }
 
     open val client: OkHttpClient = OkHttpClient()

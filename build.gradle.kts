@@ -50,7 +50,9 @@ subprojects {
         add("compileOnly", "io.reactivex:rxjava:1.3.8")
         add("compileOnly", "uy.kohesive.injekt:injekt-core:1.16.1")
 
-        add("testImplementation", files("$rootDir/core/build/classes/kotlin/test"))
+        if (name != "core") {
+            add("testImplementation", files("$rootDir/core/build/classes/kotlin/test"))
+        }
         add("testImplementation", files("$rootDir/libs/extensions-lib-14.jar"))
         add("testImplementation", files(androidJar))
         add("testImplementation", "io.reactivex:rxjava:1.3.8")
@@ -209,6 +211,9 @@ val prepareHostClasspath by tasks.registering(Copy::class) {
         add("hostClasspath", "io.reactivex:rxjava:1.3.8")
         add("hostClasspath", "uy.kohesive.injekt:injekt-core:1.16.1")
         add("hostClasspath", "org.jsoup:jsoup:1.15.3")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.3")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.6.3")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0")
     }
     from(hostConf)
     into(file("$buildDir/host-libs"))
@@ -249,6 +254,15 @@ val verifyHostApiBinding by tasks.registering(Exec::class) {
     commandLine("python", "tools/verify_host_api_binding.py")
 }
 
+val testSourceInstantiation by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Tests reflection instantiation of sources against built extension artifacts."
+    dependsOn(tasks.named("assembleRelease"))
+    dependsOn(prepareHostClasspath)
+    dependsOn(":core:compileTestKotlin")
+    commandLine("python", "tools/test_source_instantiation.py")
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."
@@ -259,5 +273,6 @@ tasks.register("check") {
     dependsOn(verifyApks)
     dependsOn(verifyNoHostClassesPackaged)
     dependsOn(verifyHostApiBinding)
+    dependsOn(testSourceInstantiation)
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

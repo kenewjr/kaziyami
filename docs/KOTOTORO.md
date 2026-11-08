@@ -236,3 +236,49 @@ Verified from upstream codebase `Kototoro-app/Kototoro` (`devel` branch, commit 
   - Kototoro checks `signatureValidator.isTrusted(packageName, signatureHash)` (`UnifiedSourcesViewModel.kt:1900-1904`). Mismatches flag `UNTRUSTED`.
   - Android OS Package Manager enforces signature matching on APK update; mismatched certificates fail installation with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
 
+---
+
+## 8. Deep Dive: Aniyomi-Style APK Extension Loading Pipeline & Filter Hierarchy
+
+Verified against `Kototoro-app/Kototoro` (commit `9e5ddc6f50d5206f7e3ba28019c5182ef0601f72`, branch `devel`):
+
+### 8.1 The Loading Pipeline
+1. **Discovery**:
+   `AniyomiExtensionLoader.kt:130-190` queries Android OS `PackageManager.getInstalledPackages` looking for packages declaring `<uses-feature android:name="tachiyomi.animeextension" />`.
+2. **Metadata Inspection**:
+   Extracts `tachiyomi.animeextension.class` (or `tachiyomi.animeextension.factory`) and `tachiyomi.animeextension.nsfw`.
+   Parses `versionName` to verify `libVersion`: `LIB_VERSION_MIN = 12.0`, `LIB_VERSION_MAX = 16.0`.
+3. **ClassLoader Instantiation**:
+   Kototoro creates a `ChildFirstPathClassLoader(dexPath, nativeLibraryDir, context.classLoader)`.
+   Invokes `ExternalExtensionSourceLoaderSupport.loadSources`:
+   ```kotlin
+   Class.forName(fullClassName, false, classLoader).getDeclaredConstructor().newInstance()
+   ```
+4. **Error Handling & Packages/Sources Disparity**:
+   - In `AniyomiExtensionLoader.kt:284-289`:
+     ```kotlin
+     try {
+         // load sources
+     } catch (e: Throwable) {
+         Log.e("AniyomiExtensionLoader", "Failed to load sources from $pkgName", e)
+         return AniyomiLoadResult.Error(pkgName, message, e)
+     }
+     ```
+   - **Why Packages Tab shows "INSTALLED" while Sources Tab is empty**:
+     - The **Packages Tab** checks `PackageManager`. Since the APK is installed at the Android OS level, Kototoro displays it as `INSTALLED`.
+     - The **Sources Tab** queries `AniyomiExtensionManager.getCatalogueSources()`, which filters only `AniyomiLoadResult.Success` entries. If class loading or constructor throws (`NoSuchMethodError`, `ClassNotFoundException`), the result is `AniyomiLoadResult.Error`. The error is logged to Logcat, and 0 sources are registered.
+
+### 8.2 The Filter Hierarchy (Why Loaded Sources May Be Hidden)
+Even when an extension successfully loads and registers its sources, the Kototoro UI can hide them behind 5 distinct filter gates:
+1. **Space Kind / Content Type (`primarySpaceKind`)**:
+   Kototoro categorizes adult anime extensions as `ContentType.HENTAI_VIDEO`. If the active space is set to **Manga** or **Novel**, all `ContentType.HENTAI_VIDEO` sources are hidden. The user must be in the **Anime** space or select **All**.
+2. **Adult / NSFW Filter (`UnifiedNsfwFilter`)**:
+   `UnifiedSourcesViewModel.kt` checks the adult toggle. If set to `SFW`, all extensions with `tachiyomi.animeextension.nsfw=1` are hidden. Must be set to `ALL` or `NSFW`.
+3. **Language Filter (`matchesLanguageFilter`)**:
+   If `strict_language_filter` is enabled in settings, sources whose language does not match the user's active languages (e.g. `id` for Indonesian, `en` for English) are filtered out.
+4. **Enabled / Disabled Filter (`UnifiedEnabledFilter`)**:
+   Newly discovered sources default to disabled until enabled in the Sources tab or if `isAllSourcesEnabled` is active. Check the "Disabled" section.
+5. **Availability Filter (`UnifiedAvailabilityFilter`)**:
+   Sources flagged broken are hidden under `AVAILABLE`.
+
+

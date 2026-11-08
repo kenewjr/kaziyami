@@ -106,11 +106,19 @@
   - [x] 19.4 Kototoro Video Architecture Realignment: Proved from Kototoro source that JAR plugins cannot support video (`ContentParser` only models manga pages and novel text). Removed JAR artifacts and index. Designated Variant A (Aniyomi APK repo) as the sole supported video distribution for Kototoro.
   - [x] 19.5 Isolated Test Doubles: Rebuilt test doubles strictly in `core/src/test/kotlin` so offline unit tests pass 100% without `Stub!` exceptions and without leaking into production APKs.
   - [x] 19.6 Extension Version Bump: Bumped all 6 sources to `extVersionCode = 3`, `extVersion = "14.3"`.
+- [x] **Phase 20: Kototoro 'Installed but No Source Appears' Resolution & Artifact Instantiation Verification (Phase 12b)**
+  - [x] 20.1 Diagnose & Root Cause: Discovered `HOST_PACKAGES` in `tools/build_apks.py` filtered out `eu/kanade/tachiyomi/animeextension/*`, excluding the extension entry-point classes from `classes.dex`. Kototoro's `AniyomiExtensionLoader` caught `ClassNotFoundException`, logged to Logcat, and dropped the sources, leaving Packages tab as 'Installed' (via `PackageManager`) but Sources tab empty (`0 sources`).
+  - [x] 20.2 Refine Host Packaging Filter & Verify: Updated `tools/build_apks.py` and `tools/verify_no_host_classes.py` to allow `eu/kanade/tachiyomi/animeextension/*` while strictly blocking `eu/kanade/tachiyomi/animesource/*`, `network`, `util`, and third-party host libraries.
+  - [x] 20.3 Lazy Serialization & Constructor Isolation: Made `SourceConfig` static serializers lazy (`by lazy`) to eliminate eager reflection on `kotlinx.serialization` during source instantiation.
+  - [x] 20.4 Startup Self-Check Logging: Added non-intrusive Logcat startup log in `GenericThemeSource`: `Log.i("Kaziyami", "Kaziyami $name v14.4 loaded, libVersion 14")` wrapped in safe catch block.
+  - [x] 20.5 Artifact Instantiation Verification Task: Created `tools/test_source_instantiation.py` and `tools/SourceInstantiationRunner.java` verifying reflectively that all built APK artifacts instantiate cleanly on the JVM and validate all 64-bit permanent IDs against `docs/SOURCE_IDS.md`. Connected task `testSourceInstantiation` into `build.gradle.kts` and `./gradlew check`.
+  - [x] 20.6 Documentation: Documented Kototoro loading pipeline and 5 filter gates in `docs/KOTOTORO.md` and added troubleshooting and cache clearing guide in `docs/TROUBLESHOOTING.md`, `README.md`, and `docs/QA_CHECKLIST.md`.
+  - [x] 20.7 Version Bump: Bumped all 6 extensions to `extVersionCode = 4`, `extVersion = "14.4"`.
 
 ---
 
 ## Current Status
-- **Overall Status**: Phase 19 complete. 100% binary compatibility against official `extensions-lib:14`. 0 host classes bundled into APKs. All DEX calls verified to link against host classpath. Offline unit tests 100% green. Kototoro video aligned to Aniyomi APK repository.
-- **Last Green Run**: `./gradlew check` (all tasks and unit tests passing), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Overall Status**: Phase 20 complete. Extension entry-point classes verified in `classes.dex`. Reflective source instantiation verified against built artifacts with permanent IDs. 100% binary compatibility against official `extensions-lib:14`. 0 host classes bundled into APKs.
+- **Last Green Run**: `./gradlew check` (all tasks, binding verifier, instantiation tests, and unit tests passing), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_source_instantiation.py` (all 6 sources verified), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for production release upon user approval.
 

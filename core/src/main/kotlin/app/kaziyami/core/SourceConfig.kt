@@ -23,11 +23,13 @@ data class SourceConfig(
     val quirks: QuirksConfig = QuirksConfig()
 ) {
     companion object {
-        private val json = Json {
-            ignoreUnknownKeys = true
-            isLenient = true
-            prettyPrint = true
-            encodeDefaults = true
+        private val json by lazy {
+            Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+                prettyPrint = true
+                encodeDefaults = true
+            }
         }
 
         fun fromJson(jsonString: String): SourceConfig = SourceConfigLoader.loadFromString(jsonString)
@@ -94,11 +96,13 @@ data class QuirksConfig(
  * Loads and validates [SourceConfig] instances from JSON strings, streams, or files.
  */
 object SourceConfigLoader {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        prettyPrint = true
-        encodeDefaults = true
+    private val json by lazy {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            prettyPrint = true
+            encodeDefaults = true
+        }
     }
 
     /**

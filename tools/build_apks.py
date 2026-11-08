@@ -249,10 +249,16 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
 
         # Bundle class files into a temporary jar for D8 input
         # Filter out any host-provided packages to preserve ClassLoader isolation
-        HOST_PACKAGES = (
-            "eu/kanade/", "okhttp3/", "okio/", "kotlin/", "kotlinx/",
-            "androidx/", "uy/kohesive/", "org/skepsun/", "org/jsoup/"
-        )
+        def is_host_package(rel_p):
+            if rel_p.startswith("eu/kanade/tachiyomi/animeextension/"):
+                return False
+            if rel_p.startswith("eu/kanade/"):
+                return True
+            return any(rel_p.startswith(hp) for hp in (
+                "okhttp3/", "okio/", "kotlin/", "kotlinx/",
+                "androidx/", "uy/kohesive/", "org/skepsun/", "org/jsoup/"
+            ))
+
         input_jar = os.path.join(tmp_dir, "input.jar")
         with zipfile.ZipFile(input_jar, "w") as zf:
             for c_dir in class_dirs:
@@ -262,10 +268,14 @@ def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
                             if file.endswith(".class"):
                                 full_p = os.path.join(root, file)
                                 rel_p = os.path.relpath(full_p, c_dir).replace('\\', '/')
-                                if any(rel_p.startswith(hp) for hp in HOST_PACKAGES):
+                                if is_host_package(rel_p):
                                     continue
                                 if rel_p not in zf.namelist():
                                     zf.write(full_p, rel_p)
+
+        packaged_jars_dir = os.path.join(ROOT_DIR, "build", "packaged-jars")
+        os.makedirs(packaged_jars_dir, exist_ok=True)
+        shutil.copy2(input_jar, os.path.join(packaged_jars_dir, f"{ext['name'].lower()}.jar"))
 
         ext_lib_jar = os.path.join(ROOT_DIR, "libs", "extensions-lib-14.jar")
         dex_out_dir = os.path.join(tmp_dir, "dex")

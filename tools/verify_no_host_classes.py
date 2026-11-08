@@ -16,7 +16,6 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APK_DIR = os.path.join(ROOT_DIR, "repo", "apk")
 
 HOST_PREFIXES = (
-    "Leu/kanade/",
     "Lokhttp3/",
     "Lokio/",
     "Lkotlin/",
@@ -65,7 +64,12 @@ def inspect_apk(apk_path):
     for i in range(class_defs_size):
         class_idx = struct.unpack_from("<I", dex_data, class_defs_off + i * 32)[0]
         cname = get_type(class_idx)
-        if any(cname.startswith(p) for p in HOST_PREFIXES):
+        # Extension entry points in eu/kanade/tachiyomi/animeextension/ are required in APK
+        if cname.startswith("Leu/kanade/tachiyomi/animeextension/"):
+            continue
+        if cname.startswith("Leu/kanade/"):
+            violations.append(cname)
+        elif any(cname.startswith(p) for p in HOST_PREFIXES):
             violations.append(cname)
 
     return violations

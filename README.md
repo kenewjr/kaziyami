@@ -76,10 +76,12 @@ Kototoro supports Kaziyami video extensions exclusively via its built-in `Aniyom
 > Kototoro's native JAR parser interface (`ContentParser`) only models static manga page images and novel text. Kototoro delegates all video playback to its built-in `AniyomiExtensionLoader`. Attempting to load video sources via JAR triggers `"manga is not supported"` or `"This video source is not supported"`. Always install Kaziyami as an Aniyomi repository in Kototoro.
 
 > [!TIP]
-> **Troubleshooting: Extensions Not Showing in Kototoro?**
-> - **NSFW Filter**: Kototoro defaults to hiding 18+ sources. Tap the filter/funnel icon at the top of the **Sources** screen and switch **NSFW Filter** to **All** or **NSFW**.
+> **Troubleshooting: Extensions Installed but Not Showing in Sources?**
+> - **Space Kind**: Ensure Kototoro is set to the **Anime** space (or Content Type: **All** / **Hentai Video**).
+> - **NSFW Filter**: Kototoro defaults to hiding 18+ sources. Tap the filter/funnel icon in **Sources** and switch **NSFW Filter** to **All** or **NSFW**.
 > - **Language Filter**: All Kaziyami sources are tagged as Indonesian (`id`) or English (`en`). In Kototoro filter settings, ensure **Indonesian** and **English** are checked in active extension languages.
-> - **Clean Base URL**: Both `https://raw.githubusercontent.com/kenewjr/kaziyami/repo` and `https://raw.githubusercontent.com/kenewjr/kaziyami/repo/index.min.json` are fully supported. `repo.json` is optimized to prevent recursive 404 lookup errors.
+> - **Enabled State**: Newly installed extensions default to disabled in Kototoro. Scroll down to the **Disabled** section in the Sources tab and toggle them **ON**.
+> - **Clear Extension Cache**: If updating from an earlier broken build, go to Android **Settings -> Apps -> Kototoro -> Storage -> Clear cache** (do not clear storage/data) and restart Kototoro. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 For detailed update workflows, troubleshooting, and rollback steps, see [docs/UPDATING.md](docs/UPDATING.md).
 

@@ -118,3 +118,46 @@ When attempting to install a Kaziyami extension APK downloaded from the custom r
 - The build pipeline now compiles resources and manifests using `aapt2 link`, dexes class files using `d8` targeting `--min-api 21`, aligns 4-byte boundaries using `zipalign`, and signs with `apksigner` enforcing v2 and v3 signatures.
 - `minSdkVersion = 21` guarantees support on Android 7.0 (API 24) through Android 15 (API 35).
 - `targetSdkVersion = 33` satisfies modern Android target requirements.
+
+---
+
+## 6. Installed but Not in Sources (Kototoro & Aniyomi)
+
+### Symptom
+After installing a Kaziyami extension package from the repository, Kototoro displays the package as **Installed** under the **Packages** tab (`Settings -> Extension management -> Packages`), but **zero sources appear** in the **Sources** tab.
+
+### Root Causes & Why This Occurs
+1. **Host Class Instantiation Failure (Fixed in v14.4)**:
+   Kototoro determines whether a package is installed via Android's `PackageManager`. If the APK installed at the OS level, the **Packages** tab flags it as `INSTALLED`.
+   However, to populate the **Sources** tab, Kototoro's `AniyomiExtensionLoader` reflectively loads the extension class (`Class.forName(extClass).getDeclaredConstructor().newInstance()`).
+   If the class was missing from bytecode or threw an exception during constructor/static initialization, Kototoro swallows the error (`try-catch (e: Throwable)` in `AniyomiExtensionLoader.kt:284`), logs it to Logcat, and drops the source.
+   In Kaziyami v14.4, all extension classes are verified in DEX and tested via reflection before release.
+
+2. **Filter Suppression in Kototoro UI**:
+   Even when an extension loads successfully, Kototoro's source filtering system may hide it:
+   - **Space Kind / Content Type**: Kaziyami sources are classified as `ContentType.HENTAI_VIDEO`. If Kototoro is set to the **Manga** or **Novel** Space, all video sources are hidden. Switch to the **Anime** space or select **All** content types.
+   - **Adult / NSFW Filter**: In the Sources tab filter menu, ensure the NSFW filter is set to **ALL** or **NSFW** (not SFW).
+   - **Language Filter**: If **Strict language filter** is enabled in Kototoro settings, sources with languages not in your enabled list (`id` for Indonesian, `en` for English) are hidden.
+   - **Enabled State**: Newly installed extensions are often toggled **OFF** by default. Check the **Disabled** section at the bottom of the Sources tab and toggle them **ON**.
+
+### Clearing Kototoro Extension APK Cache
+If Kototoro cached an older broken version of the APK:
+1. Open Android **Settings** -> **Apps** -> **Kototoro**.
+2. Tap **Storage & cache**.
+3. Tap **Clear cache** (**DO NOT** tap *Clear storage* or *Clear data*, which would delete your library and reading history).
+4. Force stop Kototoro and relaunch.
+
+### Collecting Diagnostic Logs via ADB
+To see the exact reason why a source failed to load:
+```bash
+adb logcat -d | findstr /i "kaziyami NoSuchMethod ClassNotFound AniyomiExtensionLoader"
+```
+Or on Linux/macOS:
+```bash
+adb logcat -d | grep -iE "kaziyami|NoSuchMethod|ClassNotFound|AniyomiExtensionLoader"
+```
+
+Look for lines like:
+- `I/Kaziyami: Kaziyami Nekopoi v14.4 loaded, libVersion 14` (indicates successful load)
+- `E/AniyomiExtensionLoader: Failed to load sources from eu.kanade.tachiyomi.animeextension.id.nekopoi` (indicates loader failure)
+

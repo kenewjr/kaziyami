@@ -2,6 +2,7 @@ package app.kaziyami.multisrc.generic
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -70,6 +71,14 @@ open class GenericThemeSource(
     override val name: String = config.name
     override val lang: String = config.lang
     override val supportsLatest: Boolean = true
+
+    init {
+        try {
+            Log.i("Kaziyami", "Kaziyami $name v14.4 loaded, libVersion 14")
+        } catch (_: Throwable) {
+            // Logging failure must never break source construction
+        }
+    }
 
     override val client: OkHttpClient by lazy {
         runCatching { network.cloudflareClient }
