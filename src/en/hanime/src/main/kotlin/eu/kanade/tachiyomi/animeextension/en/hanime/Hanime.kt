@@ -147,10 +147,11 @@ class Hanime : GenericThemeSource(
 
     public override fun videoListParse(response: Response): List<Video> {
         val body = response.body?.string().orEmpty()
+        val unescapedBody = body.replace("\\/", "/")
         val videoList = mutableListOf<Video>()
 
         // Check for embedded HLS m3u8 streams
-        val m3u8Matcher = M3U8_REGEX.matcher(body)
+        val m3u8Matcher = M3U8_REGEX.matcher(unescapedBody)
         while (m3u8Matcher.find()) {
             val streamUrl = m3u8Matcher.group(1)
             videoList.add(
@@ -164,7 +165,7 @@ class Hanime : GenericThemeSource(
         }
 
         // Check for embedded MP4 streams
-        val mp4Matcher = MP4_REGEX.matcher(body)
+        val mp4Matcher = MP4_REGEX.matcher(unescapedBody)
         while (mp4Matcher.find()) {
             val streamUrl = mp4Matcher.group(1)
             videoList.add(
@@ -178,14 +179,62 @@ class Hanime : GenericThemeSource(
         }
 
         // Also check iframes via ExtractorRegistry
-        val doc = org.jsoup.Jsoup.parse(body, baseUrl)
-        val iframes = doc.select("iframe[src]").mapNotNull {
-            val src = it.attr("src")
+        val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
+        val iframes = doc.select("iframe[src], iframe[data-src]").mapNotNull {
+            val src = it.attr("data-src").ifEmpty { it.attr("src") }
             if (src.isNotBlank()) UrlUtils.resolve(baseUrl, src) else null
         }
         videoList.addAll(ExtractorRegistry.extractAll(iframes, client))
 
-        return videoList.distinctBy { it.videoUrl }
+        // API fallback if HTML does not contain direct streams
+        if (videoList.isEmpty()) {
+            val slug = response.request.url.toString().trimEnd('/').substringAfterLast('/')
+            if (slug.isNotBlank() && slug != "video" && slug != "hentai") {
+                try {
+                    val apiUrl = "https://hanime.tv/api/v8/video?id=$slug"
+                    val apiReq = GET(apiUrl, headers)
+                    val apiRes = client.newCall(apiReq).execute()
+                    val apiBody = apiRes.body?.string().orEmpty()
+                    if (apiBody.trimStart().startsWith("{")) {
+                        val root = Json.parseToJsonElement(apiBody).jsonObject
+                        val manifest = root["videos_manifest"]?.jsonObject
+                        val servers = manifest?.get("servers")?.jsonArray
+                        servers?.forEach { srv ->
+                            val srvObj = srv.jsonObject
+                            val streams = srvObj["streams"]?.jsonArray
+                            streams?.forEach { st ->
+                                val stObj = st.jsonObject
+                                val streamUrl = stObj["url"]?.jsonPrimitive?.content
+                                val height = stObj["height"]?.jsonPrimitive?.content ?: "720"
+                                if (!streamUrl.isNullOrBlank()) {
+                                    videoList.add(
+                                        Video(
+                                            url = streamUrl,
+                                            quality = "Hanime ${height}p",
+                                            videoUrl = streamUrl,
+                                            headers = headers
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    // API query failed
+                }
+            }
+        }
+
+        val deduped = videoList.distinctBy { it.videoUrl }
+        if (deduped.isEmpty()) {
+            throw app.kaziyami.core.SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = config.selectors.playerIframes,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+        return deduped
     }
 
     override fun getFilterList(): AnimeFilterList {

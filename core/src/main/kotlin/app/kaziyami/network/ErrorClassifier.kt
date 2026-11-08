@@ -12,6 +12,7 @@ object ErrorClassifier {
         NO_PLAYABLE_VIDEO,
         HOST_BLOCKED,
         GEO_RESTRICTED,
+        ISP_BLOCK,
         GENERIC_NETWORK_ERROR
     }
 
@@ -46,6 +47,16 @@ object ErrorClassifier {
         }
 
         // 2. Geo-restriction / Region blocking
+        if (bodyLower.contains("103.10.223.15") ||
+            bodyLower.contains("internet positif") ||
+            bodyLower.contains("trustpositif")
+        ) {
+            return UserError(
+                type = ErrorType.ISP_BLOCK,
+                message = "Kaziyami: Blocked by ISP DNS sinkhole. Configure Android Private DNS."
+            )
+        }
+
         if (httpCode == 451 ||
             bodyLower.contains("not available in your country") ||
             bodyLower.contains("geo-blocked") ||

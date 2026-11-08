@@ -61,14 +61,24 @@ open class AnimeStreamTheme(
         val document = response.asJsoup()
         val videoUrls = mutableListOf<String>()
 
-        // Direct iframes
+        // Direct iframes (check data-src, data-lazy-src, src)
         document.select(config.selectors.playerIframes).forEach {
-            val src = it.attr("src")
+            val src = it.attr("data-src").ifEmpty {
+                it.attr("data-lazy-src").ifEmpty {
+                    it.attr("src")
+                }
+            }
+            if (src.isNotBlank()) videoUrls.add(UrlUtils.resolve(baseUrl, src))
+        }
+
+        // Direct video/source elements
+        document.select("video source[src], video[src], video source[data-src], video[data-src]").forEach { el ->
+            val src = el.attr("data-src").ifEmpty { el.attr("src") }
             if (src.isNotBlank()) videoUrls.add(UrlUtils.resolve(baseUrl, src))
         }
 
         // Server option mirrors (Base64 or HTML iframe inside select/option value)
-        document.select("select.mirror option, .mobius select option").forEach { option ->
+        document.select("select.mirror option, .mobius select option, select[name=server] option, .player_servers option, .player-options option").forEach { option ->
             val value = option.attr("value").trim()
             if (value.isNotEmpty()) {
                 val decoded = tryDecodeBase64(value) ?: value
@@ -81,7 +91,16 @@ open class AnimeStreamTheme(
             }
         }
 
-        return ExtractorRegistry.extractAll(videoUrls.distinct(), client)
+        val videos = ExtractorRegistry.extractAll(videoUrls.distinct(), client)
+        if (videos.isEmpty() && videoUrls.isNotEmpty()) {
+            throw app.kaziyami.core.SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = config.selectors.playerIframes,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+        return videos
     }
 
     private fun tryDecodeBase64(text: String): String? {
@@ -97,7 +116,8 @@ open class AnimeStreamTheme(
     private fun extractIframeSrc(html: String): String? {
         if (!html.contains("<iframe", ignoreCase = true)) return null
         val doc = Jsoup.parse(html)
-        return doc.selectFirst("iframe[src]")?.attr("src")
+        val iframe = doc.selectFirst("iframe") ?: return null
+        return iframe.attr("data-src").ifEmpty { iframe.attr("src") }.takeIf { it.isNotBlank() }
     }
 
     override fun getFilterList(): AnimeFilterList {

@@ -263,6 +263,20 @@ val testSourceInstantiation by tasks.registering(Exec::class) {
     commandLine("python", "tools/test_source_instantiation.py")
 }
 
+val kototoroSelfTest by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Runs faithful replica of Kototoro's in-app SourceTester test harness."
+    dependsOn(tasks.named("assembleRelease"))
+    dependsOn(prepareHostClasspath)
+    dependsOn(":core:compileTestKotlin")
+    val isLive = project.hasProperty("live")
+    if (isLive) {
+        commandLine("python", "tools/kototoro_self_test.py", "--live")
+    } else {
+        commandLine("python", "tools/kototoro_self_test.py")
+    }
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."
@@ -274,5 +288,6 @@ tasks.register("check") {
     dependsOn(verifyNoHostClassesPackaged)
     dependsOn(verifyHostApiBinding)
     dependsOn(testSourceInstantiation)
+    dependsOn(kototoroSelfTest)
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

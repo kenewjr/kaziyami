@@ -142,4 +142,21 @@ object ChallengeClassifier {
             message = "OK"
         )
     }
+
+    fun classify(throwable: Throwable): ChallengeResolution {
+        val msg = throwable.message.orEmpty()
+        val isSinkhole = SmartDns.SINKHOLE_IPS.any { msg.contains(it) } ||
+            msg.contains("103.10.223.15")
+        if (isSinkhole || msg.contains("internet positif", ignoreCase = true) || msg.contains("trustpositif", ignoreCase = true)) {
+            return ChallengeResolution(
+                classification = ChallengeClass.ISP_BLOCK,
+                message = "Kaziyami: Domain blocked by ISP DNS sinkhole. Configure Android Private DNS (e.g. dns.google).",
+                isPermanentBlock = true
+            )
+        }
+        return ChallengeResolution(
+            classification = ChallengeClass.NONE,
+            message = throwable.javaClass.simpleName + (if (msg.isNotBlank()) ": $msg" else "")
+        )
+    }
 }

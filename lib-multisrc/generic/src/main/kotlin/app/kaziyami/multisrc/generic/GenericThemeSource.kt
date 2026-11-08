@@ -388,6 +388,24 @@ open class GenericThemeSource(
             if (isEmptyState(document)) {
                 return emptyList()
             }
+            // Check if page represents a single-episode or movie video release
+            val hasVideoPlayer = selectFirstMatching(document, "player_iframes", config.selectors.playerIframesCandidates).second.isNotEmpty() ||
+                document.select("video, iframe, #player, .player, .play-box, .player-container, #stream, .stream, .video-content, .embed, [id*=player], [class*=player], [id*=stream], [class*=stream]").isNotEmpty() ||
+                document.select("a[href*='download'], a[href*='drive'], a[href*='mega.'], a[href*='mediafire'], .linksbt, .dlx, .download, .box-download").isNotEmpty()
+
+            if (hasVideoPlayer) {
+                val ep = SEpisode.create().apply {
+                    url = UrlUtils.getPath(response.request.url.toString())
+                    name = "Full Episode"
+                    episode_number = 1.0f
+                    val dateEl = document.selectFirst(".released-date, time, .upload-date, .date, .post-date, .time")
+                    if (dateEl != null) {
+                        date_upload = DateParser.parse(dateEl.text())
+                    }
+                }
+                return listOf(ep)
+            }
+
             throw SourceParseException(
                 source = name,
                 pageType = "episode list",
@@ -416,22 +434,43 @@ open class GenericThemeSource(
         val document = response.asJsoup()
         val iframeUrls = config.selectors.playerIframesCandidates.flatMap { selector ->
             document.select(selector).mapNotNull { element: Element ->
-                val src = element.attr("src")
+                val src = element.attr("data-src").ifEmpty {
+                    element.attr("data-lazy-src").ifEmpty {
+                        element.attr("src")
+                    }
+                }
                 if (src.isNotBlank()) src else null
             }
-        }.distinct().map { UrlUtils.resolve(baseUrl, it) }
+        }.toMutableList()
+
+        document.select("video source[src], video[src], video source[data-src], video[data-src]").forEach { el ->
+            val src = el.attr("data-src").ifEmpty { el.attr("src") }
+            if (src.isNotBlank()) iframeUrls.add(src)
+        }
+
+        val resolvedUrls = iframeUrls.distinct().map { UrlUtils.resolve(baseUrl, it) }
 
         val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
         val referer = response.request.url.toString()
-        return ExtractorRegistry.resolveSequential(
-            urls = iframeUrls,
+        val videos = ExtractorRegistry.resolveSequential(
+            urls = resolvedUrls,
             preferredHost = preferredHost,
             referer = referer,
             client = client
         ).let {
             ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
         }
+
+        if (videos.isEmpty() && resolvedUrls.isNotEmpty()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = config.selectors.playerIframes,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
+            )
+        }
+        return videos
     }
 
     override fun videoFromElement(element: Element): Video {

@@ -21,7 +21,34 @@ Adult anime streaming portals frequently deploy Cloudflare Managed Challenges or
 
 ---
 
-## 2. Blocked Mirror Domains & Custom Base URL
+## 2. Indonesian ISP DNS Sinkholes (`103.10.223.15`) & Android Private DNS
+
+Indonesian ISPs (Telkomsel, Indihome, XL Axiata, Tri, Biznet, MyRepublic, FirstMedia) intercept unencrypted standard DNS queries (UDP port 53) and hijack adult domains (e.g., `javsubbed.net`, `indohentai.net`, `guest.freeanimehentai.net`, `nekopoi.care`) to government sinkhole IP addresses, most notably `103.10.223.15` (TrustPositif / Nawala).
+
+### Symptoms
+- `ConnectException: Failed to connect to <domain>/103.10.223.15:443`
+- Kototoro source test fails on `LIST` and `SEARCH` with `ConnectException: Failed to connect to <domain>/103.10.223.15:443`.
+- The sinkhole IP `103.10.223.15` rejects all HTTPS (port 443) connection attempts.
+
+### Resolution Steps (Android Private DNS - DNS-over-TLS)
+Configuring Android Private DNS encrypts all DNS lookups at the operating system level, bypassing unencrypted ISP DNS interception completely without requiring a VPN or proxy:
+
+1. Open Android **Settings**.
+2. Tap **Network & internet** (on Samsung devices: **Connections** -> **More connection settings**).
+3. Tap **Private DNS** (usually set to *Automatic* or *Off* by default).
+4. Select **Private DNS provider hostname**.
+5. Enter one of the following verified encrypted DNS providers:
+   - `dns.google` (Google Public DNS)
+   - `one.one.one.one` (Cloudflare DNS)
+   - `dns.quad9.net` (Quad9)
+   - `family.cloudflare-dns.com` (Cloudflare 1.1.1.3)
+6. Tap **Save**.
+7. Restart Kototoro/Aniyomi or toggle Airplane Mode on/off.
+8. Retest the sources: `javsubbed.net`, `indohentai.net`, and other sources will resolve cleanly to their real Cloudflare edge IPs.
+
+---
+
+## 3. Blocked Mirror Domains & Custom Base URL
 
 Regional Internet Service Providers (e.g. Indonesian Kominfo / TrustPositif DNS filtering) frequently block adult domain names.
 
@@ -40,7 +67,7 @@ Regional Internet Service Providers (e.g. Indonesian Kominfo / TrustPositif DNS 
 
 ---
 
-## 3. Expiring & Tokenized Video URLs
+## 4. Expiring & Tokenized Video URLs
 
 Certain video host engines (such as StreamPoi or Astro SSR CDNs) generate time-limited query tokens (`?token=...&expires=...`) or restrict playback by IP/Referer.
 
