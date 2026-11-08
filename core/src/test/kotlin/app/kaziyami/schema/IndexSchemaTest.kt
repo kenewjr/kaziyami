@@ -22,7 +22,9 @@ class IndexSchemaTest {
         "Hentaimama" to "8058423919997530503",
         "Hanime" to "2150907185602526076",
         "RuleVid" to "3619818370138619659",
-        "Rule34Video" to "9212790518101043860"
+        "Rule34Video" to "9212790518101043860",
+        "Hanime1" to "8940914386632787357",
+        "3xchina" to "6860252144607113410"
     )
 
     private fun getRepoDir(): File {
@@ -85,7 +87,7 @@ class IndexSchemaTest {
 
         val content = indexFile.readText()
         val array = json.parseToJsonElement(content).jsonArray
-        assertEquals(6, array.size, "Must contain all 6 sources")
+        assertEquals(8, array.size, "Must contain all 8 sources")
 
         val expectedPkgs = setOf(
             "eu.kanade.tachiyomi.animeextension.id.nekopoi",
@@ -93,7 +95,9 @@ class IndexSchemaTest {
             "eu.kanade.tachiyomi.animeextension.en.hentaimama",
             "eu.kanade.tachiyomi.animeextension.en.hanime",
             "eu.kanade.tachiyomi.animeextension.en.rulevid",
-            "eu.kanade.tachiyomi.animeextension.en.rule34video"
+            "eu.kanade.tachiyomi.animeextension.en.rule34video",
+            "eu.kanade.tachiyomi.animeextension.zh.hanime1",
+            "eu.kanade.tachiyomi.animeextension.zh.threexchina"
         )
 
         val seenPkgs = mutableSetOf<String>()
@@ -171,7 +175,7 @@ class IndexSchemaTest {
         val content = minFile.readText()
         assertFalse(content.contains("\n"), "index.min.json must be minified")
         val array = json.parseToJsonElement(content).jsonArray
-        assertEquals(6, array.size)
+        assertEquals(8, array.size)
     }
 
     @Test

@@ -168,6 +168,12 @@ class Hanime : GenericThemeSource(
             sortIndex == 1 -> {
                 if (page > 1) "/?page=$page" else "/"
             }
+            sortIndex == 2 -> {
+                "/browse/views?page=$page"
+            }
+            sortIndex == 3 -> {
+                "/browse/top-rated?page=$page"
+            }
             else -> {
                 String.format(config.popularPath, page)
             }
@@ -526,7 +532,7 @@ class Hanime : GenericThemeSource(
 
     class HanimeSortFilter : AnimeFilter.Select<String>(
         "Sort By",
-        arrayOf("Trending", "Latest Releases"),
+        arrayOf("Trending", "Latest Releases", "Most Viewed", "Top Rated"),
         0
     )
 

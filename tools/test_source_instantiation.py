@@ -26,6 +26,8 @@ EXPECTED_SOURCES = {
     "Hanime": {"name": "Hanime", "lang": "en", "id": 2150907185602526076},
     "RuleVid": {"name": "RuleVid", "lang": "en", "id": 3619818370138619659},
     "Rule34Video": {"name": "Rule34Video", "lang": "en", "id": 9212790518101043860},
+    "Hanime1": {"name": "Hanime1", "lang": "zh", "id": 8940914386632787357},
+    "3xchina": {"name": "3xchina", "lang": "zh", "id": 6860252144607113410},
 }
 
 class TestSourceInstantiation(unittest.TestCase):
@@ -44,7 +46,7 @@ class TestSourceInstantiation(unittest.TestCase):
 
     def test_all_apks_exist_and_match_permanent_ids(self):
         apks = sorted(glob.glob(os.path.join(ROOT_DIR, "repo", "apk", "*.apk")))
-        self.assertEqual(len(apks), 6, f"Expected 6 built APKs, found {len(apks)}")
+        self.assertEqual(len(apks), 8, f"Expected 8 built APKs, found {len(apks)}")
 
         for apk_path in apks:
             apk_name = os.path.basename(apk_path)
@@ -65,7 +67,7 @@ class TestSourceInstantiation(unittest.TestCase):
 
             # 2. Match slug to expected source
             source_slug = None
-            for sname in EXPECTED_SOURCES:
+            for sname in sorted(EXPECTED_SOURCES.keys(), key=len, reverse=True):
                 if sname.lower() in apk_name.lower():
                     source_slug = sname
                     break

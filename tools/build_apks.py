@@ -57,6 +57,18 @@ EXTENSIONS = [
         "name": "Rule34Video",
         "dir": "src/en/rule34video",
         "multisrc": "lib-multisrc/kvs"
+    },
+    {
+        "lang": "zh",
+        "name": "Hanime1",
+        "dir": "src/zh/hanime1",
+        "multisrc": "lib-multisrc/generic"
+    },
+    {
+        "lang": "zh",
+        "name": "3xchina",
+        "dir": "src/zh/3xchina",
+        "multisrc": "lib-multisrc/retrotube"
     }
 ]
 
@@ -163,7 +175,7 @@ def get_signing_config(require_release=False):
     }
 
 def create_apk(ext, meta, signing_cfg, output_apk_path, sdk_tools):
-    pkg_name = f"eu.kanade.tachiyomi.animeextension.{ext['lang']}.{ext['name'].lower()}"
+    pkg_name = ext.get("pkg") or meta["extClass"].rsplit(".", 1)[0]
     manifest_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="{pkg_name}"

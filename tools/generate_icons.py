@@ -94,6 +94,26 @@ def is_glyph_pixel(name, dx, dy):
         in_play = (-4 <= dx <= 8 and abs(dy) <= (8 - dx) * 0.7)
         return in_hex_border or in_h_left or in_h_right or in_h_bar or in_play
 
+    elif name == "hanime1":
+        # 'H1' Monogram
+        in_h_left = (-22 <= dx <= -14 and -20 <= dy <= 20)
+        in_h_right = (-4 <= dx <= 4 and -20 <= dy <= 20)
+        in_h_bar = (-14 <= dx <= -4 and -4 <= dy <= 4)
+        in_1_stem = (14 <= dx <= 22 and -20 <= dy <= 20)
+        in_1_serif = (8 <= dx <= 14 and -20 <= dy <= -12 and (dy + 20) >= (14 - dx))
+        in_1_base = (8 <= dx <= 28 and 14 <= dy <= 20)
+        return in_h_left or in_h_right or in_h_bar or in_1_stem or in_1_serif or in_1_base
+
+    elif name == "3xchina":
+        # '3X' Emblem
+        in_3_top = (-24 <= dx <= -6 and -20 <= dy <= -12)
+        in_3_mid = (-16 <= dx <= -6 and -4 <= dy <= 4)
+        in_3_bot = (-24 <= dx <= -6 and 12 <= dy <= 20)
+        in_3_spine = (-10 <= dx <= -4 and ((-20 <= dy <= -4) or (0 <= dy <= 20)))
+        in_x_diag1 = (abs(dy - dx + 12) <= 3.5 and 0 <= dx <= 24 and -16 <= dy <= 16)
+        in_x_diag2 = (abs(dy + dx - 12) <= 3.5 and 0 <= dx <= 24 and -16 <= dy <= 16)
+        return in_3_top or in_3_mid or in_3_bot or in_3_spine or in_x_diag1 or in_x_diag2
+
     else:
         # Default / Kaziyami Crowned 'K'
         in_stem = (-18 <= dx <= -8 and -28 <= dy <= 28)
@@ -154,6 +174,8 @@ EXT_COLORS = {
     "hanime": (240, 98, 146),        # Pink
     "rulevid": (76, 175, 80),        # Emerald Green
     "rule34video": (255, 110, 64),   # Deep Orange
+    "hanime1": (255, 46, 147),       # Rose Pink
+    "3xchina": (255, 179, 0),        # Gold / Amber
     "kaziyami": (156, 39, 176)       # Purple (Brand)
 }
 
@@ -166,6 +188,8 @@ EXT_PACKAGES = {
     "hanime": "eu.kanade.tachiyomi.animeextension.en.hanime",
     "rulevid": "eu.kanade.tachiyomi.animeextension.en.rulevid",
     "rule34video": "eu.kanade.tachiyomi.animeextension.en.rule34video",
+    "hanime1": "eu.kanade.tachiyomi.animeextension.zh.hanime1",
+    "3xchina": "eu.kanade.tachiyomi.animeextension.zh.threexchina",
     "kaziyami": "app.kaziyami.kototoro",
 }
 

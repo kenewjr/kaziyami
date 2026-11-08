@@ -21,6 +21,8 @@ REQUIRED_MODULES = [
     ("src:en:rule34video", "src/en/rule34video"),
     ("src:id:nekopoi", "src/id/nekopoi"),
     ("src:id:nontonhentai", "src/id/nontonhentai"),
+    ("src:zh:hanime1", "src/zh/hanime1"),
+    ("src:zh:3xchina", "src/zh/3xchina"),
 ]
 
 def scan_module_results(rel_dir: str):

@@ -42,9 +42,11 @@ class Hentaimama : DooPlayTheme(
         checkAgeConfirmed()
         var category = "tvshows"
         var genre = ""
+        var sort = ""
 
         for (filter in filters) {
             when (filter) {
+                is HentaimamaSortFilter -> sort = filter.toSlug()
                 is HentaimamaCategoryFilter -> category = filter.toSlug()
                 is HentaimamaGenreFilter -> genre = filter.toSlug()
                 else -> {}
@@ -59,6 +61,10 @@ class Hentaimama : DooPlayTheme(
             }
             genre.isNotEmpty() -> {
                 if (page == 1) "/genre/$genre/" else "/genre/$genre/page/$page/"
+            }
+            sort.isNotEmpty() -> {
+                val base = if (category == "episodes") "/episodes/" else "/tvshows/"
+                if (page == 1) "$base?order=$sort" else "${base}page/$page/?order=$sort"
             }
             category == "episodes" -> {
                 if (page == 1) "/episodes/" else "/episodes/page/$page/"
@@ -75,9 +81,18 @@ class Hentaimama : DooPlayTheme(
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
             AnimeFilter.Header("Hentaimama Filters"),
+            HentaimamaSortFilter(),
             HentaimamaCategoryFilter(),
             HentaimamaGenreFilter()
         )
+    }
+
+    class HentaimamaSortFilter : AnimeFilter.Select<String>(
+        "Sort By",
+        SORTS.map { it.name }.toTypedArray(),
+        0
+    ) {
+        fun toSlug(): String = SORTS[state].slug
     }
 
     class HentaimamaCategoryFilter : AnimeFilter.Select<String>(
@@ -98,6 +113,14 @@ class Hentaimama : DooPlayTheme(
 
     companion object {
         data class Option(val name: String, val slug: String)
+
+        val SORTS = arrayOf(
+            Option("Default", ""),
+            Option("Release Date", "release"),
+            Option("Most Viewed", "views"),
+            Option("Rating", "rating"),
+            Option("Title (A-Z)", "title")
+        )
 
         val CATEGORIES = arrayOf(
             Option("TV Shows", "tvshows"),

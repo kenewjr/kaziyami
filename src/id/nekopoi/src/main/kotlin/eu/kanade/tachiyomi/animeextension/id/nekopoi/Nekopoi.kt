@@ -52,6 +52,16 @@ class Nekopoi : GenericThemeSource(
         checkAgeConfirmed()
         val cleanQuery = query.trim()
         val genre = filters.filterIsInstance<NekopoiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
+        val sort = filters.filterIsInstance<NekopoiSortFilter>().firstOrNull()?.toSlug().orEmpty()
+        val category = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
+            when (it.values[it.state]) {
+                "3D Hentai" -> "3d-hentai"
+                "Jav Cosplay" -> "jav-cosplay"
+                "Hentai" -> "hentai"
+                else -> ""
+            }
+        }.orEmpty()
+
         val path = when {
             cleanQuery.isNotEmpty() -> {
                 val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
@@ -60,15 +70,21 @@ class Nekopoi : GenericThemeSource(
             genre.isNotEmpty() -> {
                 if (page == 1) "/$genre/" else "/$genre/page/$page/"
             }
+            sort.isNotEmpty() -> {
+                "/category/$sort/page/$page/"
+            }
+            category.isNotEmpty() -> {
+                "/category/$category/page/$page/"
+            }
             else -> {
-                val category = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
+                val defaultCat = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
                     when (it.values[it.state]) {
                         "3D Hentai" -> "3d-hentai"
                         "Jav Cosplay" -> "jav-cosplay"
                         else -> "hentai"
                     }
                 } ?: "hentai"
-                "/category/$category/page/$page/"
+                "/category/$defaultCat/page/$page/"
             }
         }
         val url = UrlUtils.resolve(baseUrl, path)
@@ -214,9 +230,18 @@ class Nekopoi : GenericThemeSource(
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
             AnimeFilter.Header("Nekopoi Filters"),
+            NekopoiSortFilter(),
             NekopoiCategoryFilter(),
             NekopoiGenreFilter()
         )
+    }
+
+    class NekopoiSortFilter : AnimeFilter.Select<String>(
+        "Sort By",
+        SORTS.map { it.name }.toTypedArray(),
+        0
+    ) {
+        fun toSlug(): String = SORTS[state].slug
     }
 
     class NekopoiCategoryFilter : AnimeFilter.Select<String>(
@@ -235,6 +260,13 @@ class Nekopoi : GenericThemeSource(
 
     companion object {
         data class Option(val name: String, val slug: String)
+
+        val SORTS = arrayOf(
+            Option("Latest Updates", ""),
+            Option("Popular Hentai", "hentai"),
+            Option("3D Hentai", "3d-hentai"),
+            Option("Jav Cosplay", "jav-cosplay")
+        )
 
         val GENRES = arrayOf(
             Option("All", ""),

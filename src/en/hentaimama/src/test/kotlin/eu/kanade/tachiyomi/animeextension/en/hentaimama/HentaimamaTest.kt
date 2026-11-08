@@ -170,5 +170,12 @@ class HentaimamaTest {
 
         val reqQuery2 = source.searchAnimeRequest(2, "itadaki", filterList)
         assertEquals("https://hentaimama.io/?s=itadaki&page=2", reqQuery2.url.toString())
+
+        // 8. Sort = Most Viewed
+        genreFilter.state = 0
+        val sortFilter = filterList.filterIsInstance<Hentaimama.HentaimamaSortFilter>().first()
+        sortFilter.state = 2
+        val reqSort = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hentaimama.io/tvshows/?order=views", reqSort.url.toString())
     }
 }

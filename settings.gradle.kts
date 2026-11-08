@@ -15,3 +15,6 @@ include(":src:en:hentaimama")
 include(":src:en:hanime")
 include(":src:en:rulevid")
 include(":src:en:rule34video")
+
+include(":src:zh:hanime1")
+include(":src:zh:3xchina")

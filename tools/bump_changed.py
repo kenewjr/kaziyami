@@ -18,6 +18,10 @@ EXTENSIONS = {
     "src/en/hentaimama": ["core", "lib-multisrc/dooplay", "lib-multisrc/generic", "src/en/hentaimama"],
     "src/en/javsubbed": ["core", "lib-multisrc/retrotube", "lib-multisrc/generic", "src/en/javsubbed"],
     "src/en/hanime": ["core", "lib-multisrc/generic", "src/en/hanime"],
+    "src/en/rulevid": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rulevid"],
+    "src/en/rule34video": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rule34video"],
+    "src/zh/hanime1": ["core", "lib-multisrc/generic", "src/zh/hanime1"],
+    "src/zh/3xchina": ["core", "lib-multisrc/retrotube", "lib-multisrc/generic", "src/zh/3xchina"],
 }
 
 def get_affected_extensions(changed_files):

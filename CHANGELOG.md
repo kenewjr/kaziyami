@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.8] - 2026-11-08
+
+### Added
+- **Two Chinese Adult Animation Production Sources**:
+  - `Kaziyami: Hanime1` (`zh`): Traditional Chinese (`zh`) adult anime, 3DCG, and MMD animation. Reverse-engineered 9 sorting options, 10 genres, and 24 tags. Direct MP4 and HLS streams with Turnstile WebView fallback.
+  - `Kaziyami: 3xchina` (`zh`): Chinese (`zh`) adult video and animation platform on RetroTube base. Package mapped to `eu.kanade.tachiyomi.animeextension.zh.threexchina` with class `ThreeXChina` to satisfy Android AAPT2 constraints. 4 sorting options, categories, and tags.
+  - Permanent 64-bit source IDs locked in `docs/SOURCE_IDS.md` (`Hanime1`: `8940914386632787357L`, `3xchina`: `6860252144607113410L`).
+- **Universal Working Sorting Across All Sources**:
+  - `Nekopoi`: Added `NekopoiSortFilter` with 4 sorting options (Latest Updates, Popular Hentai, 3D Hentai, Jav Cosplay).
+  - `Hanime`: Extended `HanimeSortFilter` (Trending, Latest Releases, Most Viewed, Top Rated).
+  - `Hentaimama`: Added `HentaimamaSortFilter` (Default, Release Date, Most Viewed, Rating, Title).
+  - Verified sorting across `NontonHentai`, `RuleVid`, `Rule34Video`, `Hanime1`, and `3xchina`.
+- **Uniform Version Bump to v14.8**:
+  - Bumped all 8 extension APKs to uniform version `14.8` (`extVersionCode = 8`).
+
+## [14.7] - 2026-11-08
+
+### Fixed
+- **Nekopoi 10-Result Pagination Fix**:
+  - Implemented 2-page aggregation in `getPopularAnime`, `getLatestUpdates`, and `getSearchAnime` delivering 20 distinct items per catalogue page to satisfy Kototoro/Aniyomi 20-item paging window.
+- **Hanime AES-256-GCM Handshake Video Stream Extraction**:
+  - Reverse-engineered HTVPlayer island restoring video stream resolution via authenticated handshake (`https://auth.hanime.tv/api/v11/handshake`).
+- **NontonHentai Stream Resolution & Two-Page Aggregation**:
+  - Fixed `HentaiCopExtractor` regex for quoted sources and fixed 10-result stalling on keyword searches with 2-page aggregation.
+- **Hentaimama DooPlay AJAX Player Unescaping**:
+  - Resolved JSON escaping in `get_player_contents` response and handled `dt_embed` progressive MP4 streams.
+- **Universal Genre & Tag Filtering Across All Active Sources**:
+  - Added curated safe genre/tag filters adhering strictly to `ContentPolicy` across Nekopoi (72 genres), NontonHentai (308 genres), RuleVid (56 tags), Rule34Video (55 tags), Hanime (57 genres), and Hentaimama (28 genres).
+
 ## [14.6] - 2026-11-08
 
 ### Added

@@ -24,6 +24,8 @@ val id = (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF)
 | **Hanime** | `en` | Active | `2150907185602526076L` | `hanime/en/1` |
 | **RuleVid** | `en` | Active | `3619818370138619659L` | `rulevid/en/1` |
 | **Rule34Video** | `en` | Active | `9212790518101043860L` | `rule34video/en/1` |
+| **Hanime1** | `zh` | Active | `8940914386632787357L` | `hanime1/zh/1` |
+| **3xchina** | `zh` | Active | `6860252144607113410L` | `3xchina/zh/1` |
 | **JavSubIndo** | `id` | Backup | `3834839640077976573L` | `javsubindo/id/1` |
 | **Ohentai** | `en` | Backup | `7247837649602913976L` | `ohentai/en/1` |
 
@@ -53,6 +55,8 @@ In Kototoro native parser plugins:
 | **HANIME** | Hanime | `en` | `HENTAI_VIDEO` | `1681524797754884851L` | `kototoro:hanime/en` |
 | **RULEVID** | RuleVid | `en` | `HENTAI_VIDEO` | `6315209008681740874L` | `kototoro:rulevid/en` |
 | **RULE34VIDEO** | Rule34Video | `en` | `HENTAI_VIDEO` | `6540785455483770072L` | `kototoro:rule34video/en` |
+| **HANIME1** | Hanime1 | `zh` | `HENTAI_VIDEO` | `6974454250572858550L` | `kototoro:hanime1/zh` |
+| **THREE_X_CHINA** | 3xchina | `zh` | `HENTAI_VIDEO` | `7056131202194884936L` | `kototoro:3xchina/zh` |
 
 ---
 

@@ -10,11 +10,16 @@ Mandatory instruction document for AI assistants and automated coding agents mod
    - Never remove alternate selectors, fallback stream extractors, or caching mechanisms without explicit instructions.
    - All improvements and modifications must be additive and bolster resilience.
 2. **Permanent Source ID Lock (`docs/SOURCE_IDS.md`)**:
-   - The 64-bit hash IDs of all 6 adult sources (`Nekopoi`, `IndoHentai`, `NontonHentai`, `Hentaimama`, `JAVSubbed`, `Hanime`) are permanent.
-   - The internal source name `AnimeSource.name` MUST remain the raw site name (e.g., `Nekopoi`), NEVER prefixed with `Kaziyami:`.
+   - The 64-bit hash IDs of all 8 active sources (`Nekopoi`, `NontonHentai`, `Hanime`, `Hentaimama`, `RuleVid`, `Rule34Video`, `Hanime1`, `3xchina`) and 2 discontinued sources (`IndoHentai`, `JAVSubbed`) are permanent.
+   - The internal source name `AnimeSource.name` MUST remain the raw site name (e.g., `Nekopoi`, `3xchina`, `Hanime1`), NEVER prefixed with `Kaziyami:`.
    - Modifying source IDs corrupts bookmarks and watch history in the host application database.
 3. **Display Label Naming Conventions**:
-   - Display labels in host UIs (`android:label` in the manifest and `name` in `index.min.json`): `Kaziyami: <Site>` (e.g., `Kaziyami: Nekopoi`).
+   - Display labels in host UIs (`android:label` in the manifest and `name` in `index.min.json`): `Kaziyami: <Site>` (e.g., `Kaziyami: Nekopoi`, `Kaziyami: Hanime1`, `Kaziyami: 3xchina`).
+4. **Android Package & Class Naming Invariants**:
+   - Android package identifiers cannot begin with numbers (`3xchina` uses package `eu.kanade.tachiyomi.animeextension.zh.threexchina` and class `ThreeXChina`, while keeping raw source name `"3xchina"`).
+5. **Universal Sorting, Language & Filtering Integrity**:
+   - Every source must implement authentic, working sort filters and curated safe genre/category/tag filters adhering strictly to `ContentPolicy` (zero tolerance for minors, voyeurism, non-consensual content).
+   - In unit tests, avoid reflective manipulation of private fields; use `source.preferences.edit()` directly on `GenericThemeSource.preferences`.
 
 ---
 

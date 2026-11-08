@@ -38,13 +38,15 @@ def load_source_ids():
                 m = re.search(r'\|\s*\*\*([^\*]+)\*\*\s*\|\s*`([^`]+)`\s*\|\s*[^\|]*\|\s*`(\d+)L?`', line)
                 if m:
                     name, lang, sid = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
-                    pkg = f"eu.kanade.tachiyomi.animeextension.{lang}.{name.lower()}"
+                    pkg_suffix = "threexchina" if name.lower() == "3xchina" else name.lower()
+                    cls_name = "ThreeXChina" if name.lower() == "3xchina" else name
+                    pkg = f"eu.kanade.tachiyomi.animeextension.{lang}.{pkg_suffix}"
                     sources[pkg] = {
                         "name": name,
                         "lang": lang,
                         "id": sid,
                         "label": f"Kaziyami: {name}",
-                        "class": f"eu.kanade.tachiyomi.animeextension.{lang}.{name.lower()}.{name}"
+                        "class": f"eu.kanade.tachiyomi.animeextension.{lang}.{pkg_suffix}.{cls_name}"
                     }
     return sources
 

@@ -27,6 +27,8 @@ class SourceIdContractTest {
         ("Hanime" to "en") to 2150907185602526076L,
         ("RuleVid" to "en") to 3619818370138619659L,
         ("Rule34Video" to "en") to 9212790518101043860L,
+        ("Hanime1" to "zh") to 8940914386632787357L,
+        ("3xchina" to "zh") to 6860252144607113410L,
         ("JavSubIndo" to "id") to 3834839640077976573L,
         ("Ohentai" to "en") to 7247837649602913976L
     )
@@ -39,7 +41,9 @@ class SourceIdContractTest {
         ("JAVSubbed" to "en") to 3548241241858622381L,
         ("Hanime" to "en") to 1681524797754884851L,
         ("RuleVid" to "en") to 6315209008681740874L,
-        ("Rule34Video" to "en") to 6540785455483770072L
+        ("Rule34Video" to "en") to 6540785455483770072L,
+        ("Hanime1" to "zh") to 6974454250572858550L,
+        ("3xchina" to "zh") to 7056131202194884936L
     )
 
     @Test

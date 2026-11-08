@@ -79,7 +79,7 @@ Kototoro supports Kaziyami video extensions exclusively via its built-in `Aniyom
 > **Troubleshooting: Extensions Installed but Not Showing in Sources?**
 > - **Space Kind**: Ensure Kototoro is set to the **Anime** space (or Content Type: **All** / **Hentai Video**).
 > - **NSFW Filter**: Kototoro defaults to hiding 18+ sources. Tap the filter/funnel icon in **Sources** and switch **NSFW Filter** to **All** or **NSFW**.
-> - **Language Filter**: All Kaziyami sources are tagged as Indonesian (`id`) or English (`en`). In Kototoro filter settings, ensure **Indonesian** and **English** are checked in active extension languages.
+> - **Language Filter**: All Kaziyami sources are tagged as Indonesian (`id`), English (`en`), or Chinese (`zh`). In Kototoro filter settings, ensure **Indonesian**, **English**, and **Chinese** are checked in active extension languages.
 > - **Enabled State**: Newly installed extensions default to disabled in Kototoro. Scroll down to the **Disabled** section in the Sources tab and toggle them **ON**.
 > - **Clear Extension Cache**: If updating from an earlier broken build, go to Android **Settings -> Apps -> Kototoro -> Storage -> Clear cache** (do not clear storage/data) and restart Kototoro. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
@@ -89,7 +89,7 @@ For detailed update workflows, troubleshooting, and rollback steps, see [docs/UP
 
 ## 3. Catalog of Sources
 
-All 6 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
+All 8 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
 
 | Source Label | Language | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|
@@ -99,6 +99,8 @@ All 6 active adult sources are configured with permanent 64-bit Source IDs locke
 | **Kaziyami: Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
 | **Kaziyami: RuleVid** | English (`en`) | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
 | **Kaziyami: Rule34Video** | English (`en`) | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: 3xchina** | Chinese (`zh`) | WordPress (RetroTube) | `https://3xchina.net` | HGCloud / VidHide / StreamHide embeds, WebView fallback |
 
 > [!NOTE]
 > **Discontinued Sources**: `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.

@@ -32,7 +32,7 @@ class TestUpdateSimulation(unittest.TestCase):
         with open(apk_index_path, "r", encoding="utf-8") as f:
             apk_data = json.load(f)
 
-        self.assertEqual(len(apk_data), 6)  # 6 extensions
+        self.assertEqual(len(apk_data), 8)  # 8 extensions
 
         for entry in apk_data:
             self.assertIn("code", entry)
