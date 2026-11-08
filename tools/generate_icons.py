@@ -169,8 +169,6 @@ def main():
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     icon_dirs = [
         os.path.join(root_dir, "repo", "icon"),
-        os.path.join(root_dir, "repo", "jar"),
-        os.path.join(root_dir, "repo", "jar", "icon"),
         os.path.join(root_dir, "art", "icons")
     ]
     for d in icon_dirs:
