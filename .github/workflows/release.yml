@@ -111,13 +111,13 @@ jobs:
           python tools/test_update_simulation.py
           python tools/test_preflight.py
 
-      - name: Assemble Both Distribution Variants (APKs & JARs)
+      - name: Assemble Release Distribution APKs
         env:
           KAZIYAMI_KEYSTORE_B64: ${{ env.KAZIYAMI_KEYSTORE_B64 || secrets.KAZIYAMI_KEYSTORE_B64 }}
           KAZIYAMI_KEYSTORE_PASSWORD: ${{ env.KAZIYAMI_KEYSTORE_PASSWORD || secrets.KAZIYAMI_KEYSTORE_PASSWORD }}
           KAZIYAMI_KEY_ALIAS: ${{ env.KAZIYAMI_KEY_ALIAS || secrets.KAZIYAMI_KEY_ALIAS }}
           KAZIYAMI_KEY_PASSWORD: ${{ env.KAZIYAMI_KEY_PASSWORD || secrets.KAZIYAMI_KEY_PASSWORD }}
-        run: ./gradlew assembleAll
+        run: ./gradlew assembleRelease
 
       - name: Verify Built Release APKs
         run: python tools/verify_apks.py ${{ inputs.dry_run && '--allow-debug-cert' || '' }}
@@ -167,10 +167,7 @@ jobs:
           name: kaziyami-dryrun-artifacts
           path: |
             repo/apk/*.apk
-            repo/jar/*.jar
-            repo/jar/apk/*.jar
             repo/sha256sums.txt
-            repo/jar/sha256sums.txt
           retention-days: 1
 
       - name: Deploy Repository Assets to repo Branch
@@ -185,14 +182,14 @@ jobs:
       - name: Verify Published Repository Assets Over HTTPS
         id: verify_published
         if: ${{ !inputs.dry_run }}
-        run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --mode all --retries 10 --delay 6
+        run: python tools/verify_published_repo.py --repo "${{ github.repository }}" --branch repo --mode aniyomi --retries 10 --delay 6
 
       - name: Rollback Repository Index on Verification Failure
         if: ${{ failure() && steps.verify_published.outcome == 'failure' && !inputs.dry_run }}
         run: |
           echo "::error::Publish verification failed! Reverting repo branch index to previous commit..."
           git fetch origin repo
-          git checkout origin/repo -- repo/index.json repo/index.min.json repo/repo.json repo/jar/index.json repo/jar/index.min.json repo/jar/repo.json || true
+          git checkout origin/repo -- repo/index.json repo/index.min.json repo/repo.json || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "rollback: revert repository index due to asset verification failure [skip ci]" || true
