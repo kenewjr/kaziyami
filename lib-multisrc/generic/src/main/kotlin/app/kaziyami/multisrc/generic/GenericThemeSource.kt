@@ -212,7 +212,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = ContentPolicy.filterAnimes(elements.map { popularAnimeFromElement(it) })
+        val animeList = ContentPolicy.filterAnimes(elements.map { popularAnimeFromElement(it) }.distinctBy { it.url })
         val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false
@@ -277,7 +277,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = ContentPolicy.filterAnimes(elements.map { latestUpdatesFromElement(it) })
+        val animeList = ContentPolicy.filterAnimes(elements.map { latestUpdatesFromElement(it) }.distinctBy { it.url })
         val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false
@@ -317,7 +317,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = ContentPolicy.filterAnimes(elements.map { searchAnimeFromElement(it) })
+        val animeList = ContentPolicy.filterAnimes(elements.map { searchAnimeFromElement(it) }.distinctBy { it.url })
         val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false

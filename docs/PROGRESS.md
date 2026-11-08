@@ -155,10 +155,16 @@
   - [x] 16.1 Audit Scope: Excluded bare multisrc base themes (`lib-multisrc:kvs`) without unit tests from `check_test_counts.py` audit table.
   - [x] 16.2 Network & Actions: Bumper `networkTimeout` to 60s in `gradle-wrapper.properties` and upgraded release actions to Node 24 (`actions/checkout@v5`, `actions/setup-python@v7`, `gradle/actions/setup-gradle@v5`).
 
+- [x] **Phase 17: Nekopoi 10-Result Pagination Fix & Two-Page Aggregation**:
+  - [x] 17.1 WordPress Pagination & Redirection Diagnosis: Identified nekopoi.care strictly serves 10 items per web page. Kototoro's AniyomiSourceRuntime paging uses `(offset / 20) + 1`; receiving 10 items caused `offset` to stall below 20, re-requesting page 1 indefinitely and truncating scroll results. Identified nekopoi.care redirects `/?s=%s&page=2` to `/search/%s/` (page 1), requiring path-based pagination `/search/%s/page/%d/`.
+  - [x] 17.2 Two-Page Aggregation in Nekopoi: Implemented two-page buffering in `getPopularAnime`, `getLatestUpdates`, and `getSearchAnime` (fetching web pages `(page - 1) * 2 + 1` and `+ 2`), yielding 20 distinct items per catalogue page and satisfying Kototoro/Aniyomi 20-item paging window.
+  - [x] 17.3 Selector Refinement & URL Deduplication: Cleaned `selectors.item` to prevent duplicate matching of nested `li` and child `a.nk-search-item`, refined `selectors.nextPage`, and added `.distinctBy { it.url }` in `GenericThemeSource`.
+  - [x] 17.4 Version Bump & Verification: Bumped Nekopoi to version 14.7 (`extVersionCode = 7`). Passed `./gradlew check` (226 tests green), `kototoroSelfTest` (6/6 sources 100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% compatible), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 16 complete. GitHub Actions CI and Release pipelines resilient against network timeouts and audit gates. 6 extension APKs assembled and verified at version 14.6 (code 6).
+- **Overall Status**: Phase 17 complete. Nekopoi infinite scroll and search pagination fully resolved with 2-page aggregation and URL deduplication. 6 extension APKs assembled and verified with Nekopoi at v14.7.
 - **Last Green Run**: `./gradlew check` (58 actionable tasks, all 6 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 226 unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 
