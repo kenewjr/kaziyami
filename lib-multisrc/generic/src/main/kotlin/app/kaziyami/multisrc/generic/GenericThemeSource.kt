@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,6 +19,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import app.kaziyami.core.ContentPolicy
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.EpisodeNumberParser
 import app.kaziyami.core.ExtractorRegistry
@@ -107,6 +109,15 @@ open class GenericThemeSource(
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val context = screen.context
+
+        val agePref = SwitchPreferenceCompat(context).apply {
+            key = "age_gate_confirmed"
+            title = "I am 18 or older"
+            summary = "Confirm age requirement (18+) to access adult content"
+            setDefaultValue(false)
+        }
+        screen.addPreference(agePref)
+
         val mirrorsList = (listOf(config.baseUrl) + config.mirrors).distinct().toTypedArray()
 
         val domainPref = ListPreference(context).apply {
@@ -146,6 +157,14 @@ open class GenericThemeSource(
         screen.addPreference(hostPref)
     }
 
+    open fun isAgeConfirmed(): Boolean = preferences.getBoolean("age_gate_confirmed", false)
+
+    protected fun checkAgeConfirmed() {
+        if (!isAgeConfirmed()) {
+            throw IllegalStateException("Age verification required: Confirm 'I am 18 or older' in extension settings to access $name.")
+        }
+    }
+
     /**
      * Tries an ordered list of candidate selectors (primary + alternates), remembers which one
      * succeeded in the active session, and returns the matched elements.
@@ -169,6 +188,7 @@ open class GenericThemeSource(
     // ============================= Popular Anime =============================
 
     public override fun popularAnimeRequest(page: Int): Request {
+        checkAgeConfirmed()
         val path = String.format(config.popularPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
@@ -192,7 +212,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = elements.map { popularAnimeFromElement(it) }
+        val animeList = ContentPolicy.filterAnimes(elements.map { popularAnimeFromElement(it) })
         val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false
@@ -233,6 +253,7 @@ open class GenericThemeSource(
     // ============================= Latest Updates =============================
 
     public override fun latestUpdatesRequest(page: Int): Request {
+        checkAgeConfirmed()
         val path = String.format(config.latestPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
@@ -256,7 +277,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = elements.map { latestUpdatesFromElement(it) }
+        val animeList = ContentPolicy.filterAnimes(elements.map { latestUpdatesFromElement(it) })
         val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false
@@ -271,6 +292,7 @@ open class GenericThemeSource(
     // ============================= Search & Filters =============================
 
     public override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        checkAgeConfirmed()
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
         val path = String.format(config.searchPath, encodedQuery, page)
         val url = UrlUtils.resolve(baseUrl, path)
@@ -295,7 +317,7 @@ open class GenericThemeSource(
             )
         }
 
-        val animeList = elements.map { searchAnimeFromElement(it) }
+        val animeList = ContentPolicy.filterAnimes(elements.map { searchAnimeFromElement(it) })
         val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
             document.selectFirst(selector) != null
         } ?: false
@@ -310,6 +332,7 @@ open class GenericThemeSource(
     // ============================= Anime Details =============================
 
     public override fun animeDetailsRequest(anime: SAnime): Request {
+        checkAgeConfirmed()
         return GET(UrlUtils.resolve(baseUrl, anime.url), headers)
     }
 
@@ -349,12 +372,22 @@ open class GenericThemeSource(
         val authorEl = document.selectFirst(config.selectors.detailsAuthor)
         anime.author = authorEl?.text()?.let { HtmlText.clean(it) }
 
+        if (!ContentPolicy.isSafeAnime(anime)) {
+            throw SourceParseException(
+                source = name,
+                pageType = "anime details",
+                selectorName = "ContentPolicy",
+                urlPath = "Prohibited content indicator detected"
+            )
+        }
+
         return anime
     }
 
     // ============================= Episode List =============================
 
     public override fun episodeListRequest(anime: SAnime): Request {
+        checkAgeConfirmed()
         return GET(UrlUtils.resolve(baseUrl, anime.url), headers)
     }
 
@@ -431,6 +464,7 @@ open class GenericThemeSource(
     // ============================= Video List =============================
 
     public override fun videoListRequest(episode: SEpisode): Request {
+        checkAgeConfirmed()
         return GET(UrlUtils.resolve(baseUrl, episode.url), headers)
     }
 
@@ -603,17 +637,17 @@ open class GenericThemeSource(
 
     fun parsePopularResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
         val page = popularAnimeParse(response)
-        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+        return KaziyamiPage(ContentPolicy.filterMedia(page.animes.map { it.toKaziyamiMedia() }), page.hasNextPage)
     }
 
     fun parseLatestResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
         val page = latestUpdatesParse(response)
-        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+        return KaziyamiPage(ContentPolicy.filterMedia(page.animes.map { it.toKaziyamiMedia() }), page.hasNextPage)
     }
 
     fun parseSearchResponse(response: Response): KaziyamiPage<KaziyamiMedia> {
         val page = searchAnimeParse(response)
-        return KaziyamiPage(page.animes.map { it.toKaziyamiMedia() }, page.hasNextPage)
+        return KaziyamiPage(ContentPolicy.filterMedia(page.animes.map { it.toKaziyamiMedia() }), page.hasNextPage)
     }
 
     fun parseDetailsResponse(response: Response): KaziyamiMedia {
@@ -638,9 +672,10 @@ open class GenericThemeSource(
             if (lower.isEmpty() || lower.startsWith("javascript:") || lower.startsWith("about:") || lower.startsWith("data:")) return false
             val nonVideo = listOf(
                 "discord.com", "discordapp.com",
+                "smartfloralab.com", "a-ads.com", "ad.a-ads.com",
                 "facebook.com", "twitter.com", "x.com", "instagram.com",
                 "google.com", "googletagmanager.com", "google-analytics.com",
-                "histats.com", "disqus.com", "doubleclick.net", "adservice",
+                "histats.com", "disqus.com", "doubleclick.net", "adservice", "googleads",
                 "/widget", "recaptcha", "hcaptcha"
             )
             return nonVideo.none { lower.contains(it) }

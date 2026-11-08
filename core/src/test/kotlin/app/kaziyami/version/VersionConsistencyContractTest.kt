@@ -16,11 +16,11 @@ class VersionConsistencyContractTest {
 
     private val sources = listOf(
         Triple("id", "nekopoi", "Nekopoi"),
-        Triple("id", "indohentai", "IndoHentai"),
         Triple("id", "nontonhentai", "NontonHentai"),
         Triple("en", "hentaimama", "Hentaimama"),
-        Triple("en", "javsubbed", "JAVSubbed"),
-        Triple("en", "hanime", "Hanime")
+        Triple("en", "hanime", "Hanime"),
+        Triple("en", "rulevid", "RuleVid"),
+        Triple("en", "rule34video", "Rule34Video")
     )
 
     @Test

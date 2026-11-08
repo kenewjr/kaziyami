@@ -21,11 +21,11 @@ import android_sdk
 
 EXPECTED_SOURCES = {
     "Nekopoi": {"name": "Nekopoi", "lang": "id", "id": 7073589375897212735},
-    "IndoHentai": {"name": "IndoHentai", "lang": "id", "id": 7369497329911250289},
     "NontonHentai": {"name": "NontonHentai", "lang": "id", "id": 7400791378172011716},
     "Hentaimama": {"name": "Hentaimama", "lang": "en", "id": 8058423919997530503},
-    "JAVSubbed": {"name": "JAVSubbed", "lang": "en", "id": 9192959167101688940},
     "Hanime": {"name": "Hanime", "lang": "en", "id": 2150907185602526076},
+    "RuleVid": {"name": "RuleVid", "lang": "en", "id": 3619818370138619659},
+    "Rule34Video": {"name": "Rule34Video", "lang": "en", "id": 9212790518101043860},
 }
 
 class TestSourceInstantiation(unittest.TestCase):

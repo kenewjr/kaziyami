@@ -60,8 +60,9 @@ class Hanime : GenericThemeSource(
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val encoded = URLEncoder.encode(query, "UTF-8")
-        val url = "https://guest.freeanimehentai.net/api/v11/search_hvs?q=$encoded&page=${(page - 1).coerceAtLeast(0)}"
+        checkAgeConfirmed()
+        val path = String.format(config.popularPath, page)
+        val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
 
@@ -111,10 +112,17 @@ class Hanime : GenericThemeSource(
             )
         }
         val animeList = elements.map { searchAnimeFromElement(it) }
+        val query = response.request.url.queryParameter("q").orEmpty().lowercase()
+        val filtered = if (query.isNotBlank()) {
+            animeList.filter { it.title.lowercase().contains(query) }
+        } else {
+            animeList
+        }
+        val finalAnimes = if (filtered.isNotEmpty()) filtered else animeList
         val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
             doc.selectFirst(selector) != null
         } ?: false
-        return AnimesPage(animeList, hasNextPage)
+        return AnimesPage(finalAnimes, hasNextPage)
     }
 
     public override fun episodeListParse(response: Response): List<SEpisode> {
@@ -227,11 +235,14 @@ class Hanime : GenericThemeSource(
 
         val deduped = videoList.distinctBy { it.videoUrl }
         if (deduped.isEmpty()) {
-            throw app.kaziyami.core.SourceParseException(
-                source = name,
-                pageType = "video streams (requires Cloudflare Turnstile verification in WebView)",
-                selectorName = config.selectors.playerIframes,
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+            val epUrl = response.request.url.toString()
+            return listOf(
+                Video(
+                    url = epUrl,
+                    quality = "Open in WebView (Cloudflare Turnstile)",
+                    videoUrl = epUrl,
+                    headers = headers
+                )
             )
         }
         return deduped

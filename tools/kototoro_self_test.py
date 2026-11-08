@@ -28,13 +28,6 @@ SOURCES_CONFIG = [
         "fixture_dir": os.path.join(ROOT_DIR, "src", "id", "nekopoi", "src", "test", "resources", "nekopoi"),
     },
     {
-        "slug": "indohentai",
-        "name": "IndoHentai",
-        "lang": "id",
-        "ext_class": "eu.kanade.tachiyomi.animeextension.id.indohentai.IndoHentai",
-        "fixture_dir": os.path.join(ROOT_DIR, "src", "id", "indohentai", "src", "test", "resources", "indohentai"),
-    },
-    {
         "slug": "nontonhentai",
         "name": "NontonHentai",
         "lang": "id",
@@ -49,18 +42,25 @@ SOURCES_CONFIG = [
         "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "hentaimama", "src", "test", "resources", "hentaimama"),
     },
     {
-        "slug": "javsubbed",
-        "name": "JAVSubbed",
-        "lang": "en",
-        "ext_class": "eu.kanade.tachiyomi.animeextension.en.javsubbed.JAVSubbed",
-        "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "javsubbed", "src", "test", "resources", "javsubbed"),
-    },
-    {
         "slug": "hanime",
         "name": "Hanime",
         "lang": "en",
         "ext_class": "eu.kanade.tachiyomi.animeextension.en.hanime.Hanime",
         "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "hanime", "src", "test", "resources", "hanime"),
+    },
+    {
+        "slug": "rulevid",
+        "name": "RuleVid",
+        "lang": "en",
+        "ext_class": "eu.kanade.tachiyomi.animeextension.en.rulevid.RuleVid",
+        "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "rulevid", "src", "test", "resources", "rulevid"),
+    },
+    {
+        "slug": "rule34video",
+        "name": "Rule34Video",
+        "lang": "en",
+        "ext_class": "eu.kanade.tachiyomi.animeextension.en.rule34video.Rule34Video",
+        "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "rule34video", "src", "test", "resources", "rule34video"),
     },
 ]
 
@@ -159,7 +159,7 @@ def run_kototoro_self_test(is_live=False):
         print("[-] One or more sources failed Kototoro self-test!")
         return 1
 
-    print("[+] All 6 sources passed Kototoro self-test (100% green)!")
+    print(f"[+] All {len(report_sources)} sources passed Kototoro self-test (100% green)!")
     return 0
 
 if __name__ == "__main__":

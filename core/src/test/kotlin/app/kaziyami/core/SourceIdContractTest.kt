@@ -25,6 +25,8 @@ class SourceIdContractTest {
         ("Hentaimama" to "en") to 8058423919997530503L,
         ("JAVSubbed" to "en") to 9192959167101688940L,
         ("Hanime" to "en") to 2150907185602526076L,
+        ("RuleVid" to "en") to 3619818370138619659L,
+        ("Rule34Video" to "en") to 9212790518101043860L,
         ("JavSubIndo" to "id") to 3834839640077976573L,
         ("Ohentai" to "en") to 7247837649602913976L
     )
@@ -35,7 +37,9 @@ class SourceIdContractTest {
         ("NontonHentai" to "id") to 702783498723389045L,
         ("Hentaimama" to "en") to 4363242715237708113L,
         ("JAVSubbed" to "en") to 3548241241858622381L,
-        ("Hanime" to "en") to 1681524797754884851L
+        ("Hanime" to "en") to 1681524797754884851L,
+        ("RuleVid" to "en") to 6315209008681740874L,
+        ("Rule34Video" to "en") to 6540785455483770072L
     )
 
     @Test

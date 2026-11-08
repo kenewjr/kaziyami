@@ -132,11 +132,11 @@ val checkExtensionIcons by tasks.registering {
     doLast {
         val extensions = listOf(
             "src/id/nekopoi",
-            "src/id/indohentai",
             "src/id/nontonhentai",
             "src/en/hentaimama",
-            "src/en/javsubbed",
-            "src/en/hanime"
+            "src/en/hanime",
+            "src/en/rulevid",
+            "src/en/rule34video"
         )
         for (ext in extensions) {
             val xmlIcon = file("$ext/src/main/res/drawable/ic_launcher.xml")

@@ -68,6 +68,22 @@ public class KototoroTestRunner {
         String name = (String) sc.getMethod("getName").invoke(source);
         String baseUrl = (String) sc.getMethod("getBaseUrl").invoke(source);
 
+        try {
+            Method getPrefs = sc.getMethod("getPreferences");
+            Object prefs = getPrefs.invoke(source);
+            if (prefs != null) {
+                Class<?> editorIface = Class.forName("android.content.SharedPreferences$Editor");
+                Method edit = prefs.getClass().getMethod("edit");
+                Object editor = edit.invoke(prefs);
+                Method putBool = editorIface.getMethod("putBoolean", String.class, boolean.class);
+                putBool.invoke(editor, "age_gate_confirmed", true);
+                Method apply = editorIface.getMethod("apply");
+                apply.invoke(editor);
+            }
+        } catch (Throwable t) {
+            System.err.println("PREFS_INIT_ERROR: " + t.getMessage());
+        }
+
         String sourceKey = "ANIYOMI_" + id;
 
         boolean listOk = false;
@@ -136,12 +152,15 @@ public class KototoroTestRunner {
         if (listOk && sampleAnime != null) {
             try {
                 Object details = null;
+                Class<?> sAnimeClass = Class.forName("eu.kanade.tachiyomi.animesource.model.SAnime");
+                Class<?> sEpClass = Class.forName("eu.kanade.tachiyomi.animesource.model.SEpisode");
+
                 if (isLive) {
-                    Request req = (Request) sc.getMethod("animeDetailsRequest", sampleAnime.getClass()).invoke(source, sampleAnime);
+                    Request req = (Request) sc.getMethod("animeDetailsRequest", sAnimeClass).invoke(source, sampleAnime);
                     Response resp = executeRequest(source, req);
                     details = sc.getMethod("animeDetailsParse", Response.class).invoke(source, resp);
 
-                    Request epReq = (Request) sc.getMethod("episodeListRequest", sampleAnime.getClass()).invoke(source, sampleAnime);
+                    Request epReq = (Request) sc.getMethod("episodeListRequest", sAnimeClass).invoke(source, sampleAnime);
                     Response epResp = executeRequest(source, epReq);
                     chapters = (List<?>) sc.getMethod("episodeListParse", Response.class).invoke(source, epResp);
                 } else {
@@ -177,7 +196,8 @@ public class KototoroTestRunner {
         if (chaptersOk && sampleChapter != null) {
             try {
                 if (isLive) {
-                    Request req = (Request) sc.getMethod("videoListRequest", sampleChapter.getClass()).invoke(source, sampleChapter);
+                    Class<?> sEpClass = Class.forName("eu.kanade.tachiyomi.animesource.model.SEpisode");
+                    Request req = (Request) sc.getMethod("videoListRequest", sEpClass).invoke(source, sampleChapter);
                     Response resp = executeRequest(source, req);
                     videos = (List<?>) sc.getMethod("videoListParse", Response.class).invoke(source, resp);
                 } else {
@@ -332,6 +352,9 @@ public class KototoroTestRunner {
     }
 
     private static String formatError(Throwable t) {
+        while ((t instanceof java.lang.reflect.InvocationTargetException || t instanceof RuntimeException) && t.getCause() != null) {
+            t = t.getCause();
+        }
         String msg = t.getMessage();
         if (msg == null || msg.isBlank()) {
             return t.getClass().getSimpleName();

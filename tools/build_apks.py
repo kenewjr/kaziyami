@@ -30,12 +30,6 @@ EXTENSIONS = [
     },
     {
         "lang": "id",
-        "name": "IndoHentai",
-        "dir": "src/id/indohentai",
-        "multisrc": "lib-multisrc/generic"
-    },
-    {
-        "lang": "id",
         "name": "NontonHentai",
         "dir": "src/id/nontonhentai",
         "multisrc": "lib-multisrc/animestream"
@@ -48,15 +42,21 @@ EXTENSIONS = [
     },
     {
         "lang": "en",
-        "name": "JAVSubbed",
-        "dir": "src/en/javsubbed",
-        "multisrc": "lib-multisrc/retrotube"
-    },
-    {
-        "lang": "en",
         "name": "Hanime",
         "dir": "src/en/hanime",
         "multisrc": "lib-multisrc/generic"
+    },
+    {
+        "lang": "en",
+        "name": "RuleVid",
+        "dir": "src/en/rulevid",
+        "multisrc": "lib-multisrc/kvs"
+    },
+    {
+        "lang": "en",
+        "name": "Rule34Video",
+        "dir": "src/en/rule34video",
+        "multisrc": "lib-multisrc/kvs"
     }
 ]
 

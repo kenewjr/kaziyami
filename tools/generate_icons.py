@@ -152,6 +152,8 @@ EXT_COLORS = {
     "hentaimama": (255, 167, 38),    # Amber
     "javsubbed": (41, 121, 255),     # Sapphire
     "hanime": (240, 98, 146),        # Pink
+    "rulevid": (76, 175, 80),        # Emerald Green
+    "rule34video": (255, 110, 64),   # Deep Orange
     "kaziyami": (156, 39, 176)       # Purple (Brand)
 }
 
@@ -162,6 +164,8 @@ EXT_PACKAGES = {
     "hentaimama": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
     "javsubbed": "eu.kanade.tachiyomi.animeextension.en.javsubbed",
     "hanime": "eu.kanade.tachiyomi.animeextension.en.hanime",
+    "rulevid": "eu.kanade.tachiyomi.animeextension.en.rulevid",
+    "rule34video": "eu.kanade.tachiyomi.animeextension.en.rule34video",
     "kaziyami": "app.kaziyami.kototoro",
 }
 

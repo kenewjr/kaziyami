@@ -92,16 +92,16 @@ class StreamTapeExtractor : VideoExtractor {
 
 class DoodExtractor : VideoExtractor {
     override val name = "DoodStream"
-    private val hostRegex = Pattern.compile("doodstream\\.com|dood\\.(?:wf|pm|to|so|ws|li)", Pattern.CASE_INSENSITIVE)
+    private val hostRegex = Pattern.compile("doodstream\\.com|dood\\.(?:wf|pm|to|so|ws|li)|playmogo\\.(?:com|net|org)|mogo(?:stream)?\\.", Pattern.CASE_INSENSITIVE)
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val embedUrl = if (!url.contains("/e/")) url.replace("/d/", "/e/") else url
         val reqBuilder = Request.Builder().url(embedUrl)
-        if (referer.isNotBlank()) {
-            reqBuilder.header("Referer", referer)
-        }
+        val effectiveRef = if (referer.isNotBlank()) referer else "https://nekopoi.care/"
+        reqBuilder.header("Referer", effectiveRef)
+        reqBuilder.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
         val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
@@ -115,7 +115,11 @@ class DoodExtractor : VideoExtractor {
         val passRel = passMatcher.group(0)
         val passUrl = req.url.resolve(passRel)?.toString() ?: "https://${req.url.host}$passRel"
 
-        val passReq = Request.Builder().url(passUrl).header("Referer", embedUrl).build()
+        val passReq = Request.Builder()
+            .url(passUrl)
+            .header("Referer", embedUrl)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .build()
         val passBody = try {
             client.newCall(passReq).execute().use { it.body?.string() ?: "" }
         } catch (_: Exception) {
@@ -125,7 +129,8 @@ class DoodExtractor : VideoExtractor {
         val token = "zUEJeL3mUN"
         val finalUrl = passBody + token + "?token=" + passUrl.substringAfterLast("/") + "&expiry=" + System.currentTimeMillis()
         val headers = Headers.Builder().set("Referer", "https://${req.url.host}/").build()
-        return listOf(Video(embedUrl, "DoodStream", finalUrl, headers))
+        val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "DoodStream"
+        return listOf(Video(embedUrl, "$hostName 720p", finalUrl, headers))
     }
 }
 
@@ -255,7 +260,7 @@ class FilemoonExtractor : VideoExtractor {
 
 class StreamPoiExtractor : VideoExtractor {
     override val name = "StreamPoi"
-    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)|playmogo\\.(?:com|net|org)|mogo(?:stream)?\\.", Pattern.CASE_INSENSITIVE)
+    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)", Pattern.CASE_INSENSITIVE)
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
@@ -269,7 +274,7 @@ class StreamPoiExtractor : VideoExtractor {
         }
 
         val unpacked = unpack(html)
-        val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "StreamPoi"
+        val hostName = "StreamPoi"
         val fileMatch = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
         if (fileMatch.find()) {
             val masterUrl = fileMatch.group(1)
@@ -323,6 +328,14 @@ class HentaiCopExtractor : VideoExtractor {
             .url(url)
             .header("Referer", effectiveRef)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
+            .header("Sec-Ch-Ua", "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"")
+            .header("Sec-Ch-Ua-Mobile", "?0")
+            .header("Sec-Ch-Ua-Platform", "\"Windows\"")
+            .header("Sec-Fetch-Dest", "iframe")
+            .header("Sec-Fetch-Mode", "navigate")
+            .header("Sec-Fetch-Site", "cross-site")
             .build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string().orEmpty() }
@@ -333,18 +346,41 @@ class HentaiCopExtractor : VideoExtractor {
         val videos = mutableListOf<Video>()
         val headers = Headers.Builder().set("Referer", url).build()
 
-        val sourcesPattern = Pattern.compile("sources:\\s*\\[(.*?)\\]", Pattern.DOTALL)
-        val sourcesMatcher = sourcesPattern.matcher(html)
+        var unpackedHtml = html
+        val pMatcher = Pattern.compile("""var\s+p\s*=\s*"([^"]+)"""").matcher(html)
+        if (pMatcher.find()) {
+            try {
+                val p = pMatcher.group(1)
+                val d1 = p.reversed()
+                val d2 = java.util.Base64.getDecoder().decode(d1)
+                val d3 = java.net.URLDecoder.decode(String(d2, Charsets.UTF_8), "UTF-8")
+                unpackedHtml = d3
+            } catch (_: Exception) {}
+        }
+
+        val rhsMatcher = Pattern.compile("""var\s+kodeRHS\s*=\s*"([^"]+)"""").matcher(unpackedHtml)
+        if (rhsMatcher.find()) {
+            try {
+                val rhsB64 = rhsMatcher.group(1)
+                val rhsBytes = java.util.Base64.getDecoder().decode(rhsB64)
+                unpackedHtml += "\n" + String(rhsBytes, Charsets.UTF_8)
+            } catch (_: Exception) {}
+        }
+
+        val normalized = unpackedHtml.replace("\\/", "/")
+
+        val sourcesPattern = Pattern.compile("""sources:\s*\[(.*?)]""", Pattern.DOTALL)
+        val sourcesMatcher = sourcesPattern.matcher(normalized)
         if (sourcesMatcher.find()) {
             val block = sourcesMatcher.group(1)
-            val itemPattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL)
+            val itemPattern = Pattern.compile("""\{(.*?)}""", Pattern.DOTALL)
             val itemMatcher = itemPattern.matcher(block)
             while (itemMatcher.find()) {
                 val item = itemMatcher.group(1)
-                val fileM = Pattern.compile("['\"]?(?:file|src)['\"]?\\s*:\\s*['\"]([^'\"]+)['\"]").matcher(item)
+                val fileM = Pattern.compile("""['"]?(?:file|src)['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
                 if (fileM.find()) {
                     val streamUrl = fileM.group(1)
-                    val labelM = Pattern.compile("['\"]?label['\"]?\\s*:\\s*['\"]([^'\"]+)['\"]").matcher(item)
+                    val labelM = Pattern.compile("""['"]?label['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
                     val label = if (labelM.find()) labelM.group(1) else "HD"
                     videos.add(Video(url, "HentaiCop $label", streamUrl, headers))
                 }
@@ -352,21 +388,21 @@ class HentaiCopExtractor : VideoExtractor {
         }
 
         if (videos.isEmpty()) {
-            val directPattern = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.(?:m3u8|mp4)[^'\"]*)['\"]")
-            val directMatcher = directPattern.matcher(html)
-            if (directMatcher.find()) {
+            val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
+            val directMatcher = directPattern.matcher(normalized)
+            while (directMatcher.find()) {
                 videos.add(Video(url, "HentaiCop HD", directMatcher.group(1), headers))
             }
         }
 
         if (videos.isEmpty()) {
-            val videoTagPattern = Pattern.compile("<source[^>]+src=['\"]([^'\"]+)['\"]")
-            val videoTagMatcher = videoTagPattern.matcher(html)
-            if (videoTagMatcher.find()) {
+            val videoTagPattern = Pattern.compile("""<source[^>]+src=['"]([^'"]+)['"]""")
+            val videoTagMatcher = videoTagPattern.matcher(normalized)
+            while (videoTagMatcher.find()) {
                 videos.add(Video(url, "HentaiCop HD", videoTagMatcher.group(1), headers))
             }
         }
 
-        return videos
+        return videos.distinctBy { it.videoUrl }
     }
 }

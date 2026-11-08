@@ -17,11 +17,13 @@ val id = (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF)
 | Source Name | Language | Status | Source ID (Long) | Key Seed |
 |---|---|---|---|---|
 | **Nekopoi** | `id` | Active | `7073589375897212735L` | `nekopoi/id/1` |
-| **IndoHentai** | `id` | Active | `7369497329911250289L` | `indohentai/id/1` |
+| **IndoHentai** | `id` | Discontinued (ISP block) | `7369497329911250289L` | `indohentai/id/1` |
 | **NontonHentai** | `id` | Active | `7400791378172011716L` | `nontonhentai/id/1` |
 | **Hentaimama** | `en` | Active | `8058423919997530503L` | `hentaimama/en/1` |
-| **JAVSubbed** | `en` | Active | `9192959167101688940L` | `javsubbed/en/1` |
+| **JAVSubbed** | `en` | Discontinued (ISP block) | `9192959167101688940L` | `javsubbed/en/1` |
 | **Hanime** | `en` | Active | `2150907185602526076L` | `hanime/en/1` |
+| **RuleVid** | `en` | Active | `3619818370138619659L` | `rulevid/en/1` |
+| **Rule34Video** | `en` | Active | `9212790518101043860L` | `rule34video/en/1` |
 | **JavSubIndo** | `id` | Backup | `3834839640077976573L` | `javsubindo/id/1` |
 | **Ohentai** | `en` | Backup | `7247837649602913976L` | `ohentai/en/1` |
 
@@ -49,6 +51,8 @@ In Kototoro native parser plugins:
 | **HENTAIMAMA** | Hentaimama | `en` | `HENTAI_VIDEO` | `4363242715237708113L` | `kototoro:hentaimama/en` |
 | **JAVSUBBED** | JAVSubbed | `en` | `HENTAI_VIDEO` | `3548241241858622381L` | `kototoro:javsubbed/en` |
 | **HANIME** | Hanime | `en` | `HENTAI_VIDEO` | `1681524797754884851L` | `kototoro:hanime/en` |
+| **RULEVID** | RuleVid | `en` | `HENTAI_VIDEO` | `6315209008681740874L` | `kototoro:rulevid/en` |
+| **RULE34VIDEO** | Rule34Video | `en` | `HENTAI_VIDEO` | `6540785455483770072L` | `kototoro:rule34video/en` |
 
 ---
 

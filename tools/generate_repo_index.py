@@ -22,20 +22,20 @@ JAR_DIR = os.path.join(REPO_DIR, "jar")
 
 KNOWN_BASE_URLS = {
     "Nekopoi": "https://nekopoi.care",
-    "IndoHentai": "https://indohentai.net",
     "NontonHentai": "https://nontonhentai.net",
     "Hentaimama": "https://hentaimama.io",
-    "JAVSubbed": "https://javsubbed.net",
-    "Hanime": "https://hanime.tv"
+    "Hanime": "https://hanime.tv",
+    "RuleVid": "https://rulevid.com",
+    "Rule34Video": "https://rule34video.com"
 }
 
 SOURCES_DEF = [
     {"name": "Nekopoi", "lang": "id", "slug": "nekopoi", "url": "https://nekopoi.care"},
-    {"name": "IndoHentai", "lang": "id", "slug": "indohentai", "url": "https://indohentai.net"},
     {"name": "NontonHentai", "lang": "id", "slug": "nontonhentai", "url": "https://nontonhentai.net"},
     {"name": "Hentaimama", "lang": "en", "slug": "hentaimama", "url": "https://hentaimama.io"},
-    {"name": "JAVSubbed", "lang": "en", "slug": "javsubbed", "url": "https://javsubbed.net"},
-    {"name": "Hanime", "lang": "en", "slug": "hanime", "url": "https://hanime.tv"}
+    {"name": "Hanime", "lang": "en", "slug": "hanime", "url": "https://hanime.tv"},
+    {"name": "RuleVid", "lang": "en", "slug": "rulevid", "url": "https://rulevid.com"},
+    {"name": "Rule34Video", "lang": "en", "slug": "rule34video", "url": "https://rule34video.com"}
 ]
 
 def load_source_ids():

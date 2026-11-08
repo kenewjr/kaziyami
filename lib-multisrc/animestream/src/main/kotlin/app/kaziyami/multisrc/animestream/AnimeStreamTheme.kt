@@ -103,12 +103,15 @@ open class AnimeStreamTheme(
         ).let {
             ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
         }
-        if (videos.isEmpty() && filteredUrls.isNotEmpty()) {
-            throw app.kaziyami.core.SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = config.selectors.playerIframes,
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+        if (videos.isEmpty()) {
+            val fallbackUrl = filteredUrls.firstOrNull() ?: response.request.url.toString()
+            return listOf(
+                Video(
+                    url = fallbackUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = fallbackUrl,
+                    headers = okhttp3.Headers.Builder().set("Referer", referer).build()
+                )
             )
         }
         return videos

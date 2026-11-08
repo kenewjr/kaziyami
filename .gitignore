@@ -1,46 +1,60 @@
-# Gradle & build
+# Gradle & build artifacts
 .gradle/
+**/.gradle/
 build/
-*/build/
-*/*/build/
-*/*/*/build/
+**/build/
 bin/
-*/bin/
-*/*/bin/
-*/*/*/bin/
+**/bin/
 
-# IDE
-.idea/
-*.iml
-.vscode/
-*.ipr
-*.iws
-
-# Android / Keystores
+# Android, Keys & Secrets
 *.keystore
 *.jks
+*.key
+*.pem
+*.p12
+*.pk8
 local.properties
 keystore.properties
 
 # Distribution & Build Outputs (published only on dedicated 'repo' branch)
 repo/
 
-# OS
+# IDE & Editors
+.idea/
+*.iml
+.vscode/
+*.ipr
+*.iws
+*.swp
+*~
+
+# Operating System
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Python
 __pycache__/
-*.pyc
+**/__pycache__/
+*.py[cod]
+*$py.class
 .pytest_cache/
+probe*.py
+tools/probe*.py
 
-# Diagnostics & Reports
+# Diagnostics, Logs & Reports
 reports/
+**/reports/
+**/test-results/
+*.log
+**/*.log
 
 # AI Assistant Memory, Scratchpad & Session Artifacts
 .gemini/
 .antigravity/
 .system_generated/
+**/.system_generated/
 brain/
 scratch/
 .cursor/
@@ -51,4 +65,3 @@ transcript*.jsonl
 task-*.log
 *.chat
 *.llm
-

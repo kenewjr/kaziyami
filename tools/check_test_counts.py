@@ -15,10 +15,11 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REQUIRED_MODULES = [
     ("core", "core"),
     ("lib-multisrc:generic", "lib-multisrc/generic"),
+    ("lib-multisrc:kvs", "lib-multisrc/kvs"),
     ("src:en:hanime", "src/en/hanime"),
     ("src:en:hentaimama", "src/en/hentaimama"),
-    ("src:en:javsubbed", "src/en/javsubbed"),
-    ("src:id:indohentai", "src/id/indohentai"),
+    ("src:en:rulevid", "src/en/rulevid"),
+    ("src:en:rule34video", "src/en/rule34video"),
     ("src:id:nekopoi", "src/id/nekopoi"),
     ("src:id:nontonhentai", "src/id/nontonhentai"),
 ]

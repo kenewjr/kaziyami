@@ -61,6 +61,7 @@ class VideoExtractorsTest {
     fun doodExtractorParsesPassMd5() {
         val ext = DoodExtractor()
         assertTrue(ext.canExtract("https://dood.so/e/dood123"))
+        assertTrue(ext.canExtract("https://playmogo.com/e/mogo789"))
 
         server.enqueue(MockResponse().setResponseCode(200).setBody("<html><body>/pass_md5/token123</body></html>"))
         server.enqueue(MockResponse().setResponseCode(200).setBody("https://doodstream.net/video_stream_direct"))
@@ -143,7 +144,7 @@ class VideoExtractorsTest {
         val ext = StreamPoiExtractor()
         assertTrue(ext.canExtract("https://streampoi.com/e/poi123"))
         assertTrue(ext.canExtract("https://streamruby.net/e/ruby456"))
-        assertTrue(ext.canExtract("https://playmogo.com/e/mogo789"))
+        assertTrue(ext.canExtract("https://streamruby.com/e/ruby789"))
 
         // Packed jwplayer script setting sources
         val packed = """

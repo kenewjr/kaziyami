@@ -18,11 +18,11 @@ class IndexSchemaTest {
 
     private val expectedSourceIds = mapOf(
         "Nekopoi" to "7073589375897212735",
-        "IndoHentai" to "7369497329911250289",
         "NontonHentai" to "7400791378172011716",
         "Hentaimama" to "8058423919997530503",
-        "JAVSubbed" to "9192959167101688940",
-        "Hanime" to "2150907185602526076"
+        "Hanime" to "2150907185602526076",
+        "RuleVid" to "3619818370138619659",
+        "Rule34Video" to "9212790518101043860"
     )
 
     private fun getRepoDir(): File {
@@ -89,11 +89,11 @@ class IndexSchemaTest {
 
         val expectedPkgs = setOf(
             "eu.kanade.tachiyomi.animeextension.id.nekopoi",
-            "eu.kanade.tachiyomi.animeextension.id.indohentai",
             "eu.kanade.tachiyomi.animeextension.id.nontonhentai",
             "eu.kanade.tachiyomi.animeextension.en.hentaimama",
-            "eu.kanade.tachiyomi.animeextension.en.javsubbed",
-            "eu.kanade.tachiyomi.animeextension.en.hanime"
+            "eu.kanade.tachiyomi.animeextension.en.hanime",
+            "eu.kanade.tachiyomi.animeextension.en.rulevid",
+            "eu.kanade.tachiyomi.animeextension.en.rule34video"
         )
 
         val seenPkgs = mutableSetOf<String>()

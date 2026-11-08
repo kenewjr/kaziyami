@@ -109,6 +109,78 @@ open class DooPlayTheme(
             }
         }
 
+        // 3. Modern DooPlay player tabs (get_player_contents, .dt-mi-tabs a, #post_report)
+        val postId = document.selectFirst("#post_report input[name=post_id], input[name=post_id]")?.attr("value")
+            ?: Regex("""a:\s*['"](\d+)['"]""").find(document.html())?.groupValues?.get(1)
+            ?: Regex("""post-(\d+)""").find(document.html())?.groupValues?.get(1)
+
+        val modernTabs = document.select(".dt-mi-tabs a, [class*='dt-mi'] a, #playeroptions a")
+        val optionIndices = if (modernTabs.isNotEmpty()) {
+            modernTabs.mapNotNull {
+                it.attr("href").replace("#option-", "").toIntOrNull()
+            }.distinct()
+        } else if (!postId.isNullOrBlank()) {
+            listOf(1, 2, 3)
+        } else {
+            emptyList()
+        }
+
+        if (!postId.isNullOrBlank()) {
+            val ajaxUrl = UrlUtils.resolve(baseUrl, "/wp-admin/admin-ajax.php")
+            for (optIndex in optionIndices) {
+                try {
+                    val requestBody = FormBody.Builder()
+                        .add("action", "get_player_contents")
+                        .add("a", postId)
+                        .add("i", optIndex.toString())
+                        .build()
+
+                    val ajaxRequest = Request.Builder()
+                        .url(ajaxUrl)
+                        .post(requestBody)
+                        .header("Referer", response.request.url.toString())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .build()
+
+                    client.newCall(ajaxRequest).execute().use { ajaxResponse ->
+                        if (ajaxResponse.isSuccessful) {
+                            val body = ajaxResponse.body?.string().orEmpty()
+                            val ajaxDoc = Jsoup.parse(body)
+                            ajaxDoc.select("iframe[src], iframe[data-src]").forEach { element ->
+                                val src = element.attr("data-src").ifEmpty { element.attr("src") }
+                                if (src.isNotBlank()) candidateUrls.add(UrlUtils.resolve(baseUrl, src))
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        }
+
+        // 4. Resolve dt_embed wrappers (hentaimama.io/?dt_embed=...)
+        val directStreamUrls = mutableListOf<String>()
+        for (candidate in candidateUrls) {
+            if (candidate.contains("dt_embed", ignoreCase = true) || candidate.contains("embed=rtmp", ignoreCase = true)) {
+                try {
+                    val embedReq = Request.Builder()
+                        .url(candidate)
+                        .header("Referer", response.request.url.toString())
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+                        .build()
+                    client.newCall(embedReq).execute().use { embedRes ->
+                        if (embedRes.isSuccessful) {
+                            val embedBody = embedRes.body?.string().orEmpty().replace("\\/", "/")
+                            val fileRegex = Regex("""["']?(?:file|src)["']?\s*:\s*["']([^"']+\.(?:mp4|m3u8)[^"']*)["']""", RegexOption.IGNORE_CASE)
+                            fileRegex.findAll(embedBody).forEach { m ->
+                                directStreamUrls.add(m.groupValues[1])
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+        candidateUrls.addAll(directStreamUrls)
+
         val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
         val referer = response.request.url.toString()

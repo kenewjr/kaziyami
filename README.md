@@ -89,16 +89,22 @@ For detailed update workflows, troubleshooting, and rollback steps, see [docs/UP
 
 ## 3. Catalog of Sources
 
-All 6 adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
+All 6 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
 
 | Source Label | Language | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|
-| **Kaziyami: Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo, Mp4Upload |
-| **Kaziyami: IndoHentai** | Indonesian (`id`) | Custom SSR Card Grid | `https://indohentai.net` | Loadvid, XXContent CDN |
-| **Kaziyami: NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop, HepiDrive, GDPlayer, LocalStream |
-| **Kaziyami: Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct 1080p/720p MP4, GDVid |
-| **Kaziyami: JAVSubbed** | English (`en`) | WordPress (RetroTube) | `https://javsubbed.net` | Streamtape, VOE, Doodstream |
-| **Kaziyami: Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p) |
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
+| **Kaziyami: NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
+| **Kaziyami: Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
+| **Kaziyami: Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
+| **Kaziyami: RuleVid** | English (`en`) | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
+| **Kaziyami: Rule34Video** | English (`en`) | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
+
+> [!NOTE]
+> **Discontinued Sources**: `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
+
+> [!IMPORTANT]
+> **Age Gate Confirmation**: Every source requires enabling the "I am 18 or older" toggle in Extension Settings before initiating media requests. See [docs/CONTENT_POLICY.md](docs/CONTENT_POLICY.md) for automated safety filters and policies.
 
 ---
 

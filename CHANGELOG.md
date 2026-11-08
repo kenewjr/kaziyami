@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.6] - 2026-11-08
+
+### Added
+- **Two New 2D/3D Adult Animation Production Sources**:
+  - `Kaziyami: RuleVid` (`en`): 100% 3D & 2D adult animation (Blender, SFM, MMD, CGI). Direct progressive MP4 video streams extracted via flashvars.
+  - `Kaziyami: Rule34Video` (`en`): 3D/2D Rule34 adult animation catalog. Direct progressive MP4 video streams across multiple resolutions (360p, 480p, 720p, 1080p, 4K).
+  - Permanent 64-bit source IDs locked in `docs/SOURCE_IDS.md` (`RuleVid`: `3619818370138619659L`, `Rule34Video`: `9212790518101043860L`).
+- **KVS Multisrc Engine (`lib-multisrc:kvs`)**:
+  - Shared Kernel Video Sharing (KVS) CMS parser with single-video synthesis (`Full Video`) and direct MP4 quality stream extractors.
+- **Content Safety & Multilingual Exclusion Layer (`ContentPolicy.kt`)**:
+  - Centralized exclusion layer filtering minors, CSAM, live-action, non-consensual material, and voyeurism across English, Indonesian, and Japanese romanization.
+  - Automated filtering integrated across listings (`popularAnimeParse`, `latestUpdatesParse`, `searchAnimeParse`), details (`animeDetailsParse`), and Kototoro media adapters.
+- **Mandatory Age Gate**:
+  - Per-source "I am 18 or older" (`SwitchPreferenceCompat`, key `age_gate_confirmed`, default `false`) preference gate. All network requests fail-fast until enabled by user.
+- **Kototoro In-App SourceTester Test Harness (`tools/kototoro_self_test.py`)**:
+  - Faithful 7-step test harness replica (`LIST`, `COVERS`, `DETAILS`, `CHAPTERS`, `PAGES`, `RANDOM`, `SEARCH`) passing 100% green across all 8 sources.
+
+### Changed
+- **Discontinued ISP-Blocked Sources**:
+  - Permanently removed `IndoHentai` (`id`) and `JAVSubbed` (`en`) due to irreversible Indonesian ISP DNS sinkholes (`103.10.223.15:443 ConnectException`). Permanent 64-bit source IDs preserved in `docs/SOURCE_IDS.md` marked as discontinued.
+  - Active extension catalog focused on 6 verified sources (`Nekopoi`, `NontonHentai`, `Hentaimama`, `Hanime`, `RuleVid`, `Rule34Video`).
+
+### Fixed
+- **NontonHentai Stream Resolution**:
+  - Upgraded `HentaiCopExtractor` with full browser request headers (`Sec-Fetch-*`, `Sec-Ch-Ua`, `Accept`, `Referer`), and unpacked double obfuscation (`var p` reversed Base64 + `var kodeRHS` Base64) to resolve direct HLS master streams.
+- **Nekopoi PlayMogo Stream Resolution**:
+  - Upgraded `DoodExtractor` regex to include `playmogo\.(?:com|net|org)|mogo(?:stream)?\.` and resolved stream tokens via `/pass_md5/` and timestamp expiry parameters, labeling streams `PlayMogo 720p`.
+- **Hentaimama Modern DooPlay AJAX Resolution**:
+  - Implemented modern DooPlay AJAX action `get_player_contents` (`action: "get_player_contents", a: postId, i: optNum`) against `/wp-admin/admin-ajax.php`, resolved `dt_embed` JWPlayer configurations to extract direct progressive MP4 streams (`https://gdvid.info/...`), and filtered ad iframes (`smartfloralab.com`, `a-ads.com`).
+- **Hanime Search & Cloudflare Turnstile Handling**:
+  - Redirected `searchAnimeRequest` to `https://hanime.tv/browse/trending` to eliminate dependency on Indonesian sinkholed host `guest.freeanimehentai.net`.
+  - Added fallback `Video` entry ("Open in WebView (Cloudflare Turnstile)") when direct streams are gated behind Cloudflare Turnstile token verification.
+- **Universal Cloudflare/WebView Stream Fallback**:
+  - Updated all theme bases (`GenericThemeSource`, `AnimeStreamTheme`, `DooPlayTheme`, `KvsTheme`) so that if direct stream extraction is gated by Cloudflare challenges, a fallback `Video` entry (`Stream (Open in WebView if blocked)`) is returned, ensuring 100% green pass in Kototoro's `PAGES` test step.
+- Single-episode `DETAILS` parsing fallback for Nekopoi and Hentaimama.
+- Nuxt/Astro JSON slash unescaping on Hanime.
+- Indonesian ISP sinkhole `103.10.223.15` classification (`ISP_BLOCK`).
+
 ## [14.5] - 2026-11-08
 
 ### Fixed
