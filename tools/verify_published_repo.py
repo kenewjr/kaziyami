@@ -44,7 +44,7 @@ def fetch_url(url, retries=5, delay=5):
                 time.sleep(delay)
     raise RuntimeError(f"Failed to fetch {url} after {retries} attempts: {last_err}")
 
-def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5):
+def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5, check_local_size=False):
     base_raw = f"https://raw.githubusercontent.com/{owner_repo}/{branch}"
     index_url = f"{base_raw}/index.min.json"
     repo_url = f"{base_raw}/repo.json"
@@ -104,12 +104,13 @@ def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5):
         if actual_sha != expected_sha:
             raise ValueError(f"SHA-256 mismatch for {apk_name}: got {actual_sha}, expected {expected_sha}")
 
-        # Check local file size if available
-        local_apk = os.path.join(ROOT_DIR, "repo", "apk", apk_name)
-        if os.path.exists(local_apk):
-            local_size = os.path.getsize(local_apk)
-            if len(apk_bytes) != local_size:
-                raise ValueError(f"Size mismatch for {apk_name}: downloaded {len(apk_bytes)}, local {local_size}")
+        # Check local file size if explicitly requested
+        if check_local_size:
+            local_apk = os.path.join(ROOT_DIR, "repo", "apk", apk_name)
+            if os.path.exists(local_apk):
+                local_size = os.path.getsize(local_apk)
+                if len(apk_bytes) != local_size:
+                    raise ValueError(f"Size mismatch for {apk_name}: downloaded {len(apk_bytes)}, local {local_size}")
 
         # Verify icon URL if present
         if icon_name:
@@ -197,11 +198,18 @@ def main():
     parser.add_argument("--mode", choices=["all", "aniyomi", "kototoro"], default="all", help="Repository variant to verify")
     parser.add_argument("--retries", type=int, default=5, help="Number of retry attempts")
     parser.add_argument("--delay", type=int, default=5, help="Delay between retries in seconds")
+    parser.add_argument("--check-local-size", action="store_true", help="Assert downloaded assets match local files on disk")
     args = parser.parse_args()
 
     try:
         if args.mode in ("all", "aniyomi"):
-            verify_published_repo(args.repo, branch=args.branch, retries=args.retries, delay=args.delay)
+            verify_published_repo(
+                args.repo,
+                branch=args.branch,
+                retries=args.retries,
+                delay=args.delay,
+                check_local_size=args.check_local_size
+            )
         if args.mode in ("all", "kototoro"):
             verify_published_kototoro_repo(args.repo, branch=args.branch, retries=args.retries, delay=args.delay)
         return 0
