@@ -30,7 +30,16 @@ class TestVerifyHostApiBinding(unittest.TestCase):
                 dex_data = zf.read("classes.dex")
             cls.local_classes, cls.method_refs, cls.field_refs = checker.parse_dex(dex_data)
         else:
-            cls.local_classes, cls.method_refs, cls.field_refs = {}, [], []
+            # Synthetic fixture when running before APK assembly
+            cls.local_classes = {
+                "Lapp/kaziyami/multisrc/generic/GenericThemeSource;": (
+                    "Leu/kanade/tachiyomi/animesource/online/ParsedAnimeHttpSource;",
+                    [],
+                    set(),
+                    set()
+                )
+            }
+            cls.method_refs, cls.field_refs = [], []
 
     def test_host_classes_loaded(self):
         self.assertGreater(len(self.host_classes), 5000, "Must load host API classes from compileOnly jars")

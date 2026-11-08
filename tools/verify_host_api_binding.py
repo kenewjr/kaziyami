@@ -130,6 +130,13 @@ def load_host_classes(extra_jars=None):
     android_jar = sdk_tools.get("android_jar")
     if android_jar and os.path.exists(android_jar):
         jars.append(android_jar)
+
+    host_libs_dir = os.path.join(ROOT_DIR, "build", "host-libs")
+    if os.path.exists(host_libs_dir):
+        for fname in os.listdir(host_libs_dir):
+            if fname.endswith(".jar"):
+                jars.append(os.path.join(host_libs_dir, fname))
+
     jars.extend(find_gradle_cache_jars())
     if extra_jars:
         jars.extend(extra_jars)

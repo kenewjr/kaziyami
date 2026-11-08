@@ -179,6 +179,21 @@ tasks.register<Exec>("generateRepoIndex") {
     commandLine("python", "tools/generate_repo_index.py", "--mode", "aniyomi")
 }
 
+val prepareHostClasspath by tasks.registering(Copy::class) {
+    group = "verification"
+    description = "Prepares host runtime dependency jars for API binding verification."
+    val hostConf = configurations.maybeCreate("hostClasspath")
+    dependencies {
+        add("hostClasspath", "com.squareup.okhttp3:okhttp:4.9.3")
+        add("hostClasspath", "com.squareup.okio:okio:2.8.0")
+        add("hostClasspath", "io.reactivex:rxjava:1.3.8")
+        add("hostClasspath", "uy.kohesive.injekt:injekt-core:1.16.1")
+        add("hostClasspath", "org.jsoup:jsoup:1.15.3")
+    }
+    from(hostConf)
+    into(file("$buildDir/host-libs"))
+}
+
 val testVerifyApks by tasks.registering(Exec::class) {
     group = "verification"
     description = "Runs unit tests for APK verification logic with fixtures."
@@ -188,6 +203,7 @@ val testVerifyApks by tasks.registering(Exec::class) {
 val testVerifyHostApiBinding by tasks.registering(Exec::class) {
     group = "verification"
     description = "Runs unit tests for host API binding verification with fixtures."
+    dependsOn(prepareHostClasspath)
     commandLine("python", "tools/test_verify_host_api_binding.py")
 }
 
@@ -209,6 +225,7 @@ val verifyHostApiBinding by tasks.registering(Exec::class) {
     group = "verification"
     description = "Verifies binary compatibility of all method/field calls against host classpath."
     dependsOn(tasks.named("assembleRelease"))
+    dependsOn(prepareHostClasspath)
     commandLine("python", "tools/verify_host_api_binding.py")
 }
 
