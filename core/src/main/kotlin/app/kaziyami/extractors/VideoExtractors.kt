@@ -336,6 +336,7 @@ class HentaiCopExtractor : VideoExtractor {
             .header("Sec-Fetch-Dest", "iframe")
             .header("Sec-Fetch-Mode", "navigate")
             .header("Sec-Fetch-Site", "cross-site")
+            .header("Upgrade-Insecure-Requests", "1")
             .build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string().orEmpty() }
@@ -344,7 +345,11 @@ class HentaiCopExtractor : VideoExtractor {
         }
 
         val videos = mutableListOf<Video>()
-        val headers = Headers.Builder().set("Referer", url).build()
+        val videoHeaders = Headers.Builder()
+            .set("Referer", "https://hentaicop.com/")
+            .set("Origin", "https://hentaicop.com")
+            .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .build()
 
         var unpackedHtml = html
         val pMatcher = Pattern.compile("""var\s+p\s*=\s*"([^"]+)"""").matcher(html)
@@ -352,7 +357,7 @@ class HentaiCopExtractor : VideoExtractor {
             try {
                 val p = pMatcher.group(1)
                 val d1 = p.reversed()
-                val d2 = java.util.Base64.getDecoder().decode(d1)
+                val d2 = java.util.Base64.getDecoder().decode(d1.replace("\\s".toRegex(), ""))
                 val d3 = java.net.URLDecoder.decode(String(d2, Charsets.UTF_8), "UTF-8")
                 unpackedHtml = d3
             } catch (_: Exception) {}
@@ -361,7 +366,7 @@ class HentaiCopExtractor : VideoExtractor {
         val rhsMatcher = Pattern.compile("""var\s+kodeRHS\s*=\s*"([^"]+)"""").matcher(unpackedHtml)
         if (rhsMatcher.find()) {
             try {
-                val rhsB64 = rhsMatcher.group(1)
+                val rhsB64 = rhsMatcher.group(1).replace("\\s".toRegex(), "")
                 val rhsBytes = java.util.Base64.getDecoder().decode(rhsB64)
                 unpackedHtml += "\n" + String(rhsBytes, Charsets.UTF_8)
             } catch (_: Exception) {}
@@ -369,7 +374,7 @@ class HentaiCopExtractor : VideoExtractor {
 
         val normalized = unpackedHtml.replace("\\/", "/")
 
-        val sourcesPattern = Pattern.compile("""sources:\s*\[(.*?)]""", Pattern.DOTALL)
+        val sourcesPattern = Pattern.compile("""['"]?sources['"]?\s*:\s*\[(.*?)]""", Pattern.DOTALL)
         val sourcesMatcher = sourcesPattern.matcher(normalized)
         if (sourcesMatcher.find()) {
             val block = sourcesMatcher.group(1)
@@ -381,8 +386,16 @@ class HentaiCopExtractor : VideoExtractor {
                 if (fileM.find()) {
                     val streamUrl = fileM.group(1)
                     val labelM = Pattern.compile("""['"]?label['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
-                    val label = if (labelM.find()) labelM.group(1) else "HD"
-                    videos.add(Video(url, "HentaiCop $label", streamUrl, headers))
+                    val rawLabel = if (labelM.find()) labelM.group(1) else ""
+                    val quality = when {
+                        rawLabel.contains("Original", ignoreCase = true) -> "HentaiCop 1080p (Original)"
+                        rawLabel.isNotBlank() -> "HentaiCop $rawLabel"
+                        streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
+                        streamUrl.contains("720p", ignoreCase = true) -> "HentaiCop 720p"
+                        streamUrl.contains("480p", ignoreCase = true) -> "HentaiCop 480p"
+                        else -> "HentaiCop HD"
+                    }
+                    videos.add(Video(url, quality, streamUrl, videoHeaders))
                 }
             }
         }
@@ -391,7 +404,14 @@ class HentaiCopExtractor : VideoExtractor {
             val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
             val directMatcher = directPattern.matcher(normalized)
             while (directMatcher.find()) {
-                videos.add(Video(url, "HentaiCop HD", directMatcher.group(1), headers))
+                val streamUrl = directMatcher.group(1)
+                val quality = when {
+                    streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
+                    streamUrl.contains("720p", ignoreCase = true) -> "HentaiCop 720p"
+                    streamUrl.contains("480p", ignoreCase = true) -> "HentaiCop 480p"
+                    else -> "HentaiCop HD"
+                }
+                videos.add(Video(url, quality, streamUrl, videoHeaders))
             }
         }
 
@@ -399,7 +419,8 @@ class HentaiCopExtractor : VideoExtractor {
             val videoTagPattern = Pattern.compile("""<source[^>]+src=['"]([^'"]+)['"]""")
             val videoTagMatcher = videoTagPattern.matcher(normalized)
             while (videoTagMatcher.find()) {
-                videos.add(Video(url, "HentaiCop HD", videoTagMatcher.group(1), headers))
+                val streamUrl = videoTagMatcher.group(1)
+                videos.add(Video(url, "HentaiCop HD", streamUrl, videoHeaders))
             }
         }
 

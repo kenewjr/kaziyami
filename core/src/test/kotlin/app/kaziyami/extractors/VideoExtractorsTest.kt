@@ -177,5 +177,23 @@ class VideoExtractorsTest {
         assertEquals("https://hentaicop.com/stream/video.mp4", videos[0].videoUrl)
         assertEquals("HentaiCop 720p", videos[0].quality)
     }
+
+    @Test
+    fun hentaiCopExtractorParsesJsonWithQuotesAndOriginalLabel() {
+        val ext = HentaiCopExtractor()
+        val html = """
+            <html><body>
+                <script>var config = {"sources":[{"label":"Original","type":"hls","file":"https://example.com/hls/master.m3u8"}]};</script>
+            </body></html>
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(html))
+
+        val videos = ext.extract(server.url("/play.php?id=abc").toString(), "https://nontonhentai.net/", client)
+        assertEquals(1, videos.size)
+        assertEquals("https://example.com/hls/master.m3u8", videos[0].videoUrl)
+        assertEquals("HentaiCop 1080p (Original)", videos[0].quality)
+        assertEquals("https://hentaicop.com/", videos[0].headers?.get("Referer"))
+        assertEquals("https://hentaicop.com", videos[0].headers?.get("Origin"))
+    }
 }
 

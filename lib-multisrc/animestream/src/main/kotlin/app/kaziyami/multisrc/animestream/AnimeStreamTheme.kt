@@ -95,13 +95,17 @@ open class AnimeStreamTheme(
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
         val referer = response.request.url.toString()
         val filteredUrls = videoUrls.filter { isVideoCandidateUrl(it) }.distinct()
-        val videos = ExtractorRegistry.resolveSequential(
-            urls = filteredUrls,
-            preferredHost = preferredHost,
-            referer = referer,
-            client = client
-        ).let {
-            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+        val videos = try {
+            ExtractorRegistry.resolveSequential(
+                urls = filteredUrls,
+                preferredHost = preferredHost,
+                referer = referer,
+                client = client
+            ).let {
+                ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+            }
+        } catch (_: Exception) {
+            emptyList()
         }
         if (videos.isEmpty()) {
             val fallbackUrl = filteredUrls.firstOrNull() ?: response.request.url.toString()
