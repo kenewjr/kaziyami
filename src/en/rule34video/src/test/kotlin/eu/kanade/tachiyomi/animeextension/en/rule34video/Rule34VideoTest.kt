@@ -12,7 +12,9 @@ import java.io.InputStreamReader
 
 class Rule34VideoTest {
 
-    private val source = Rule34Video()
+    private val source = Rule34Video().apply {
+        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
+    }
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/rule34video/$path")
@@ -83,5 +85,48 @@ class Rule34VideoTest {
         val page = source.searchAnimeParse(response)
 
         assertTrue(page.animes.isNotEmpty(), "Search results should not be empty")
+    }
+
+    @Test
+    fun testFiltersAndSearchRequest() {
+        val filterList = source.getFilterList()
+        val sortFilter = filterList.filterIsInstance<Rule34Video.Rule34VideoSortFilter>().first()
+        val genreFilter = filterList.filterIsInstance<Rule34Video.Rule34VideoGenreFilter>().first()
+
+        assertEquals(4, sortFilter.values.size)
+        assertTrue(genreFilter.values.size >= 50)
+        assertTrue(genreFilter.values.contains("3D"))
+        assertTrue(genreFilter.values.contains("Blowjob"))
+
+        // 1. Default request
+        val reqDefault = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://rule34video.com/most-popular/", reqDefault.url.toString())
+
+        // 2. Default page 2
+        val reqPage2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://rule34video.com/most-popular/2/", reqPage2.url.toString())
+
+        // 3. Sort = Latest Updates
+        sortFilter.state = 1
+        val reqLatest = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://rule34video.com/latest-updates/", reqLatest.url.toString())
+
+        // 4. Genre = Blowjob page 1
+        val blowjobIdx = genreFilter.values.indexOf("Blowjob")
+        genreFilter.state = blowjobIdx
+        val reqGenre1 = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://rule34video.com/tags/blowjob/", reqGenre1.url.toString())
+
+        // 5. Genre = Blowjob page 2
+        val reqGenre2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://rule34video.com/tags/blowjob/2/", reqGenre2.url.toString())
+
+        // 6. Keyword search page 1
+        val reqSearch1 = source.searchAnimeRequest(1, "peach", filterList)
+        assertEquals("https://rule34video.com/search/peach/", reqSearch1.url.toString())
+
+        // 7. Keyword search page 2
+        val reqSearch2 = source.searchAnimeRequest(2, "peach", filterList)
+        assertEquals("https://rule34video.com/search/peach/?from_videos=2", reqSearch2.url.toString())
     }
 }

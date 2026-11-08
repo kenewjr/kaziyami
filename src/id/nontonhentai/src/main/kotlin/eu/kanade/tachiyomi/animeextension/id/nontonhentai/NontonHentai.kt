@@ -41,14 +41,24 @@ class NontonHentai : AnimeStreamTheme(
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()
         val cleanQuery = query.trim()
+        val genre = filters.filterIsInstance<NontonHentaiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
+        val order = filters.filterIsInstance<NontonHentaiSortFilter>().firstOrNull()?.toSlug().orEmpty()
+        val status = filters.filterIsInstance<NontonHentaiStatusFilter>().firstOrNull()?.toSlug().orEmpty()
+
         val path = if (cleanQuery.isNotEmpty()) {
             val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
-            if (page > 1) "/page/$page/?s=$encoded" else "/?s=$encoded"
+            if (genre.isNotEmpty() || order.isNotEmpty() || status.isNotEmpty()) {
+                val params = mutableListOf<String>()
+                params.add("title=$encoded")
+                if (order.isNotEmpty()) params.add("order=$order")
+                if (status.isNotEmpty()) params.add("status=$status")
+                if (genre.isNotEmpty()) params.add("genre%5B%5D=$genre")
+                params.add("page=$page")
+                "/anime/?" + params.joinToString("&")
+            } else {
+                if (page > 1) "/page/$page/?s=$encoded" else "/?s=$encoded"
+            }
         } else {
-            val genre = filters.filterIsInstance<NontonHentaiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
-            val order = filters.filterIsInstance<NontonHentaiSortFilter>().firstOrNull()?.toSlug().orEmpty()
-            val status = filters.filterIsInstance<NontonHentaiStatusFilter>().firstOrNull()?.toSlug().orEmpty()
-
             val params = mutableListOf<String>()
             if (order.isNotEmpty()) params.add("order=$order")
             if (status.isNotEmpty()) params.add("status=$status")

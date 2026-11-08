@@ -15,7 +15,9 @@ import java.io.InputStreamReader
 
 class NekopoiTest {
 
-    private val source = Nekopoi()
+    private val source = Nekopoi().apply {
+        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
+    }
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/nekopoi/$path")
@@ -110,5 +112,40 @@ class NekopoiTest {
         val next = source.mirrorManager.failover("https://nekopoi.care")
         assertEquals("https://nekopoi.app", next)
         assertEquals("https://nekopoi.app", source.baseUrl)
+    }
+
+    @Test
+    fun testFiltersAndSearchRequest() {
+        val filterList = source.getFilterList()
+        val catFilter = filterList.filterIsInstance<Nekopoi.NekopoiCategoryFilter>().first()
+        val genreFilter = filterList.filterIsInstance<Nekopoi.NekopoiGenreFilter>().first()
+
+        assertEquals(4, catFilter.values.size)
+        assertTrue(genreFilter.values.size >= 70)
+        assertTrue(genreFilter.values.contains("Romance"))
+        assertTrue(genreFilter.values.contains("Milf") || genreFilter.values.contains("MILF"))
+
+        // 1. Default request
+        val reqDefault = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://nekopoi.care/category/hentai/page/1/", reqDefault.url.toString())
+
+        // 2. Category = 3D Hentai
+        catFilter.state = 2
+        val req3D = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://nekopoi.care/category/3d-hentai/page/1/", req3D.url.toString())
+
+        // 3. Genre = Romance page 1
+        val romanceIdx = genreFilter.values.indexOf("Romance")
+        genreFilter.state = romanceIdx
+        val reqRomance1 = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://nekopoi.care/genres/romance/", reqRomance1.url.toString())
+
+        // 4. Genre = Romance page 2
+        val reqRomance2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://nekopoi.care/genres/romance/page/2/", reqRomance2.url.toString())
+
+        // 5. Query overrides filters
+        val reqQuery = source.searchAnimeRequest(1, "kanojo", filterList)
+        assertEquals("https://nekopoi.care/search/kanojo/page/1/", reqQuery.url.toString())
     }
 }

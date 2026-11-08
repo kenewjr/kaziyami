@@ -181,10 +181,18 @@
   - [x] 20.5 Category & Curated Safe Genre Filters: Added `HentaimamaCategoryFilter` (TV Shows, Episodes) and `HentaimamaGenreFilter` (28 safe genres per `ContentPolicy`), routing queries via `/?s=%s&page=%d`, `/genre/%s/page/%d/`, `/episodes/page/%d/`, and `/tvshows/page/%d/`.
   - [x] 20.6 Version Bump & Verification: Bumped Hentaimama extension to version 14.7 (`extVersionCode = 7`). Passed `./gradlew check` (236 tests green, 0 failures), `kototoroSelfTest` (6/6 sources 100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 21: Universal Genre & Tag Filtering Across All 6 Active Sources (Nekopoi, RuleVid, Rule34Video, NontonHentai)**:
+  - [x] 21.1 Nekopoi Safe Genre Filter: Added `NekopoiGenreFilter` with 72 curated safe genres parsed from `https://nekopoi.care/genre-list/` (excluding prohibited content per `ContentPolicy`). Routed requests to `/$genre/` (page 1) and `/$genre/page/$page/` (page > 1) with automatic 2-page aggregation yielding 20 items per catalogue page.
+  - [x] 21.2 RuleVid Tag & Sort Filter: Added `RuleVidGenreFilter` with 56 validated tags/genres from `https://rulevid.com/tags/` and `RuleVidSortFilter` (Most Popular, Latest Updates, Top Rated, Most Viewed), routing queries to `/tags/$genre/` and `/tags/$genre/$page/`.
+  - [x] 21.3 Rule34Video Tag & Sort Filter: Added `Rule34VideoGenreFilter` with 55 validated tags/genres from `https://rule34video.com/tags/` and `Rule34VideoSortFilter` (Most Popular, Latest Updates, Top Rated, Most Viewed), routing queries to `/tags/$genre/` and `/tags/$genre/$page/`.
+  - [x] 21.4 NontonHentai Search & Filter Composition: Enhanced `searchAnimeRequest` to allow combining keyword queries with genre, status, and sort filters via `/anime/?title=$query&...`.
+  - [x] 21.5 Version Code Alignment: Bumped RuleVid and Rule34Video to version 14.7 (`extVersionCode = 7`), establishing uniform `14.7` versioning across all 6 production extensions.
+  - [x] 21.6 Verification: Passed `./gradlew check` (239 tests green, 0 failures), `kototoroSelfTest` (6/6 sources 100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 20 complete. Hentaimama stream extraction, description parsing, and safe genre filtering restored. All 6 extension APKs assembled and verified with Hentaimama, NontonHentai, Hanime, and Nekopoi at v14.7.
-- **Last Green Run**: `./gradlew check` (58 actionable tasks, all 6 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 236 unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Overall Status**: Phase 21 complete. Universal genre and tag filtering implemented across all 6 active sources with 100% verified routes. All 6 extension APKs assembled and verified at uniform version v14.7 (code 7).
+- **Last Green Run**: `./gradlew check` (58 actionable tasks, all 6 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 239 unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 

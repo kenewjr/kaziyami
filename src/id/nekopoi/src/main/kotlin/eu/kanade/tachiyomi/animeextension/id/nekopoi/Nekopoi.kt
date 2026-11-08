@@ -51,18 +51,25 @@ class Nekopoi : GenericThemeSource(
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()
         val cleanQuery = query.trim()
-        val path = if (cleanQuery.isNotEmpty()) {
-            val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
-            String.format(config.searchPath, encoded, page)
-        } else {
-            val category = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
-                when (it.values[it.state]) {
-                    "3D Hentai" -> "3d-hentai"
-                    "Jav Cosplay" -> "jav-cosplay"
-                    else -> "hentai"
-                }
-            } ?: "hentai"
-            "/category/$category/page/$page/"
+        val genre = filters.filterIsInstance<NekopoiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
+        val path = when {
+            cleanQuery.isNotEmpty() -> {
+                val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
+                String.format(config.searchPath, encoded, page)
+            }
+            genre.isNotEmpty() -> {
+                if (page == 1) "/$genre/" else "/$genre/page/$page/"
+            }
+            else -> {
+                val category = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
+                    when (it.values[it.state]) {
+                        "3D Hentai" -> "3d-hentai"
+                        "Jav Cosplay" -> "jav-cosplay"
+                        else -> "hentai"
+                    }
+                } ?: "hentai"
+                "/category/$category/page/$page/"
+            }
         }
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
@@ -207,7 +214,8 @@ class Nekopoi : GenericThemeSource(
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
             AnimeFilter.Header("Nekopoi Filters"),
-            NekopoiCategoryFilter()
+            NekopoiCategoryFilter(),
+            NekopoiGenreFilter()
         )
     }
 
@@ -216,4 +224,92 @@ class Nekopoi : GenericThemeSource(
         arrayOf("All", "Hentai", "3D Hentai", "Jav Cosplay"),
         0
     )
+
+    class NekopoiGenreFilter : AnimeFilter.Select<String>(
+        "Genre",
+        GENRES.map { it.name }.toTypedArray(),
+        0
+    ) {
+        fun toSlug(): String = GENRES[state].slug
+    }
+
+    companion object {
+        data class Option(val name: String, val slug: String)
+
+        val GENRES = arrayOf(
+            Option("All", ""),
+            Option("Action", "genres/action"),
+            Option("Ahegao", "genres/ahegao"),
+            Option("Anal", "genres/anal"),
+            Option("Armpit", "genres/armpit"),
+            Option("BDSM", "genres/bdsm"),
+            Option("Big Oppai", "genres/big-oppai"),
+            Option("Blackmail", "genres/blackmail"),
+            Option("Blonde", "genres/blonde"),
+            Option("Blowjob", "genres/blowjob"),
+            Option("Bondage", "genres/bondage"),
+            Option("Cheating", "genres/cheating"),
+            Option("Comedy", "genres/comedy"),
+            Option("Creampie", "genres/creampie"),
+            Option("Dark Skin", "genres/dark-skin"),
+            Option("DILF", "genres/dilf"),
+            Option("Elf", "genres/elf"),
+            Option("Exhibitionist", "genres/exhibitionist"),
+            Option("Fellatio", "genres/fellatio"),
+            Option("Female Monster", "genres/female-monster"),
+            Option("Femdom", "genres/femdom"),
+            Option("Footjob", "genres/footjob"),
+            Option("Furry", "genres/furry"),
+            Option("Futanari", "genres/futanari"),
+            Option("Gangbang", "genres/gangbang"),
+            Option("Gore", "genres/gore"),
+            Option("Gyaru", "genres/gyaru"),
+            Option("Handjob", "genres/handjob"),
+            Option("Harem", "genres/harem"),
+            Option("Horror", "genres/horror"),
+            Option("Housewife", "genres/housewife"),
+            Option("Humiliation", "genres/humiliation"),
+            Option("Hypnotize", "genres/hypnotize"),
+            Option("Incest", "genres/incest"),
+            Option("Intercrural", "genres/intercrural"),
+            Option("Lactation", "genres/lactation"),
+            Option("Maid", "genres/maid"),
+            Option("Male Monster", "genres/male-monster"),
+            Option("Masturbation", "genres/masturbation"),
+            Option("Megane", "genres/megane"),
+            Option("MILF", "genres/milf"),
+            Option("Mind Control", "genres/mind-control"),
+            Option("Monster", "genres/monster"),
+            Option("Netorare", "genres/netorare"),
+            Option("Nipple Fuck", "genres/nipple-fuck"),
+            Option("Nurse", "genres/nurse"),
+            Option("Old man", "genres/old-man"),
+            Option("Onee-san", "genres/onee-san"),
+            Option("Oral", "genres/oral"),
+            Option("Paihame", "genres/paihame"),
+            Option("Paizuri", "genres/paizuri"),
+            Option("Pantyhose", "genres/pantyhose"),
+            Option("Pregnant", "genres/pregnant"),
+            Option("Prostitution", "genres/prostitution"),
+            Option("Romance", "genres/romance"),
+            Option("Saimin", "genres/saimin"),
+            Option("Schoolgirl", "genres/schoolgirl"),
+            Option("Semi-Hentai", "genres/semi-hentai"),
+            Option("Sex Toys", "genres/sex-toys"),
+            Option("Shibari", "genres/shibari"),
+            Option("Stocking", "genres/stocking"),
+            Option("Succubus", "genres/succubus"),
+            Option("Supranatural", "genres/supranatural"),
+            Option("Swimsuit", "genres/swimsuit"),
+            Option("Tentacles", "genres/tentacles"),
+            Option("Threesome", "genres/threesome"),
+            Option("Tsundere", "genres/tsundere"),
+            Option("Ugly Bastard", "genres/ugly-bastard"),
+            Option("Uncensored", "genres/uncensored"),
+            Option("Vanilla", "genres/vanilla"),
+            Option("Virgin", "genres/virgin"),
+            Option("Yaoi", "genres/yaoi"),
+            Option("Yuri", "genres/yuri")
+        )
+    }
 }
