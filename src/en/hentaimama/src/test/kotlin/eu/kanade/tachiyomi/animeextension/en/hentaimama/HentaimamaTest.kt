@@ -13,7 +13,9 @@ import java.io.InputStreamReader
 
 class HentaimamaTest {
 
-    private val source = Hentaimama()
+    private val source = Hentaimama().apply {
+        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
+    }
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/hentaimama/$path")
@@ -30,7 +32,7 @@ class HentaimamaTest {
             .message("OK")
             .body(html.toResponseBody())
             .build()
-    }
+        }
 
     @Test
     fun parsePopularAnime() {
@@ -56,6 +58,26 @@ class HentaimamaTest {
         assertTrue(details.description!!.contains("A vampire succubus hybrid"))
         assertEquals("Comedy, Supernatural", details.genre)
         assertEquals(SAnime.COMPLETED, details.status)
+    }
+
+    @Test
+    fun parseAnimeDetailsMetaDescription() {
+        val html = """
+            <html>
+            <head>
+                <meta property="og:description" content="Watch Hitori Tsuma hentai online free in HD." />
+            </head>
+            <body>
+                <div class="sheader"><div class="data"><h1>Hitori Tsuma</h1></div></div>
+                <div class="poster"><img src="https://hentaimama.io/thumb.jpg" /></div>
+            </body>
+            </html>
+        """.trimIndent()
+        val response = mockResponse("https://hentaimama.io/tvshows/hitori-tsuma/", html)
+        val details = source.animeDetailsParse(response)
+
+        assertEquals("Hitori Tsuma", details.title)
+        assertEquals("Watch Hitori Tsuma hentai online free in HD.", details.description)
     }
 
     @Test
@@ -98,5 +120,55 @@ class HentaimamaTest {
 
         assertTrue(page.animes.isEmpty())
         assertFalse(page.hasNextPage)
+    }
+
+    @Test
+    fun testFiltersAndSearchRequest() {
+        val filterList = source.getFilterList()
+        val categoryFilter = filterList.filterIsInstance<Hentaimama.HentaimamaCategoryFilter>().first()
+        val genreFilter = filterList.filterIsInstance<Hentaimama.HentaimamaGenreFilter>().first()
+
+        assertEquals(2, categoryFilter.values.size)
+        assertTrue(genreFilter.values.size >= 28)
+        assertTrue(genreFilter.values.contains("MILF"))
+        assertTrue(genreFilter.values.contains("Vanilla"))
+
+        // 1. Default request: TV Shows page 1
+        val reqDefault = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hentaimama.io/tvshows/", reqDefault.url.toString())
+
+        // 2. Default TV Shows page 2
+        val reqPage2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://hentaimama.io/tvshows/page/2/", reqPage2.url.toString())
+
+        // 3. Category = Episodes page 1
+        categoryFilter.state = 1
+        val reqEpisodes1 = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hentaimama.io/episodes/", reqEpisodes1.url.toString())
+
+        // 4. Category = Episodes page 2
+        val reqEpisodes2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://hentaimama.io/episodes/page/2/", reqEpisodes2.url.toString())
+
+        // Reset category
+        categoryFilter.state = 0
+
+        // 5. Genre = MILF page 1
+        val milfIndex = genreFilter.values.indexOf("MILF")
+        assertTrue(milfIndex >= 0)
+        genreFilter.state = milfIndex
+        val reqMilf1 = source.searchAnimeRequest(1, "", filterList)
+        assertEquals("https://hentaimama.io/genre/milf/", reqMilf1.url.toString())
+
+        // 6. Genre = MILF page 2
+        val reqMilf2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://hentaimama.io/genre/milf/page/2/", reqMilf2.url.toString())
+
+        // 7. Search Query overrides genre & category
+        val reqQuery1 = source.searchAnimeRequest(1, "itadaki", filterList)
+        assertEquals("https://hentaimama.io/?s=itadaki", reqQuery1.url.toString())
+
+        val reqQuery2 = source.searchAnimeRequest(2, "itadaki", filterList)
+        assertEquals("https://hentaimama.io/?s=itadaki&page=2", reqQuery2.url.toString())
     }
 }

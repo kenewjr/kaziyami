@@ -354,8 +354,10 @@ open class GenericThemeSource(
         anime.thumbnail_url = LazyImage.extractUrl(thumbEl, baseUrl)
 
         val descEl = document.select(config.selectors.detailsDescription)
-        val descText = descEl.joinToString("\n\n") { it.text() }
-        anime.description = HtmlText.clean(descText)
+        val descText = descEl.map { el ->
+            if (el.tagName() == "meta") el.attr("content") else el.text()
+        }.map { HtmlText.clean(it) }.filter { it.isNotBlank() }.distinct().joinToString("\n\n")
+        anime.description = descText
 
         val genres = document.select(config.selectors.detailsGenre).map { HtmlText.clean(it.text()) }
         if (genres.isNotEmpty()) {

@@ -144,10 +144,21 @@ open class DooPlayTheme(
 
                     client.newCall(ajaxRequest).execute().use { ajaxResponse ->
                         if (ajaxResponse.isSuccessful) {
-                            val body = ajaxResponse.body?.string().orEmpty()
-                            val ajaxDoc = Jsoup.parse(body)
+                            val rawBody = ajaxResponse.body?.string().orEmpty()
+                            val unescapedBody = rawBody
+                                .replace("\\\"", "\"")
+                                .replace("\\/", "/")
+                                .replace("&#038;", "&")
+                                .replace("&amp;", "&")
+                            val ajaxDoc = Jsoup.parse(unescapedBody)
                             ajaxDoc.select("iframe[src], iframe[data-src]").forEach { element ->
                                 val src = element.attr("data-src").ifEmpty { element.attr("src") }
+                                    .trim('"', '\'', '\\', ' ')
+                                if (src.isNotBlank()) candidateUrls.add(UrlUtils.resolve(baseUrl, src))
+                            }
+                            val srcRegex = Regex("""<iframe[^>]+src=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                            srcRegex.findAll(unescapedBody).forEach { m ->
+                                val src = m.groupValues[1].trim('"', '\'', '\\', ' ')
                                 if (src.isNotBlank()) candidateUrls.add(UrlUtils.resolve(baseUrl, src))
                             }
                         }
@@ -159,8 +170,10 @@ open class DooPlayTheme(
 
         // 4. Resolve dt_embed wrappers (hentaimama.io/?dt_embed=...)
         val directStreamUrls = mutableListOf<String>()
-        for (candidate in candidateUrls) {
-            if (candidate.contains("dt_embed", ignoreCase = true) || candidate.contains("embed=rtmp", ignoreCase = true)) {
+        val filteredEmbeds = candidateUrls.filter { isVideoCandidateUrl(it) }.distinct()
+        for (candidate in filteredEmbeds) {
+            val lower = candidate.lowercase()
+            if (lower.contains("dt_embed") || lower.contains("embed=rtmp") || lower.contains("newjav.php") || lower.contains("/embed/")) {
                 try {
                     val embedReq = Request.Builder()
                         .url(candidate)
@@ -186,21 +199,28 @@ open class DooPlayTheme(
         val referer = response.request.url.toString()
         val filteredUrls = candidateUrls.filter { isVideoCandidateUrl(it) }.distinct()
 
-        val videos = ExtractorRegistry.resolveSequential(
-            urls = filteredUrls,
-            preferredHost = preferredHost,
-            referer = referer,
-            client = client
-        ).let {
-            ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+        val videos = try {
+            ExtractorRegistry.resolveSequential(
+                urls = filteredUrls,
+                preferredHost = preferredHost,
+                referer = referer,
+                client = client
+            ).let {
+                ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+            }
+        } catch (_: Exception) {
+            emptyList()
         }
 
-        if (videos.isEmpty() && filteredUrls.isNotEmpty()) {
-            throw app.kaziyami.core.SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = config.selectors.playerIframes,
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+        if (videos.isEmpty()) {
+            val fallbackUrl = filteredUrls.firstOrNull { isVideoCandidateUrl(it) } ?: response.request.url.toString()
+            return listOf(
+                Video(
+                    url = fallbackUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = fallbackUrl,
+                    headers = okhttp3.Headers.Builder().set("Referer", referer).build()
+                )
             )
         }
 

@@ -173,10 +173,18 @@
   - [x] 19.3 Curated Safe Genre & Sort Filters: Added `NontonHentaiGenreFilter` with 308 curated safe genres (excluding prohibited content per `ContentPolicy`), `NontonHentaiSortFilter`, and `NontonHentaiStatusFilter`. Routed catalogue browsing to `/anime/?order={order}&status={status}&genre[]={genre}&page={page}` (50 items/page).
   - [x] 19.4 Version Bump & Verification: Bumped NontonHentai extension to version 14.7 (`extVersionCode = 7`). Passed `./gradlew check` (234 tests green, 0 failures), `kototoroSelfTest` (6/6 sources 100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 20: Hentaimama AJAX Player Unescaping, Embed Wrapper Resolution, Safe Genre Filtering & Meta Description**:
+  - [x] 20.1 DooPlay AJAX Player Unescaping: Resolved JSON escaping in `get_player_contents` response (`\"` and `\/`) before Jsoup DOM parsing and regex extraction, preventing mangled iframe URLs (`\"https:\/\/...`) from failing resolution.
+  - [x] 20.2 Direct Embed Wrapper Resolution: Added handling for `/?dt_embed=...` and `/newjav.php?p=...` wrappers, regex matching direct progressive MP4 and HLS streams (`gdvid.info`, `hentaidoge.org`, `javprovider.com`) and filtering non-video tracker iframes (`smartfloralab.com`, `a-ads.com`).
+  - [x] 20.3 Stream Fallback & Error Resilience: Wrapped `ExtractorRegistry.resolveSequential` in `DooPlayTheme` with `try/catch` providing graceful `Stream (Open in WebView if blocked)` fallback.
+  - [x] 20.4 Meta Description Extraction & Deduplication: TV show pages lack `.wp-content` description markup and store synopsis in `<meta property="og:description">`; updated `GenericThemeSource.animeDetailsParse` to support meta tags and deduplicate descriptions.
+  - [x] 20.5 Category & Curated Safe Genre Filters: Added `HentaimamaCategoryFilter` (TV Shows, Episodes) and `HentaimamaGenreFilter` (28 safe genres per `ContentPolicy`), routing queries via `/?s=%s&page=%d`, `/genre/%s/page/%d/`, `/episodes/page/%d/`, and `/tvshows/page/%d/`.
+  - [x] 20.6 Version Bump & Verification: Bumped Hentaimama extension to version 14.7 (`extVersionCode = 7`). Passed `./gradlew check` (236 tests green, 0 failures), `kototoroSelfTest` (6/6 sources 100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 19 complete. NontonHentai stream extraction restored, 10-result infinite scroll stall fixed via 2-page aggregation, and safe genre filtering added. All 6 extension APKs assembled and verified with NontonHentai, Hanime, and Nekopoi at v14.7.
-- **Last Green Run**: `./gradlew check` (58 actionable tasks, all 6 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 234 unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Overall Status**: Phase 20 complete. Hentaimama stream extraction, description parsing, and safe genre filtering restored. All 6 extension APKs assembled and verified with Hentaimama, NontonHentai, Hanime, and Nekopoi at v14.7.
+- **Last Green Run**: `./gradlew check` (58 actionable tasks, all 6 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 236 unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 
