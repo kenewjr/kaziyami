@@ -107,14 +107,23 @@ class Hanime1Test {
         val filters = source.getFilterList()
         val sortFilter = filters.filterIsInstance<Hanime1.Hanime1SortFilter>().first()
         val genreFilter = filters.filterIsInstance<Hanime1.Hanime1GenreFilter>().first()
+        val durationFilter = filters.filterIsInstance<Hanime1.Hanime1DurationFilter>().first()
+        val tagFilter = filters.filterIsInstance<Hanime1.Hanime1TagFilter>().first()
+        val brandFilter = filters.filterIsInstance<Hanime1.Hanime1BrandFilter>().first()
 
         sortFilter.state = 4 // 本月排行
-        genreFilter.state = 4 // 3DCG
+        genreFilter.state = 4 // 3D動畫
+        durationFilter.state = 2 // 中長片
+        tagFilter.state = 3 // 中文字幕
+        brandFilter.state = 1 // PoRO
 
         val req = source.searchAnimeRequest(1, "action", filters)
         assertThat(req.url.queryParameter("query")).isEqualTo("action")
         assertThat(req.url.queryParameter("sort")).isEqualTo("本月排行")
-        assertThat(req.url.queryParameter("genre")).isEqualTo("3DCG")
+        assertThat(req.url.queryParameter("genre")).isEqualTo("3D動畫")
+        assertThat(req.url.queryParameter("duration")).isEqualTo("中長片")
+        assertThat(req.url.queryParameter("tag")).isEqualTo("中文字幕")
+        assertThat(req.url.queryParameter("brand")).isEqualTo("PoRO")
     }
 }
 

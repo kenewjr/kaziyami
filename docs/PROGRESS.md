@@ -223,10 +223,16 @@
   - [x] 26.2 Version Bump to v14.12: Bumped Hanime1 to `extVersionCode = 12`, `extVersion = "14.12"`. Ensures monotonic update detection in Kototoro and Aniyomi package managers.
   - [x] 26.3 Verification: Passed `./gradlew check` (252 unit tests green), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 27: Hanime1 Comprehensive Genre, Sorting, Duration, Tag & Studio Filter Expansion**:
+  - [x] 27.1 Exhaustive Filter Catalog: Expanded Hanime1 filters with 9 authentic sorting orders (`最新上市`, `最新上傳`, `本日排行`, `本週排行`, `本月排行`, `觀看次數`, `讚好比例`, `他們在看`, `時長最長`), 11 official genres (`全部類型`, `裏番`, `泡麵番`, `Motion Anime`, `3D動畫`, `同人作品`, `2.5D`, `2D動畫`, `AI生成`, `MMD`, `Cosplay`), 4 duration options (`短片`, `中長片`, `長片`), 95 curated safe tags (across themes, character roles, relationships, appearance, acts, adhering to `ContentPolicy`), and 20 top studio brands (`PoRO`, `Queen Bee`, `メリー・ジェーン`, `ピンクパイナップル`, `ばにぃうぉ～か～`, etc.).
+  - [x] 27.2 Safe Search Query Composition: Combined `query`, `genre`, `sort`, `duration`, `tag`, and `brand` query parameters into clean URL-encoded search paths without `String.format`.
+  - [x] 27.3 Version Bump to v14.13: Bumped Hanime1 to `extVersionCode = 13`, `extVersion = "14.13"`.
+  - [x] 27.4 Verification: Updated unit tests in `Hanime1Test.kt`. Passed `./gradlew check` (252 unit tests green), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 26 complete. 8 active production sources. `Hanime1` bumped to v14.12 (code 12); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Overall Status**: Phase 27 complete. 8 active production sources. `Hanime1` bumped to v14.13 (code 13); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
 - **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 

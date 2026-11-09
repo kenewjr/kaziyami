@@ -63,9 +63,11 @@ class Hanime1 : GenericThemeSource(
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()
         val cleanQuery = query.trim()
-        val genre = filters.filterIsInstance<Hanime1GenreFilter>().firstOrNull()?.toSlug().orEmpty()
         val sort = filters.filterIsInstance<Hanime1SortFilter>().firstOrNull()?.toSlug().orEmpty()
+        val genre = filters.filterIsInstance<Hanime1GenreFilter>().firstOrNull()?.toSlug().orEmpty()
+        val duration = filters.filterIsInstance<Hanime1DurationFilter>().firstOrNull()?.toSlug().orEmpty()
         val tag = filters.filterIsInstance<Hanime1TagFilter>().firstOrNull()?.toSlug().orEmpty()
+        val brand = filters.filterIsInstance<Hanime1BrandFilter>().firstOrNull()?.toSlug().orEmpty()
 
         val params = mutableListOf<String>()
         if (cleanQuery.isNotEmpty()) {
@@ -77,8 +79,14 @@ class Hanime1 : GenericThemeSource(
         if (sort.isNotEmpty()) {
             params.add("sort=" + URLEncoder.encode(sort, "UTF-8"))
         }
+        if (duration.isNotEmpty()) {
+            params.add("duration=" + URLEncoder.encode(duration, "UTF-8"))
+        }
         if (tag.isNotEmpty()) {
             params.add("tag=" + URLEncoder.encode(tag, "UTF-8"))
+        }
+        if (brand.isNotEmpty()) {
+            params.add("brand=" + URLEncoder.encode(brand, "UTF-8"))
         }
         if (page > 1) {
             params.add("page=$page")
@@ -177,7 +185,9 @@ class Hanime1 : GenericThemeSource(
             AnimeFilter.Header("Hanime1 繁體中文過濾器"),
             Hanime1SortFilter(),
             Hanime1GenreFilter(),
-            Hanime1TagFilter()
+            Hanime1DurationFilter(),
+            Hanime1TagFilter(),
+            Hanime1BrandFilter()
         )
     }
 
@@ -190,11 +200,19 @@ class Hanime1 : GenericThemeSource(
     }
 
     class Hanime1GenreFilter : AnimeFilter.Select<String>(
-        "分類 (Genre)",
+        "類型 (Genre)",
         GENRES.map { it.name }.toTypedArray(),
         0
     ) {
         fun toSlug(): String = GENRES[state].slug
+    }
+
+    class Hanime1DurationFilter : AnimeFilter.Select<String>(
+        "時長 (Duration)",
+        DURATIONS.map { it.name }.toTypedArray(),
+        0
+    ) {
+        fun toSlug(): String = DURATIONS[state].slug
     }
 
     class Hanime1TagFilter : AnimeFilter.Select<String>(
@@ -203,6 +221,14 @@ class Hanime1 : GenericThemeSource(
         0
     ) {
         fun toSlug(): String = TAGS[state].slug
+    }
+
+    class Hanime1BrandFilter : AnimeFilter.Select<String>(
+        "製作廠商 (Studio / Brand)",
+        BRANDS.map { it.name }.toTypedArray(),
+        0
+    ) {
+        fun toSlug(): String = BRANDS[state].slug
     }
 
     companion object {
@@ -221,44 +247,161 @@ class Hanime1 : GenericThemeSource(
         )
 
         val GENRES = arrayOf(
-            Option("全部 (All)", ""),
+            Option("全部類型 (All Genres)", ""),
             Option("裏番 (Hentai)", "裏番"),
             Option("泡麵番 (Short Anime)", "泡麵番"),
             Option("Motion Anime", "Motion Anime"),
-            Option("3DCG", "3DCG"),
+            Option("3D動畫 (3D Animation / 3DCG)", "3D動畫"),
+            Option("同人作品 (Doujin Work)", "同人作品"),
             Option("2.5D", "2.5D"),
             Option("2D動畫", "2D動畫"),
-            Option("AI生成", "AI生成"),
+            Option("AI生成 (AI Generated)", "AI生成"),
             Option("MMD", "MMD"),
             Option("Cosplay", "Cosplay")
         )
 
+        val DURATIONS = arrayOf(
+            Option("全部時長 (All Durations)", ""),
+            Option("短片 (Short <= 4 min)", "短片"),
+            Option("中長片 (Medium 4-20 min)", "中長片"),
+            Option("長片 (Feature > 20 min)", "長片")
+        )
+
         val TAGS = arrayOf(
-            Option("全部標籤 (All)", ""),
+            Option("全部標籤 (All Tags)", ""),
+            // 規格 (Specs)
             Option("無碼 (Uncensored)", "無碼"),
             Option("AI解碼 (AI Decoded)", "AI解碼"),
             Option("中文字幕 (Chinese Sub)", "中文字幕"),
             Option("中文配音 (Chinese Dub)", "中文配音"),
-            Option("同人作品 (Fan Video)", "同人作品"),
+            Option("1080P", "1080P"),
+            Option("60FPS", "60FPS"),
+            // 劇情主題 (Themes)
+            Option("純愛 (Pure Love)", "純愛"),
+            Option("戀愛喜劇 (Romcom)", "戀愛喜劇"),
+            Option("後宮 (Harem)", "後宮"),
+            Option("異世界 (Isekai)", "異世界"),
+            Option("催眠 / 精神控制 (Hypnosis)", "催眠"),
+            Option("NTR (Netorare)", "NTR"),
+            Option("出軌 (Affair)", "出軌"),
+            Option("公眾場合 (Public)", "公眾場合"),
+            Option("百合 (Yuri)", "百合"),
+            Option("耽美 (Yaoi)", "耽美"),
+            Option("性轉換 (Gender Bender)", "性轉換"),
+            // 角色關係 (Relationships)
             Option("近親 (Incest)", "近親"),
             Option("姐 (Elder Sister)", "姐"),
             Option("妹 (Younger Sister)", "妹"),
             Option("母 (Mother)", "母"),
             Option("女兒 (Daughter)", "女兒"),
+            Option("師生 (Teacher Student)", "師生"),
+            Option("情侶 (Couple)", "情侶"),
+            Option("青梅竹馬 (Childhood Friend)", "青梅竹馬"),
+            // 角色身分 (Roles)
             Option("處女 (Virgin)", "處女"),
             Option("御姐 (Older Sister)", "御姐"),
             Option("熟女 (MILF)", "熟女"),
             Option("人妻 (Married Woman)", "人妻"),
+            Option("老師 (Teacher)", "老師"),
+            Option("女醫護士 (Nurse / Doctor)", "女醫護士"),
+            Option("OL (Office Lady)", "OL"),
+            Option("大小姐 (Rich Lady)", "大小姐"),
+            Option("偶像 (Idol)", "偶像"),
+            Option("女僕 (Maid)", "女僕"),
+            Option("巫女 (Shrine Maiden)", "巫女"),
+            Option("修女 (Nun)", "修女"),
+            Option("風俗娘 (Hostess)", "風俗娘"),
+            Option("公主 (Princess)", "公主"),
+            Option("女戰士 (Female Warrior)", "女戰士"),
+            Option("魔法少女 (Magical Girl)", "魔法少女"),
+            Option("異種族 (Other Race)", "異種族"),
+            Option("妖精 (Elf)", "妖精"),
+            Option("魔物娘 (Monster Girl)", "魔物娘"),
+            Option("獸娘 (Beast Girl)", "獸娘"),
+            Option("碧池 (Bitch)", "碧池"),
+            Option("痴女 (Perverted Woman)", "痴女"),
+            Option("不良少女 (Delinquent Girl)", "不良少女"),
+            Option("傲嬌 (Tsundere)", "傲嬌"),
+            Option("病嬌 (Yandere)", "病嬌"),
+            Option("無口 (Dandere)", "無口"),
+            Option("偽娘 (Trap / Crossdresser)", "偽娘"),
+            Option("扶他 (Futanari)", "扶他"),
+            // 外貌與服裝 (Appearance & Costumes)
             Option("巨乳 (Big Breasts)", "巨乳"),
-            Option("貧乳 (Flat Chest)", "貧乳"),
+            Option("貧乳 (Flat / Small Breasts)", "貧乳"),
+            Option("黑皮膚 (Dark Skin)", "黑皮膚"),
+            Option("眼鏡娘 (Glasses)", "眼鏡娘"),
+            Option("獸耳 (Animal Ears)", "獸耳"),
+            Option("短髮 (Short Hair)", "短髮"),
+            Option("馬尾 (Ponytail)", "馬尾"),
+            Option("雙馬尾 (Twin Tail)", "雙馬尾"),
+            Option("肌肉女 (Muscular Woman)", "肌肉女"),
+            Option("水手服 (Sailor Suit)", "水手服"),
+            Option("體操服 (Gym Clothes)", "體操服"),
+            Option("泳裝 (Swimsuit)", "泳裝"),
+            Option("比基尼 (Bikini)", "比基尼"),
+            Option("和服 (Kimono)", "和服"),
+            Option("兔女郎 (Bunny Girl)", "兔女郎"),
+            Option("圍裙 (Apron)", "圍裙"),
+            Option("啦啦隊 (Cheerleader)", "啦啦隊"),
+            Option("旗袍 (Cheongsam)", "旗袍"),
+            Option("絲襪 (Stockings)", "絲襪"),
             Option("黑絲 (Black Stockings)", "黑絲"),
-            Option("催眠 (Hypnosis)", "催眠"),
-            Option("異世界 (Isekai)", "異世界"),
-            Option("純愛 (Pure Love)", "純愛"),
-            Option("NTR (Netorare)", "NTR"),
+            Option("吊襪帶 (Garter Belt)", "吊襪帶"),
+            Option("熱褲 (Hot Pants)", "熱褲"),
+            Option("迷你裙 (Mini Skirt)", "迷你裙"),
+            Option("性感內衣 (Lingerie)", "性感內衣"),
+            Option("丁字褲 (Thong)", "丁字褲"),
+            Option("高跟鞋 (High Heels)", "高跟鞋"),
+            Option("淫紋 (Crest Tattoo)", "淫紋"),
+            // 體位與情節 (Acts & Positions)
             Option("內射 (Creampie)", "內射"),
             Option("口交 (Blowjob)", "口交"),
-            Option("後背位 (Doggystyle)", "後背位")
+            Option("口爆 (Facial)", "口爆"),
+            Option("顏射 (Facial)", "顏射"),
+            Option("乳交 (Titfuck)", "乳交"),
+            Option("手交 (Handjob)", "手交"),
+            Option("腳交 (Footjob)", "腳交"),
+            Option("指交 (Fingering)", "指交"),
+            Option("肛交 (Anal)", "肛交"),
+            Option("3P (Threesome)", "3P"),
+            Option("群交 (Orgy)", "群交"),
+            Option("雙洞齊下 (Double Penetration)", "雙洞齊下"),
+            Option("懷孕 (Pregnancy)", "懷孕"),
+            Option("噴奶 (Lactation)", "噴奶"),
+            Option("自慰 (Masturbation)", "自慰"),
+            Option("顏面騎乘 (Facesitting)", "顏面騎乘"),
+            Option("車震 (Car Sex)", "車震"),
+            Option("後背位 (Doggystyle)", "後背位"),
+            Option("性玩具 (Sex Toys)", "性玩具"),
+            Option("觸手 (Tentacles)", "觸手"),
+            Option("BDSM", "BDSM"),
+            Option("綑綁 (Bondage)", "綑綁"),
+            Option("調教 (Training)", "調教"),
+            Option("女王樣 (Femdom)", "女王樣")
+        )
+
+        val BRANDS = arrayOf(
+            Option("全部廠商 (All Studios)", ""),
+            Option("PoRO", "PoRO"),
+            Option("Queen Bee", "Queen Bee"),
+            Option("メリー・ジェーン (Mary Jane)", "メリー・ジェーン"),
+            Option("ピンクパイナップル (Pink Pineapple)", "ピンクパイナップル"),
+            Option("ばにぃうぉ～か～ (Bunnywalker)", "ばにぃうぉ～か～"),
+            Option("魔人 (Majin)", "魔人"),
+            Option("milky (ミルキー)", "milky"),
+            Option("Seven (セブン)", "Seven"),
+            Option("T-Rex", "T-Rex"),
+            Option("ZIZ", "ZIZ"),
+            Option("EDGE", "EDGE"),
+            Option("ショーテン (Showten)", "ショーテン"),
+            Option("妄想実現めでぃあ", "妄想実現めでぃあ"),
+            Option("せるふぃっしゅ (Selfish)", "せるふぃっしゅ"),
+            Option("Collaboration Works", "Collaboration Works"),
+            Option("BOOTLEG", "BOOTLEG"),
+            Option("BOMB!CUTE!BOMB!", "BOMB!CUTE!BOMB!"),
+            Option("GOLD BEAR", "GOLD BEAR"),
+            Option("鈴木みら乃 (Suzuki Mirano)", "鈴木みら乃")
         )
     }
 }
