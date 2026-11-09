@@ -1,6 +1,8 @@
 package app.kaziyami.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
+import app.kaziyami.network.BrowserHeaders
+import app.kaziyami.network.BrowserProfile
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -324,19 +326,19 @@ class HentaiCopExtractor : VideoExtractor {
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val effectiveRef = if (referer.isNotBlank()) referer else "https://nontonhentai.net/"
+        val profile = BrowserProfile.resolve()
+        val browserHeaders = BrowserHeaders.headersFor(
+            url = url,
+            referer = effectiveRef,
+            type = BrowserHeaders.HeaderType.NAVIGATE,
+            profile = profile
+        )
         val req = Request.Builder()
             .url(url)
-            .header("Referer", effectiveRef)
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
-            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
-            .header("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
-            .header("Sec-Ch-Ua", "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"")
-            .header("Sec-Ch-Ua-Mobile", "?0")
-            .header("Sec-Ch-Ua-Platform", "\"Windows\"")
+            .headers(browserHeaders)
             .header("Sec-Fetch-Dest", "iframe")
             .header("Sec-Fetch-Mode", "navigate")
             .header("Sec-Fetch-Site", "cross-site")
-            .header("Upgrade-Insecure-Requests", "1")
             .build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string().orEmpty() }
@@ -348,7 +350,7 @@ class HentaiCopExtractor : VideoExtractor {
         val videoHeaders = Headers.Builder()
             .set("Referer", "https://hentaicop.com/")
             .set("Origin", "https://hentaicop.com")
-            .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .set("User-Agent", profile.userAgent)
             .build()
 
         var unpackedHtml = html
@@ -425,5 +427,119 @@ class HentaiCopExtractor : VideoExtractor {
         }
 
         return videos.distinctBy { it.videoUrl }
+    }
+}
+
+class HgCloudExtractor : VideoExtractor {
+    override val name = "HgCloud"
+    private val hostRegex = Pattern.compile(
+        "hgcloud\\.to|dhcplay\\.com|hglink\\.to|hanerix\\.com|audinifer\\.com|vibuxer\\.com|hgplaycdn\\.com|hglamioz\\.com|niramirus\\.com|playnixes\\.com|medixiru\\.com",
+        Pattern.CASE_INSENSITIVE
+    )
+
+    override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
+
+    override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val effectiveRef = if (referer.isNotBlank()) referer else "https://3xchina.page/"
+        val profile = BrowserProfile.resolve()
+        val browserHeaders = BrowserHeaders.headersFor(
+            url = url,
+            referer = effectiveRef,
+            type = BrowserHeaders.HeaderType.NAVIGATE,
+            profile = profile
+        )
+        val req = Request.Builder()
+            .url(url)
+            .headers(browserHeaders)
+            .build()
+
+        val resp = try {
+            client.newCall(req).execute()
+        } catch (_: Exception) {
+            return emptyList()
+        }
+
+        val finalUrl = resp.request.url.toString()
+        val html = resp.use { it.body?.string().orEmpty() }
+        if (html.isBlank()) return emptyList()
+
+        val unpacked = unpack(html)
+        val videoHeaders = Headers.Builder()
+            .set("Referer", finalUrl)
+            .set("User-Agent", profile.userAgent)
+            .build()
+
+        val videos = mutableListOf<Video>()
+
+        // 1. sources: [{file:"...", ...}]
+        val sourcesPattern = Pattern.compile("""['"]?sources['"]?\s*:\s*\[(.*?)]""", Pattern.DOTALL)
+        val sourcesMatcher = sourcesPattern.matcher(unpacked)
+        if (sourcesMatcher.find()) {
+            val block = sourcesMatcher.group(1)
+            val filePattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+)['"]""")
+            val fileMatcher = filePattern.matcher(block)
+            while (fileMatcher.find()) {
+                val streamUrl = fileMatcher.group(1)
+                if (streamUrl.isNotBlank() && (streamUrl.contains(".m3u8") || streamUrl.contains(".mp4"))) {
+                    videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+                }
+            }
+        }
+
+        // 2. Direct file: "..." or direct .m3u8 link
+        if (videos.isEmpty()) {
+            val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
+            val directMatcher = directPattern.matcher(unpacked)
+            while (directMatcher.find()) {
+                val streamUrl = directMatcher.group(1)
+                videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+            }
+        }
+
+        // 3. Fallback regex for raw m3u8 in unpacked content
+        if (videos.isEmpty()) {
+            val rawM3u8Pattern = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""")
+            val rawMatcher = rawM3u8Pattern.matcher(unpacked)
+            while (rawMatcher.find()) {
+                val streamUrl = rawMatcher.group(1)
+                videos.add(Video(url, "HgCloud HD (HLS)", streamUrl, videoHeaders))
+            }
+        }
+
+        return videos.distinctBy { it.videoUrl }
+    }
+
+    fun unpack(script: String): String {
+        val regex = Pattern.compile(
+            "eval\\(function\\(p,a,c,k,e,d\\)\\{.*?return p\\}\\('(.*?)',(\\d+),(\\d+),'(.*?)'\\.split\\('\\|'\\)",
+            Pattern.DOTALL
+        )
+        val matcher = regex.matcher(script)
+        if (!matcher.find()) return script
+        var payload = matcher.group(1)
+        val radix = matcher.group(2).toInt()
+        val count = matcher.group(3).toInt()
+        val symTab = matcher.group(4).split("|")
+        for (i in count - 1 downTo 0) {
+            val word = if (i < symTab.size && symTab[i].isNotEmpty()) symTab[i] else null
+            if (word != null) {
+                val key = toBaseN(i, radix)
+                payload = payload.replace("\\b$key\\b".toRegex(), word)
+            }
+        }
+        return payload
+    }
+
+    private fun toBaseN(num: Int, radix: Int): String {
+        if (radix in 2..36) return num.toString(radix)
+        val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if (num == 0) return "0"
+        var n = num
+        val sb = StringBuilder()
+        while (n > 0) {
+            sb.append(chars[n % radix])
+            n /= radix
+        }
+        return sb.reverse().toString()
     }
 }

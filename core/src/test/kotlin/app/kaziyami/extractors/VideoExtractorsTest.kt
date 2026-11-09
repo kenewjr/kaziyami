@@ -195,5 +195,24 @@ class VideoExtractorsTest {
         assertEquals("https://hentaicop.com/", videos[0].headers?.get("Referer"))
         assertEquals("https://hentaicop.com", videos[0].headers?.get("Origin"))
     }
+
+    @Test
+    fun hgCloudExtractorUnpacksDeanEdwards() {
+        val ext = HgCloudExtractor()
+        assertTrue(ext.canExtract("https://hgcloud.to/e/hg123"))
+        assertTrue(ext.canExtract("https://hanerix.com/e/han456"))
+        assertTrue(ext.canExtract("https://audinifer.com/e/aud789"))
+        assertTrue(ext.canExtract("https://vibuxer.com/e/vib101"))
+
+        val packed = """
+            <script type='text/javascript'>eval(function(p,a,c,k,e,d){while(c--)if(k[c])p=p.replace(new RegExp('\\b'+c.toString(a)+'\\b','g'),k[c]);return p}('0:[{1:"2://3.4/5/6.7",8:"9"}]',10,10,'sources|file|https|jZdDKEFw9oEu0.premilkyway|com|hls2|master|m3u8|type|hls'.split('|'))</script>
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(packed))
+
+        val videos = ext.extract(server.url("/e/hg123").toString(), "https://3xchina.page/", client)
+        assertEquals(1, videos.size)
+        assertEquals("https://jZdDKEFw9oEu0.premilkyway.com/hls2/master.m3u8", videos[0].videoUrl)
+        assertTrue(videos[0].quality.contains("1080p"))
+    }
 }
 

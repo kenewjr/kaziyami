@@ -49,7 +49,7 @@ object BrowserHeaders {
         url: String,
         referer: String? = null,
         type: HeaderType = HeaderType.NAVIGATE,
-        profile: BrowserProfile = BrowserProfile.DEFAULT
+        profile: BrowserProfile = BrowserProfile.resolve()
     ): Headers {
         val builder = Headers.Builder()
 
@@ -137,11 +137,11 @@ object BrowserHeaders {
  */
 class BrowserHeaderInterceptor(
     private val defaultRefererProvider: (() -> String)? = null,
-    private val profile: BrowserProfile = BrowserProfile.DEFAULT
+    private val profile: BrowserProfile = BrowserProfile.resolve()
 ) : Interceptor {
-    constructor(refererProvider: () -> String) : this(refererProvider, BrowserProfile.DEFAULT)
+    constructor(refererProvider: () -> String) : this(refererProvider, BrowserProfile.resolve())
     constructor(profile: BrowserProfile) : this(null, profile)
-    constructor() : this(null, BrowserProfile.DEFAULT)
+    constructor() : this(null, BrowserProfile.resolve())
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
@@ -341,11 +341,25 @@ class SimpleCookieJar : CookieJar {
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        if (isAndroidAvailable) {
+            syncFromAndroidWebView(url)
+        }
         val list = store[url.host] ?: return emptyList()
         val now = System.currentTimeMillis()
         synchronized(list) {
             list.removeAll { it.expiresAt < now }
             return list.toList()
+        }
+    }
+
+    companion object {
+        private val isAndroidAvailable: Boolean by lazy {
+            try {
+                Class.forName("android.webkit.CookieManager")
+                true
+            } catch (_: Throwable) {
+                false
+            }
         }
     }
 

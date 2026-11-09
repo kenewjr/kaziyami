@@ -5,6 +5,7 @@ import app.kaziyami.extractors.DirectVideoExtractor
 import app.kaziyami.extractors.DoodExtractor
 import app.kaziyami.extractors.FilemoonExtractor
 import app.kaziyami.extractors.HentaiCopExtractor
+import app.kaziyami.extractors.HgCloudExtractor
 import app.kaziyami.extractors.Mp4UploadExtractor
 import app.kaziyami.extractors.StreamPoiExtractor
 import app.kaziyami.extractors.StreamTapeExtractor
@@ -29,7 +30,8 @@ object ExtractorRegistry {
         StreamWishExtractor(),
         FilemoonExtractor(),
         StreamPoiExtractor(),
-        HentaiCopExtractor()
+        HentaiCopExtractor(),
+        HgCloudExtractor()
     )
 
     /**

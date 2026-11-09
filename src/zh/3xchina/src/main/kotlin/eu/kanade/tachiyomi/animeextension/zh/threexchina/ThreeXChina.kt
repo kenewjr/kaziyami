@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.ExtractorRegistry
+import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
@@ -17,8 +18,8 @@ import java.net.URLEncoder
 class ThreeXChina : RetroTubeTheme(
     name = "3xchina",
     lang = "zh",
-    baseUrl = "https://3xchina.net",
-    mirrors = listOf("https://3xchina.page"),
+    baseUrl = "https://3xchina.page",
+    mirrors = listOf("https://3xchina.net"),
     popularPath = "/most-viewed/page/%d/",
     latestPath = "/latest-updates/page/%d/",
     searchPath = "/page/%d/?s=%s",
@@ -36,7 +37,7 @@ class ThreeXChina : RetroTubeTheme(
         playerIframes = ".responsive-player iframe, .responsive-player IFRAME, iframe[src]"
     ),
     customQuirks = QuirksConfig(
-        customReferer = "https://3xchina.net/"
+        customReferer = "https://3xchina.page/"
     )
 ) {
 
@@ -86,16 +87,30 @@ class ThreeXChina : RetroTubeTheme(
             if (src.isNotEmpty()) embedUrls.add(UrlUtils.resolve(baseUrl, src))
         }
 
-        val videos = ExtractorRegistry.extractAll(embedUrls.distinct(), client)
-        if (videos.isEmpty() && embedUrls.isNotEmpty()) {
-            val epUrl = embedUrls.first()
-            return listOf(
-                Video(
-                    url = epUrl,
-                    quality = "Open in WebView (Stream Host)",
-                    videoUrl = epUrl,
-                    headers = headers
-                )
+        val candidateUrls = embedUrls.filter { isVideoCandidateUrl(it) }.distinct()
+        val referer = response.request.url.toString()
+        val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
+        val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
+
+        val videos = try {
+            ExtractorRegistry.resolveSequential(
+                urls = candidateUrls,
+                preferredHost = preferredHost,
+                referer = referer,
+                client = client
+            ).let {
+                ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        if (videos.isEmpty() && candidateUrls.isNotEmpty()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = config.selectors.playerIframes,
+                urlPath = UrlUtils.getPath(response.request.url.toString())
             )
         }
         return videos

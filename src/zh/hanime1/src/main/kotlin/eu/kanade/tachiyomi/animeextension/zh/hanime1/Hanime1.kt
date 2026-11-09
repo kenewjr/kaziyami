@@ -150,14 +150,11 @@ class Hanime1 : GenericThemeSource(
 
         val deduped = videoList.distinctBy { it.videoUrl }
         if (deduped.isEmpty()) {
-            val epUrl = response.request.url.toString()
-            return listOf(
-                Video(
-                    url = epUrl,
-                    quality = "Open in WebView (Cloudflare Turnstile)",
-                    videoUrl = epUrl,
-                    headers = headers
-                )
+            throw app.kaziyami.core.SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = "video#player, iframe[src]",
+                urlPath = UrlUtils.getPath(response.request.url.toString())
             )
         }
         return deduped
