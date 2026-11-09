@@ -80,15 +80,29 @@ open class GenericThemeSource(
         } catch (_: Throwable) {
             // Logging failure must never break source construction
         }
+        syncHostUserAgent()
+    }
+
+    private fun syncHostUserAgent() {
+        runCatching {
+            val hostUa = network.defaultUserAgentProvider()
+            if (hostUa.isNotBlank()) {
+                app.kaziyami.network.BrowserProfile.setRuntimeUserAgent(hostUa)
+            }
+        }
     }
 
     override val client: OkHttpClient by lazy {
-        runCatching { network.cloudflareClient }
-            .recoverCatching { network.client }
+        @Suppress("DEPRECATION")
+        runCatching { network.client }
+            .recoverCatching { network.cloudflareClient }
             .getOrElse { app.kaziyami.network.NetworkHelper().client }
     }
 
-    override fun headersBuilder(): Headers.Builder = BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
+    override fun headersBuilder(): Headers.Builder {
+        syncHostUserAgent()
+        return BrowserHeaders.defaultHeaders(baseUrl).newBuilder()
+    }
 
     val mirrorManager = MirrorManager(
         defaultBaseUrl = config.baseUrl,

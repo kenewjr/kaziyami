@@ -45,6 +45,8 @@ def bump_source(slug: str):
         if len(parts) >= 3:
             parts[-1] = str(int(parts[-1]) + 1)
             new_ver = ".".join(parts)
+        elif len(parts) == 2:
+            new_ver = f"{parts[0]}.{new_code}"
         else:
             new_ver = f"{ver_str}.{new_code}"
         content = re.sub(r'val\s+extVersion\s*=\s*"[^"]+"', f'val extVersion = "{new_ver}"', content)

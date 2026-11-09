@@ -203,10 +203,18 @@
   - [x] 23.4 Independent Version Bump for Modified Sources: Bumped `extVersionCode` from 8 to 9 (`extVersion = "14.9"`) strictly for the 3 modified extensions (`NontonHentai`, `Hanime1`, `3xchina`). Unchanged extensions (`Nekopoi`, `Hentaimama`, `Hanime`, `RuleVid`, `Rule34Video`) remain at `14.8` (code 8) to prevent false update prompts in host UIs.
   - [x] 23.5 Verification: Passed `./gradlew check` (69 actionable tasks, 250 unit tests green, 0 failures), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (passed), `test_preflight.py` (passed), `test_collect_diagnostics.py` (passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 24: Host User-Agent Synchronization & Kototoro Cloudflare Solver Loop Fix**:
+  - [x] 24.1 Host User-Agent Synchronization: Identified root cause of Kototoro Cloudflare loop: `BrowserProfile` fell back to Windows Desktop Chrome User-Agent and client hints (`Sec-Ch-Ua-Platform: "Windows"`, `Sec-Ch-Ua-Mobile: ?0`) on Android devices, causing Cloudflare Turnstile to invalidate `cf_clearance` due to UA mismatch with the Android WebView solver. Resolved by syncing `network.defaultUserAgentProvider()` via `GenericThemeSource.init` and `headersBuilder()` into `BrowserProfile.setRuntimeUserAgent(hostUa)`.
+  - [x] 24.2 Android Client Hints Omission: Safely omitted `Sec-Ch-Ua*` client hints on Android runtimes to prevent Turnstile fingerprint / brand / platform mismatches between WebView and OkHttp.
+  - [x] 24.3 Dual-Scope Cookie Merging: In `SimpleCookieJar.syncFromAndroidWebView(url)`, queried and merged cookies from both root origin (`"${url.scheme}://${url.host}/"`) and the full URL to reliably capture domain-scoped `cf_clearance` tokens.
+  - [x] 24.4 Hanime1 URL-Safe Path Encoding: Percent-encoded Chinese query parameters in `popularPath` and `latestPath` in `Hanime1`.
+  - [x] 24.5 Version Bump: Bumped Hanime1 to version 14.10 (`extVersionCode = 10`, `extVersion = "14.10"`). All other 7 sources remain at their previous versions.
+  - [x] 24.6 Verification: Passed `./gradlew check` (69 actionable tasks, 250 unit tests green, 0 failures), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 23 complete. 8 active production sources. `NontonHentai`, `Hanime1`, and `3xchina` bumped to v14.9 (code 9); remaining 5 active sources remain at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Overall Status**: Phase 24 complete. 8 active production sources. `Hanime1` bumped to v14.10 (code 10); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
 - **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 250 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (250 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 

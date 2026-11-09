@@ -402,8 +402,13 @@ class SimpleCookieJar : CookieJar {
             val getInstance = cmClass.getMethod("getInstance")
             val cookieManager = getInstance.invoke(null)
             val getCookie = cmClass.getMethod("getCookie", String::class.java)
-            val rawHeader = getCookie.invoke(cookieManager, url.toString()) as? String
-            if (!rawHeader.isNullOrBlank()) {
+
+            val rootUrl = "${url.scheme}://${url.host}/"
+            val rootCookies = getCookie.invoke(cookieManager, rootUrl) as? String
+            val fullCookies = getCookie.invoke(cookieManager, url.toString()) as? String
+            val rawHeaders = listOfNotNull(rootCookies, fullCookies).filter { it.isNotBlank() }
+
+            for (rawHeader in rawHeaders) {
                 val parsed = rawHeader.split(";").mapNotNull { part ->
                     val trimmed = part.trim()
                     val eq = trimmed.indexOf('=')

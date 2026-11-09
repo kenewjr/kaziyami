@@ -24,6 +24,13 @@ data class BrowserProfile(
         @Volatile
         private var cachedResolved: BrowserProfile? = null
 
+        fun setRuntimeUserAgent(ua: String) {
+            val clean = ua.trim()
+            if (clean.isNotBlank()) {
+                cachedResolved = computeProfileForUserAgent(clean)
+            }
+        }
+
         fun resolve(): BrowserProfile {
             cachedResolved?.let { return it }
             val resolved = computeResolvedProfile()
@@ -36,45 +43,79 @@ data class BrowserProfile(
         }
 
         fun resolveRuntimeUserAgent(): String? {
-            // 1. Try Android WebSettings.getDefaultUserAgent via ActivityThread or Injekt
+            // 1. Try Injekt: NetworkHelper.defaultUserAgentProvider() or Application -> WebSettings
             try {
-                val context = try {
-                    val atClass = Class.forName("android.app.ActivityThread")
+                val injektKt = Class.forName("uy.kohesive.injekt.InjektKt")
+                val getInjekt = injektKt.getMethod("getInjekt")
+                val scope = getInjekt.invoke(null)
+                val getInstance = scope.javaClass.getMethod("getInstance", java.lang.reflect.Type::class.java)
+
+                try {
+                    val nhClass = Class.forName("eu.kanade.tachiyomi.network.NetworkHelper")
+                    val nh = getInstance.invoke(scope, nhClass)
+                    if (nh != null) {
+                        val getUa = nhClass.getMethod("defaultUserAgentProvider")
+                        val ua = getUa.invoke(nh) as? String
+                        if (!ua.isNullOrBlank()) return ua.trim()
+                    }
+                } catch (_: Throwable) {}
+
+                try {
+                    val appClass = Class.forName("android.app.Application")
+                    val app = getInstance.invoke(scope, appClass)
+                    if (app != null) {
+                        val wsClass = Class.forName("android.webkit.WebSettings")
+                        val getUa = wsClass.getMethod("getDefaultUserAgent", Class.forName("android.content.Context"))
+                        val ua = getUa.invoke(null, app) as? String
+                        if (!ua.isNullOrBlank()) return ua.trim()
+                    }
+                } catch (_: Throwable) {}
+            } catch (_: Throwable) {}
+
+            // 2. Try Android ActivityThread -> WebSettings.getDefaultUserAgent
+            try {
+                val atClass = Class.forName("android.app.ActivityThread")
+                val app = try {
                     atClass.getMethod("currentApplication").invoke(null)
                 } catch (_: Throwable) {
                     try {
-                        val injektClass = Class.forName("uy.kohesive.injekt.Injekt")
-                        val instance = injektClass.getField("INSTANCE").get(null)
-                        val getMethod = injektClass.getMethod("getInstance", Class::class.java)
-                        getMethod.invoke(instance, Class.forName("android.app.Application"))
+                        atClass.getMethod("getApplication").invoke(null)
                     } catch (_: Throwable) {
                         null
                     }
                 }
-
-                if (context != null) {
+                if (app != null) {
                     val wsClass = Class.forName("android.webkit.WebSettings")
                     val getUa = wsClass.getMethod("getDefaultUserAgent", Class.forName("android.content.Context"))
-                    val ua = getUa.invoke(null, context) as? String
-                    if (!ua.isNullOrBlank()) {
-                        return ua.trim()
-                    }
+                    val ua = getUa.invoke(null, app) as? String
+                    if (!ua.isNullOrBlank()) return ua.trim()
                 }
-            } catch (_: Throwable) {
-                // Fallback to system property or default
+            } catch (_: Throwable) {}
+
+            // 3. Try system property http.agent
+            val sysAgent = System.getProperty("http.agent")?.trim().orEmpty()
+            if (sysAgent.isNotBlank()) {
+                if (sysAgent.contains("Mozilla") || sysAgent.contains("Chrome")) {
+                    return sysAgent
+                }
+                if (sysAgent.contains("Android")) {
+                    val match = Regex("""\((Linux; U; Android [^)]+)\)""").find(sysAgent)
+                    val osInfo = match?.groupValues?.get(1)?.replace("; U;", ";") ?: "Linux; Android 10; K"
+                    return "Mozilla/5.0 ($osInfo) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"
+                }
             }
 
-            // 2. Try system property
-            val sysAgent = System.getProperty("http.agent")?.trim()
-            if (!sysAgent.isNullOrBlank() && (sysAgent.contains("Mozilla") || sysAgent.contains("Chrome"))) {
-                return sysAgent
+            // 4. Android runtime detection without explicit UA: fallback to modern generic Android UA
+            val isAndroidRuntime = System.getProperty("java.vendor")?.contains("Android", ignoreCase = true) == true ||
+                System.getProperty("java.vm.vendor")?.contains("The Android Project", ignoreCase = true) == true
+            if (isAndroidRuntime) {
+                return "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"
             }
 
             return null
         }
 
-        private fun computeResolvedProfile(): BrowserProfile {
-            val runtimeUa = resolveRuntimeUserAgent() ?: return DEFAULT
+        fun computeProfileForUserAgent(runtimeUa: String): BrowserProfile {
             val chromeMatch = Regex("""Chrome/(\d+)\.""").find(runtimeUa)
             val isAndroid = runtimeUa.contains("Android", ignoreCase = true)
             val isMobile = isAndroid || runtimeUa.contains("Mobile", ignoreCase = true)
@@ -86,7 +127,8 @@ data class BrowserProfile(
                 else -> null
             }
 
-            val (secChUa, secChUaMobile, secChUaPlatform) = if (chromeMatch != null && platform != null) {
+            // Android WebViews and mobile apps omit Sec-Ch-Ua client hints by default to avoid Turnstile conflicts
+            val (secChUa, secChUaMobile, secChUaPlatform) = if (!isAndroid && chromeMatch != null && platform != null) {
                 val major = chromeMatch.groupValues[1]
                 Triple(
                     "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"$major\", \"Google Chrome\";v=\"$major\"",
@@ -103,6 +145,11 @@ data class BrowserProfile(
                 secChUaMobile = secChUaMobile,
                 secChUaPlatform = secChUaPlatform
             )
+        }
+
+        private fun computeResolvedProfile(): BrowserProfile {
+            val runtimeUa = resolveRuntimeUserAgent() ?: return DEFAULT
+            return computeProfileForUserAgent(runtimeUa)
         }
     }
 
