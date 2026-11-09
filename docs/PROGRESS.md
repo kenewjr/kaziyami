@@ -218,10 +218,15 @@
   - [x] 25.4 Independent Version Bump: Bumped `Hanime1` to version 14.11 (`extVersionCode = 11`, `extVersion = "14.11"`). All other 7 sources remain untouched.
   - [x] 25.5 Verification: Added unit tests `popularAnimeRequest_constructsValidUrlWithoutFormatError` and `latestUpdatesRequest_constructsValidUrlWithoutFormatError` to `Hanime1Test.kt`. Passed `./gradlew check` (252 unit tests green), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 26: Total Elimination of String.format in GenericThemeSource & Hanime1 Bump to v14.12**:
+  - [x] 26.1 String.format Complete Removal: Replaced `String.format` in `GenericThemeSource.safeFormatPage` directly with `template.replace("%d", page.toString())` and in `GenericThemeSource.searchAnimeRequest` with `config.searchPath.replace("%s", encodedQuery).replace("%d", page.toString())`, preventing any possible format conversion exceptions when URLs contain percent-encoded entities.
+  - [x] 26.2 Version Bump to v14.12: Bumped Hanime1 to `extVersionCode = 12`, `extVersion = "14.12"`. Ensures monotonic update detection in Kototoro and Aniyomi package managers.
+  - [x] 26.3 Verification: Passed `./gradlew check` (252 unit tests green), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 25 complete. 8 active production sources. `Hanime1` bumped to v14.11 (code 11); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Overall Status**: Phase 26 complete. 8 active production sources. `Hanime1` bumped to v14.12 (code 12); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
 - **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 

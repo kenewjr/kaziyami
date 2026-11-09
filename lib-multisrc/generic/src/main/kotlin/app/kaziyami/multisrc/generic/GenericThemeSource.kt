@@ -274,8 +274,7 @@ open class GenericThemeSource(
     }
 
     private fun safeFormatPage(template: String, page: Int): String {
-        return runCatching { String.format(template, page) }
-            .getOrElse { template.replace("%d", page.toString()) }
+        return template.replace("%d", page.toString())
     }
 
     override fun latestUpdatesSelector(): String = config.selectors.item
@@ -313,7 +312,7 @@ open class GenericThemeSource(
     public override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
-        val path = String.format(config.searchPath, encodedQuery, page)
+        val path = config.searchPath.replace("%s", encodedQuery).replace("%d", page.toString())
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
