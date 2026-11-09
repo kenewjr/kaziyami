@@ -14,7 +14,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def bump_source(slug: str):
     found = None
-    for lang in ["id", "en"]:
+    for lang in ["id", "en", "zh"]:
         path = os.path.join(ROOT_DIR, "src", lang, slug, "build.gradle.kts")
         if os.path.exists(path):
             found = path

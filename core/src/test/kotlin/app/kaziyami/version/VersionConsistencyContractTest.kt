@@ -20,7 +20,9 @@ class VersionConsistencyContractTest {
         Triple("en", "hentaimama", "Hentaimama"),
         Triple("en", "hanime", "Hanime"),
         Triple("en", "rulevid", "RuleVid"),
-        Triple("en", "rule34video", "Rule34Video")
+        Triple("en", "rule34video", "Rule34Video"),
+        Triple("zh", "hanime1", "Hanime1"),
+        Triple("zh", "3xchina", "3xchina")
     )
 
     @Test
@@ -59,7 +61,8 @@ class VersionConsistencyContractTest {
             val rawLibVersion = libMatch!!.groupValues[1]
 
             // Variant A (Aniyomi APK) Invariants
-            val aniyomiPkg = "eu.kanade.tachiyomi.animeextension.$lang.$slug"
+            val pkgSuffix = if (slug == "3xchina") "threexchina" else slug
+            val aniyomiPkg = "eu.kanade.tachiyomi.animeextension.$lang.$pkgSuffix"
             val aniyomiEntry = aniyomiMap[aniyomiPkg]?.jsonObject
             assertNotNull(aniyomiEntry, "Aniyomi index must contain entry for $aniyomiPkg")
 
