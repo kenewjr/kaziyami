@@ -25,8 +25,8 @@ class Hanime1 : GenericThemeSource(
         lang = "zh",
         baseUrl = "https://hanime1.me",
         mirrors = listOf("https://hanime1.me"),
-        popularPath = "/search?sort=%E6%9C%AC%E6%97%A5%E6%8E%92%E8%A1%8C&page=%d",
-        latestPath = "/search?sort=%E6%9C%80%E6%96%B0%E4%B8%8A%E5%B8%82&page=%d",
+        popularPath = "/search?sort=本日排行&page=%d",
+        latestPath = "/search?sort=最新上市&page=%d",
         searchPath = "/search?query=%s&page=%d",
         selectors = SelectorsConfig(
             item = ".search-result-items > div, div[class^=video-item-container], div.home-rows-videos-div, .card",
@@ -47,6 +47,18 @@ class Hanime1 : GenericThemeSource(
         )
     )
 ) {
+
+    public override fun popularAnimeRequest(page: Int): Request {
+        checkAgeConfirmed()
+        val path = if (page > 1) "/search?sort=本日排行&page=$page" else "/search?sort=本日排行"
+        return GET(UrlUtils.resolve(baseUrl, path), headers)
+    }
+
+    public override fun latestUpdatesRequest(page: Int): Request {
+        checkAgeConfirmed()
+        val path = if (page > 1) "/search?sort=最新上市&page=$page" else "/search?sort=最新上市"
+        return GET(UrlUtils.resolve(baseUrl, path), headers)
+    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()

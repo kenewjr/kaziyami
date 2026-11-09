@@ -203,7 +203,7 @@ open class GenericThemeSource(
 
     public override fun popularAnimeRequest(page: Int): Request {
         checkAgeConfirmed()
-        val path = String.format(config.popularPath, page)
+        val path = safeFormatPage(config.popularPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
@@ -268,9 +268,14 @@ open class GenericThemeSource(
 
     public override fun latestUpdatesRequest(page: Int): Request {
         checkAgeConfirmed()
-        val path = String.format(config.latestPath, page)
+        val path = safeFormatPage(config.latestPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
+    }
+
+    private fun safeFormatPage(template: String, page: Int): String {
+        return runCatching { String.format(template, page) }
+            .getOrElse { template.replace("%d", page.toString()) }
     }
 
     override fun latestUpdatesSelector(): String = config.selectors.item

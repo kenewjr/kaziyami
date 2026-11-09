@@ -211,10 +211,17 @@
   - [x] 24.5 Version Bump: Bumped Hanime1 to version 14.10 (`extVersionCode = 10`, `extVersion = "14.10"`). All other 7 sources remain at their previous versions.
   - [x] 24.6 Verification: Passed `./gradlew check` (69 actionable tasks, 250 unit tests green, 0 failures), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 25: String.format IllegalFormatConversionException Fix**:
+  - [x] 25.1 Diagnose & Root Cause: Traced `e != java.lang.Integer` to Java `IllegalFormatConversionException` inside `String.format(config.popularPath, page)`. Putting URL percent-encoded characters (`%E6%9C%AC...`) into `popularPath` caused Java's `Formatter` to interpret `%E` as scientific floating-point conversion specifier, throwing upon receiving `page: Int` (`Integer`).
+  - [x] 25.2 Direct URL Builder Overrides: Overrode `popularAnimeRequest` and `latestUpdatesRequest` in `Hanime1` using Kotlin string interpolation (`/search?sort=本日排行&page=$page`). Reverted `popularPath` and `latestPath` to raw Chinese characters.
+  - [x] 25.3 Defensive Format Fallback: Implemented `safeFormatPage(template, page)` in `GenericThemeSource`, safely catching any `Formatter` exception and falling back to `.replace("%d", page.toString())`.
+  - [x] 25.4 Independent Version Bump: Bumped `Hanime1` to version 14.11 (`extVersionCode = 11`, `extVersion = "14.11"`). All other 7 sources remain untouched.
+  - [x] 25.5 Verification: Added unit tests `popularAnimeRequest_constructsValidUrlWithoutFormatError` and `latestUpdatesRequest_constructsValidUrlWithoutFormatError` to `Hanime1Test.kt`. Passed `./gradlew check` (252 unit tests green), `kototoroSelfTest` (8/8 sources pass all 7 steps 100% green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 24 complete. 8 active production sources. `Hanime1` bumped to v14.10 (code 10); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
-- **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 250 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (250 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+- **Overall Status**: Phase 25 complete. 8 active production sources. `Hanime1` bumped to v14.11 (code 11); `NontonHentai` and `3xchina` at v14.9 (code 9); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: None. Ready for remote push and CI monitoring.
 

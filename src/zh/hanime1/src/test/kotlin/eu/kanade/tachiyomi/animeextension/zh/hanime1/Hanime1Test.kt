@@ -81,6 +81,28 @@ class Hanime1Test {
     }
 
     @Test
+    fun popularAnimeRequest_constructsValidUrlWithoutFormatError() {
+        val req1 = source.popularAnimeRequest(1)
+        assertThat(req1.url.queryParameter("sort")).isEqualTo("本日排行")
+        assertThat(req1.url.queryParameter("page")).isNull()
+
+        val req2 = source.popularAnimeRequest(2)
+        assertThat(req2.url.queryParameter("sort")).isEqualTo("本日排行")
+        assertThat(req2.url.queryParameter("page")).isEqualTo("2")
+    }
+
+    @Test
+    fun latestUpdatesRequest_constructsValidUrlWithoutFormatError() {
+        val req1 = source.latestUpdatesRequest(1)
+        assertThat(req1.url.queryParameter("sort")).isEqualTo("最新上市")
+        assertThat(req1.url.queryParameter("page")).isNull()
+
+        val req2 = source.latestUpdatesRequest(3)
+        assertThat(req2.url.queryParameter("sort")).isEqualTo("最新上市")
+        assertThat(req2.url.queryParameter("page")).isEqualTo("3")
+    }
+
+    @Test
     fun searchAnimeRequest_composesSortingAndGenre() {
         val filters = source.getFilterList()
         val sortFilter = filters.filterIsInstance<Hanime1.Hanime1SortFilter>().first()
