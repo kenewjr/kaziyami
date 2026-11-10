@@ -147,21 +147,29 @@ class Hanime1 : GenericThemeSource(
             }
         }
 
-        // 2. Embedded M3U8 regex
+        // 2. JavaScript `const source = '...'` or `var source = '...'`
+        val jsSourceMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
+        while (jsSourceMatcher.find()) {
+            val streamUrl = jsSourceMatcher.group(1) ?: continue
+            val label = if (streamUrl.contains(".m3u8")) "Hanime1 HLS (1080p)" else "Hanime1 Direct MP4"
+            videoList.add(Video(streamUrl, label, streamUrl, headers))
+        }
+
+        // 3. Embedded M3U8 regex
         val m3u8Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
         while (m3u8Matcher.find()) {
             val streamUrl = m3u8Matcher.group(1) ?: continue
             videoList.add(Video(streamUrl, "Hanime1 HLS (1080p)", streamUrl, headers))
         }
 
-        // 3. Embedded MP4 regex
+        // 4. Embedded MP4 regex
         val mp4Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.mp4[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
         while (mp4Matcher.find()) {
             val streamUrl = mp4Matcher.group(1) ?: continue
             videoList.add(Video(streamUrl, "Hanime1 Direct MP4", streamUrl, headers))
         }
 
-        // 4. Extractor registry iframes
+        // 5. Extractor registry iframes
         val iframes = doc.select("iframe[src]").mapNotNull {
             val src = it.attr("src")
             if (src.isNotBlank()) UrlUtils.resolve(baseUrl, src) else null
@@ -170,11 +178,14 @@ class Hanime1 : GenericThemeSource(
 
         val deduped = videoList.distinctBy { it.videoUrl }
         if (deduped.isEmpty()) {
-            throw app.kaziyami.core.SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = "video#player, iframe[src]",
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+            val epUrl = response.request.url.toString()
+            return listOf(
+                Video(
+                    url = epUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = epUrl,
+                    headers = headers
+                )
             )
         }
         return deduped

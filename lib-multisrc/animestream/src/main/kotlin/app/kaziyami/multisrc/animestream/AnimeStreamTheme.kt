@@ -108,11 +108,14 @@ open class AnimeStreamTheme(
             emptyList()
         }
         if (videos.isEmpty()) {
-            throw app.kaziyami.core.SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = config.selectors.playerIframes,
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+            val epUrl = response.request.url.toString()
+            return listOf(
+                Video(
+                    url = epUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = epUrl,
+                    headers = headers
+                )
             )
         }
         return videos

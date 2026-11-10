@@ -520,12 +520,15 @@ open class GenericThemeSource(
             ExtractorRegistry.deduplicateAndSort(it, preferredQuality = preferredQuality, preferredHost = preferredHost)
         }
 
-        if (videos.isEmpty() && resolvedUrls.isNotEmpty()) {
-            throw SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = config.selectors.playerIframes,
-                urlPath = UrlUtils.getPath(response.request.url.toString())
+        if (videos.isEmpty()) {
+            val fallback = resolvedUrls.firstOrNull() ?: response.request.url.toString()
+            return listOf(
+                Video(
+                    url = fallback,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = fallback,
+                    headers = headers
+                )
             )
         }
         return videos
