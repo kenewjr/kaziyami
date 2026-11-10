@@ -208,14 +208,14 @@ val prepareHostClasspath by tasks.registering(Copy::class) {
     description = "Prepares host runtime dependency jars for API binding verification."
     val hostConf = configurations.maybeCreate("hostClasspath")
     dependencies {
-        add("hostClasspath", "com.squareup.okhttp3:okhttp:4.9.3")
+        add("hostClasspath", "com.squareup.okhttp3:okhttp:4.12.1")
         add("hostClasspath", "com.squareup.okio:okio:2.8.0")
         add("hostClasspath", "io.reactivex:rxjava:1.3.8")
         add("hostClasspath", "uy.kohesive.injekt:injekt-core:1.16.1")
-        add("hostClasspath", "org.jsoup:jsoup:1.15.3")
-        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.3")
-        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.6.3")
-        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0")
+        add("hostClasspath", "org.jsoup:jsoup:1.24.1")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.12.0")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.12.0")
+        add("hostClasspath", "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0")
     }
     from(hostConf)
     into(file("$buildDir/host-libs"))
