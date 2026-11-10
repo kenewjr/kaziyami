@@ -209,7 +209,7 @@ val prepareHostClasspath by tasks.registering(Copy::class) {
     val hostConf = configurations.maybeCreate("hostClasspath")
     dependencies {
         add("hostClasspath", "com.squareup.okhttp3:okhttp:4.9.3")
-        add("hostClasspath", "com.squareup.okio:okio:2.8.0")
+        add("hostClasspath", "com.squareup.okio:okio:3.18.2")
         add("hostClasspath", "io.reactivex:rxjava:1.3.8")
         add("hostClasspath", "uy.kohesive.injekt:injekt-core:1.16.1")
         add("hostClasspath", "org.jsoup:jsoup:1.15.3")
