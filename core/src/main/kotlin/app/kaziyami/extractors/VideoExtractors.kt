@@ -25,9 +25,7 @@ class DirectVideoExtractor : VideoExtractor {
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val effectiveRef = if (referer.isNotBlank()) referer else url
-        val headers = Headers.Builder()
-            .set("Referer", effectiveRef)
-            .build()
+        val headers = BrowserHeaders.mediaHeaders(effectiveRef)
         val quality = if (url.contains("1080p", ignoreCase = true)) {
             "Direct 1080p"
         } else if (url.contains("720p", ignoreCase = true)) {
@@ -87,7 +85,7 @@ class StreamTapeExtractor : VideoExtractor {
         }
 
         val videoUrl = streamUrl ?: return emptyList()
-        val headers = Headers.Builder().set("Referer", embedUrl).build()
+        val headers = BrowserHeaders.mediaHeaders(embedUrl)
         return listOf(Video(embedUrl, "StreamTape 720p", videoUrl, headers))
     }
 }
@@ -130,7 +128,7 @@ class DoodExtractor : VideoExtractor {
 
         val token = "zUEJeL3mUN"
         val finalUrl = passBody + token + "?token=" + passUrl.substringAfterLast("/") + "&expiry=" + System.currentTimeMillis()
-        val headers = Headers.Builder().set("Referer", "https://${req.url.host}/").build()
+        val headers = BrowserHeaders.mediaHeaders("https://${req.url.host}/")
         val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "DoodStream"
         return listOf(Video(embedUrl, "$hostName 720p", finalUrl, headers))
     }
@@ -158,7 +156,7 @@ class VoeExtractor : VideoExtractor {
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val hlsUrl = matcher.group(1)
-            val headers = Headers.Builder().set("Referer", url).build()
+            val headers = BrowserHeaders.mediaHeaders(url)
             return listOf(Video(url, "VOE 720p", hlsUrl, headers))
         }
 
@@ -195,7 +193,7 @@ class Mp4UploadExtractor : VideoExtractor {
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val videoUrl = matcher.group(1)
-            val headers = Headers.Builder().set("Referer", embedUrl).build()
+            val headers = BrowserHeaders.mediaHeaders(embedUrl)
             return listOf(Video(embedUrl, "Mp4Upload HD", videoUrl, headers))
         }
         return emptyList()
@@ -224,7 +222,7 @@ class StreamWishExtractor : VideoExtractor {
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val videoUrl = matcher.group(1)
-            val headers = Headers.Builder().set("Referer", url).build()
+            val headers = BrowserHeaders.mediaHeaders(url)
             return listOf(Video(url, "StreamWish HD", videoUrl, headers))
         }
         return emptyList()
@@ -253,7 +251,7 @@ class FilemoonExtractor : VideoExtractor {
         val matcher = pattern.matcher(html)
         if (matcher.find()) {
             val videoUrl = matcher.group(1)
-            val headers = Headers.Builder().set("Referer", url).build()
+            val headers = BrowserHeaders.mediaHeaders(url)
             return listOf(Video(url, "Filemoon HD", videoUrl, headers))
         }
         return emptyList()
@@ -280,7 +278,7 @@ class StreamPoiExtractor : VideoExtractor {
         val fileMatch = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
         if (fileMatch.find()) {
             val masterUrl = fileMatch.group(1)
-            val headers = Headers.Builder().set("Referer", url).build()
+            val headers = BrowserHeaders.mediaHeaders(url)
             return listOf(
                 Video(url, "$hostName 1080p (HLS)", masterUrl, headers),
                 Video(url, "$hostName 720p (HLS)", masterUrl, headers)
@@ -289,7 +287,7 @@ class StreamPoiExtractor : VideoExtractor {
         val directMatch = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
         if (directMatch.find()) {
             val masterUrl = directMatch.group(1)
-            val headers = Headers.Builder().set("Referer", url).build()
+            val headers = BrowserHeaders.mediaHeaders(url)
             return listOf(Video(url, "$hostName HD (HLS)", masterUrl, headers))
         }
 
@@ -347,10 +345,9 @@ class HentaiCopExtractor : VideoExtractor {
         }
 
         val videos = mutableListOf<Video>()
-        val videoHeaders = Headers.Builder()
-            .set("Referer", "https://hentaicop.com/")
+        val videoHeaders = BrowserHeaders.mediaHeaders("https://hentaicop.com/")
+            .newBuilder()
             .set("Origin", "https://hentaicop.com")
-            .set("User-Agent", profile.userAgent)
             .build()
 
         var unpackedHtml = html
@@ -480,10 +477,7 @@ class HgCloudExtractor : VideoExtractor {
         if (html.isBlank()) return emptyList()
 
         val unpacked = unpack(html)
-        val videoHeaders = Headers.Builder()
-            .set("Referer", finalUrl)
-            .set("User-Agent", profile.userAgent)
-            .build()
+        val videoHeaders = BrowserHeaders.mediaHeaders(finalUrl)
 
         val videos = mutableListOf<Video>()
 

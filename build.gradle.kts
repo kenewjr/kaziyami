@@ -279,6 +279,13 @@ val kototoroSelfTest by tasks.registering(Exec::class) {
     }
 }
 
+val verifyStreamHygiene by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Verifies real-world stream hygiene, single-char search padding, and video headers."
+    dependsOn(kototoroSelfTest)
+    commandLine("python", "tools/verify_stream_hygiene.py")
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all verification tasks across root and subprojects."
@@ -291,5 +298,6 @@ tasks.register("check") {
     dependsOn(verifyHostApiBinding)
     dependsOn(testSourceInstantiation)
     dependsOn(kototoroSelfTest)
+    dependsOn(verifyStreamHygiene)
     dependsOn(subprojects.map { it.tasks.matching { task -> task.name == "check" || task.name == "test" } })
 }

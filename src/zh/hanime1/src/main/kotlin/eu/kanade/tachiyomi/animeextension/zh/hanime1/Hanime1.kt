@@ -138,13 +138,7 @@ class Hanime1 : GenericThemeSource(
         val unescapedBody = body.replace("\\/", "/")
         val videoList = mutableListOf<Video>()
 
-        val videoHeaders = headers.newBuilder()
-            .set("Referer", "https://hanime1.me/")
-            .removeAll("Sec-Fetch-Dest")
-            .removeAll("Sec-Fetch-Mode")
-            .removeAll("Sec-Fetch-User")
-            .removeAll("Upgrade-Insecure-Requests")
-            .build()
+        val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime1.me/", headers)
 
         val isVideoUrl: (String) -> Boolean = { u ->
             val l = u.lowercase()

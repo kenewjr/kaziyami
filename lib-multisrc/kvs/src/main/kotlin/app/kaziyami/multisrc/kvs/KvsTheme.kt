@@ -131,9 +131,7 @@ open class KvsTheme(
     override fun videoListParse(response: Response): List<Video> {
         val html = response.body?.string().orEmpty()
         val videos = mutableListOf<Video>()
-        val videoHeaders = headers.newBuilder()
-            .set("Referer", baseUrl)
-            .build()
+        val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders(baseUrl, headers)
 
         // 1. Primary video_url
         val mainMatch = Regex("""video_url:\s*['"]([^'"]+)['"]""").find(html)

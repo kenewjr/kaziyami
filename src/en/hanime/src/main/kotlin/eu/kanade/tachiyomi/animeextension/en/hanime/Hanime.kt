@@ -283,6 +283,7 @@ class Hanime : GenericThemeSource(
         val body = response.body?.string().orEmpty()
         val unescapedBody = body.replace("\\/", "/")
         val videoList = mutableListOf<Video>()
+        val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime.tv/", headers)
 
         // 1. Embedded HLS m3u8 streams
         val m3u8Matcher = M3U8_REGEX.matcher(unescapedBody)
@@ -293,7 +294,7 @@ class Hanime : GenericThemeSource(
                     url = streamUrl,
                     quality = "HLS 720p/1080p",
                     videoUrl = streamUrl,
-                    headers = headers
+                    headers = videoHeaders
                 )
             )
         }
@@ -307,7 +308,7 @@ class Hanime : GenericThemeSource(
                     url = streamUrl,
                     quality = "Direct MP4",
                     videoUrl = streamUrl,
-                    headers = headers
+                    headers = videoHeaders
                 )
             )
         }
@@ -336,7 +337,7 @@ class Hanime : GenericThemeSource(
                     url = epUrl,
                     quality = "Open in WebView (Cloudflare Turnstile)",
                     videoUrl = epUrl,
-                    headers = headers
+                    headers = videoHeaders
                 )
             )
         }
@@ -437,6 +438,7 @@ class Hanime : GenericThemeSource(
             val root = Json.parseToJsonElement(jsonStr).jsonObject
             val sources = root["sources"]?.jsonArray ?: return emptyList()
             val list = mutableListOf<Video>()
+            val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime.tv/", headers)
             for (item in sources) {
                 val obj = item.jsonObject
                 val src = obj["src"]?.jsonPrimitive?.content.orEmpty()
@@ -448,7 +450,7 @@ class Hanime : GenericThemeSource(
                         url = streamUrl,
                         quality = "Hanime $label",
                         videoUrl = streamUrl,
-                        headers = headers
+                        headers = videoHeaders
                     )
                 )
             }

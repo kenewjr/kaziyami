@@ -87,6 +87,24 @@ jobs:
       - name: Scan Repository for Secrets and Tokens
         run: python tools/scan_secrets.py
 
+      - name: Verify No Host Classes Packaged
+        run: python tools/verify_no_host_classes.py
+
+      - name: Verify Host API Bindings
+        run: python tools/verify_host_api_binding.py
+
+      - name: Verify Stream Hygiene and Search Padding
+        run: python tools/verify_stream_hygiene.py
+
+      - name: Test Auto-Update Monotonic Simulation
+        run: python tools/test_update_simulation.py
+
+      - name: Test Preflight Validation
+        run: python tools/test_preflight.py
+
+      - name: Test Diagnostics Sanitization
+        run: python tools/test_collect_diagnostics.py
+
   runtime-compat:
     runs-on: ubuntu-24.04
     steps:

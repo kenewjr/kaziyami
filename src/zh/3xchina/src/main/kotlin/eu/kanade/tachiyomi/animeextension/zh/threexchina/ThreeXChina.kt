@@ -112,7 +112,7 @@ class ThreeXChina : RetroTubeTheme(
                     url = fallback,
                     quality = "Stream (Open in WebView if blocked)",
                     videoUrl = fallback,
-                    headers = headers
+                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
                 )
             )
         }

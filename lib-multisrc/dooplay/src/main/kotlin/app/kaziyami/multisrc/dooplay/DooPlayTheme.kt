@@ -219,7 +219,7 @@ open class DooPlayTheme(
                     url = fallbackUrl,
                     quality = "Stream (Open in WebView if blocked)",
                     videoUrl = fallbackUrl,
-                    headers = okhttp3.Headers.Builder().set("Referer", referer).build()
+                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
                 )
             )
         }

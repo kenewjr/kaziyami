@@ -114,7 +114,7 @@ open class AnimeStreamTheme(
                     url = epUrl,
                     quality = "Stream (Open in WebView if blocked)",
                     videoUrl = epUrl,
-                    headers = headers
+                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(baseUrl, headers)
                 )
             )
         }

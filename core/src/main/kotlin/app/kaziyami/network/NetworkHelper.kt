@@ -130,6 +130,42 @@ object BrowserHeaders {
      * Backward-compatible default headers generator.
      */
     fun defaultHeaders(referer: String? = null): Headers = headersFor("", referer, HeaderType.NAVIGATE)
+
+    /**
+     * Generates clean, robust headers for media/video stream requests.
+     * Guaranteed to include browser User-Agent and Referer, while stripping
+     * document navigation headers (Sec-Fetch-Dest: document, Upgrade-Insecure-Requests).
+     */
+    fun mediaHeaders(
+        referer: String? = null,
+        extraHeaders: Headers? = null,
+        profile: BrowserProfile = BrowserProfile.resolve()
+    ): Headers {
+        val builder = Headers.Builder()
+        builder.set("User-Agent", profile.userAgent)
+        if (!referer.isNullOrBlank()) {
+            builder.set("Referer", referer)
+        }
+        builder.set("Accept", "*/*")
+        builder.set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
+        builder.set("Sec-Fetch-Mode", "no-cors")
+        builder.set("Sec-Fetch-Dest", "video")
+
+        if (extraHeaders != null) {
+            for (i in 0 until extraHeaders.size) {
+                val name = extraHeaders.name(i)
+                val value = extraHeaders.value(i)
+                if (name.equals("Sec-Fetch-Dest", ignoreCase = true) && value.equals("document", ignoreCase = true)) continue
+                if (name.equals("Upgrade-Insecure-Requests", ignoreCase = true)) continue
+                if (name.equals("Sec-Fetch-Mode", ignoreCase = true) && value.equals("navigate", ignoreCase = true)) continue
+                if (name.equals("Sec-Fetch-User", ignoreCase = true)) continue
+                if (name.equals("User-Agent", ignoreCase = true)) continue
+                if (name.equals("Referer", ignoreCase = true) && !referer.isNullOrBlank()) continue
+                builder.set(name, value)
+            }
+        }
+        return builder.build()
+    }
 }
 
 /**

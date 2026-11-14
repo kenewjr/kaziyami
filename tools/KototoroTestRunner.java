@@ -137,11 +137,11 @@ public class KototoroTestRunner {
         if (listOk && sampleAnime != null) {
             try {
                 String thumb = (String) sampleAnime.getClass().getMethod("getThumbnail_url").invoke(sampleAnime);
-                if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://"))) {
+                if (thumb != null && (thumb.startsWith("http://") || thumb.startsWith("https://")) && !isPlaceholder(thumb)) {
                     coversOk = true;
                     coversMsg = "1/1 covers valid";
                 } else {
-                    coversMsg = "No valid cover URL found";
+                    coversMsg = "No valid cover URL found: " + (thumb == null ? "null" : thumb);
                 }
             } catch (Throwable t) {
                 coversMsg = formatError(t);
@@ -212,11 +212,20 @@ public class KototoroTestRunner {
                     if (videoUrl == null) {
                         videoUrl = (String) firstVideo.getClass().getMethod("getUrl").invoke(firstVideo);
                     }
-                    if (videoUrl != null && !videoUrl.isEmpty()) {
+                    okhttp3.Headers vHeaders = (okhttp3.Headers) firstVideo.getClass().getMethod("getHeaders").invoke(firstVideo);
+                    if (videoUrl == null || videoUrl.trim().isEmpty()) {
+                        pagesMsg = "Video URL is empty";
+                    } else if (looksLikeHtml(videoUrl)) {
+                        pagesMsg = "Video URL is an HTML webpage, not a stream: " + videoUrl;
+                    } else if (vHeaders != null && "document".equalsIgnoreCase(vHeaders.get("Sec-Fetch-Dest"))) {
+                        pagesMsg = "Video headers contain forbidden document navigation header: Sec-Fetch-Dest: document";
+                    } else if (vHeaders != null && vHeaders.get("Upgrade-Insecure-Requests") != null) {
+                        pagesMsg = "Video headers contain forbidden navigation header: Upgrade-Insecure-Requests";
+                    } else if (vHeaders != null && (vHeaders.get("User-Agent") == null || vHeaders.get("User-Agent").trim().isEmpty())) {
+                        pagesMsg = "Video headers missing User-Agent (causes CDN 403)";
+                    } else {
                         pagesOk = true;
                         pagesMsg = "Playable video streams: " + videos.size();
-                    } else {
-                        pagesMsg = "Page list is empty";
                     }
                 } else {
                     pagesMsg = "Page list is empty";
@@ -232,12 +241,17 @@ public class KototoroTestRunner {
 
         // ================= 7. SEARCH =================
         try {
+            Method getFilters = sc.getMethod("getFilterList");
+            Object filterList = getFilters.invoke(source);
+            Request searchReq = (Request) sc.getMethod("searchAnimeRequest", int.class, String.class, filterList.getClass())
+                .invoke(source, 1, "a", filterList);
+            String searchUrl = searchReq.url().toString();
+            if (searchUrl.endsWith("/search/a/") || searchUrl.endsWith("/search/a")) {
+                throw new IllegalStateException("Search URL contains unpadded single-character route: " + searchUrl);
+            }
+
             if (isLive) {
-                Method getFilters = sc.getMethod("getFilterList");
-                Object filterList = getFilters.invoke(source);
-                Request req = (Request) sc.getMethod("searchAnimeRequest", int.class, String.class, filterList.getClass())
-                    .invoke(source, 1, "a", filterList);
-                Response resp = executeRequest(source, req);
+                Response resp = executeRequest(source, searchReq);
                 Object page = sc.getMethod("searchAnimeParse", Response.class).invoke(source, resp);
                 List<?> results = (List<?>) page.getClass().getMethod("getAnimes").invoke(page);
                 if (results != null && !results.isEmpty()) {
@@ -365,6 +379,29 @@ public class KototoroTestRunner {
     private static String escapeJson(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ").replace("\r", "");
+    }
+
+    private static boolean isPlaceholder(String url) {
+        if (url == null) return true;
+        String lower = url.toLowerCase().trim();
+        if (lower.isEmpty()) return true;
+        if (lower.startsWith("data:image/svg+xml")) return true;
+        if (lower.startsWith("data:image/gif") && (lower.contains("r0lgodlhaqaba") || lower.length() < 100)) return true;
+        if (lower.contains("blank.gif") || lower.endsWith("spacer.png") || lower.endsWith("pixel.gif") || lower.endsWith("1x1.png")) return true;
+        return false;
+    }
+
+    private static boolean looksLikeHtml(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase().trim();
+        if (lower.endsWith(".html") || lower.endsWith(".htm") || lower.endsWith(".php") ||
+            lower.contains(".html?") || lower.contains(".php?")) {
+            return true;
+        }
+        if (lower.contains("/watch?") || (lower.contains("/video/") && !lower.contains(".mp4") && !lower.contains(".m3u8"))) {
+            return true;
+        }
+        return false;
     }
 }
 

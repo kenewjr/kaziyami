@@ -527,7 +527,7 @@ open class GenericThemeSource(
                     url = fallback,
                     quality = "Stream (Open in WebView if blocked)",
                     videoUrl = fallback,
-                    headers = headers
+                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(baseUrl, headers)
                 )
             )
         }
