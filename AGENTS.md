@@ -90,3 +90,27 @@ Before modifying code, follow this sequence:
    - Update task items in `docs/PROGRESS.md`.
 5. **Zero Secret Leaks**:
    - Never stage or commit `.keystore`, `.jks`, `.properties` containing credentials, or AI session logs.
+
+---
+
+## 5. Lessons Learned & Anti-Regression Invariants (Kototoro & Live Source Tests)
+
+1. **Kototoro 7-Step In-App Verification Suite (`SourceTester`)**:
+   - Kototoro executes 7 sequential steps: `LIST`, `COVERS`, `DETAILS`, `CHAPTERS`, `PAGES`, `RANDOM`, `SEARCH`.
+   - **Timeout Constraints**: Maximum 20 seconds per step, 90 seconds cumulative per source.
+   - **Step 5 (`PAGES`) Stream Verification**: Kototoro peeks 4KB from `video.videoUrl` and strictly checks `looksLikeVideoStream(contentType, head)` (`video/*`, `application/*mpegurl`, `#EXTM3U`, `ftyp`).
+   - **NEVER Return Webpage/HTML URLs as Video Streams**: Returning HTML embed page URLs or empty video lists triggers `Stream failed: Content-Type: text/html`.
+2. **Video Playback Header Hygiene**:
+   - Video headers (`Video.headers`) MUST include browser `User-Agent` and valid `Referer` (missing UA causes HTTP 403 on video CDNs such as RuleVid).
+   - Video headers MUST NEVER include document navigation headers (`Sec-Fetch-Dest: document`, `Upgrade-Insecure-Requests: 1`), which causes video CDNs to reject media streams with HTTP 404 (as observed on Hanime1).
+3. **Thumbnail Parsing Beyond `<img>` Elements**:
+   - Never assume thumbnails exist solely in `<img>` tags. Themes like Nekopoi place cover images in inline CSS `style="background-image: url('...')"` on `.nk-thumb-crop`. If `thumbnail_url` is empty, Kototoro `COVERS` times out (20s).
+   - Details thumbnails must always include fallback candidates like `meta[property='og:image']`.
+4. **DNS Pre-Validation on Dynamic & Ephemeral Embed Hosts**:
+   - Embed hosts (e.g., `hentaicop.com` on NontonHentai) often unpack temporary, expired, or blocked domains (such as `9385b44eef82e4b1ce998.site`).
+   - Video extractors must pre-validate host resolvability (`InetAddress.getByName(host)`) before appending extracted stream candidates to avoid unresolvable host exceptions in players.
+5. **Search Query Padding & Single-Page Latency Budget**:
+   - Kototoro's search test queries single characters (`"a"`). Sites with URL rewrites requiring minimum query lengths (RuleVid requires >= 2 chars) return HTTP 404; pad single-character queries (`cleanQuery + cleanQuery`).
+   - High-latency backends (WordPress queries taking 10-17s) exceed Kototoro's 20s step timeout if two pages are fetched sequentially. In `getSearchAnime` and `fetchSearchAnime`, return page 1 immediately when `page1.animes.isNotEmpty()`.
+6. **Independent Version Bumping**:
+   - Only increment `extVersionCode` and `extVersion` for extensions that have actual code changes or bug fixes. Unmodified extensions must remain at their existing versions to prevent false update prompts in host UIs.
