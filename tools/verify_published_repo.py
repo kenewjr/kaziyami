@@ -125,93 +125,24 @@ def verify_published_repo(owner_repo, branch="repo", retries=5, delay=5, check_l
     print("[+] All published Aniyomi APK repository assets successfully verified!")
     return 0
 
-def verify_published_kototoro_repo(owner_repo, branch="repo", retries=5, delay=5):
-    base_raw = f"https://raw.githubusercontent.com/{owner_repo}/{branch}/jar"
-    index_url = f"{base_raw}/index.min.json"
-    repo_url = f"{base_raw}/repo.json"
-    sha_url = f"{base_raw}/sha256sums.txt"
-
-    print(f"[+] Verifying published Kototoro JAR repo at {base_raw} ...")
-
-    # 1. Fetch repo.json
-    print(f"[+] Checking Kototoro repo.json: {repo_url}")
-    repo_bytes, _ = fetch_url(repo_url, retries=retries, delay=delay)
-    if b"kaziyami-extensions" in repo_bytes:
-        raise ValueError("Kototoro repo.json contains deprecated URL substring 'kaziyami-extensions'")
-
-    # 2. Fetch index.min.json
-    print(f"[+] Checking Kototoro index.min.json: {index_url}")
-    index_bytes, _ = fetch_url(index_url, retries=retries, delay=delay)
-    if b"kaziyami-extensions" in index_bytes:
-        raise ValueError("Kototoro index.min.json contains deprecated URL substring 'kaziyami-extensions'")
-    index_data = json.loads(index_bytes.decode("utf-8"))
-
-    # 3. Fetch sha256sums.txt
-    print(f"[+] Checking Kototoro sha256sums.txt: {sha_url}")
-    sha_bytes, _ = fetch_url(sha_url, retries=retries, delay=delay)
-    sha_lines = sha_bytes.decode("utf-8").strip().splitlines()
-    sha_map = {}
-    for line in sha_lines:
-        line = line.strip()
-        if line:
-            parts = line.split(None, 1)
-            if len(parts) == 2:
-                file_hash = parts[0].strip()
-                file_path = parts[1].strip()
-                sha_map[file_path] = file_hash
-                sha_map[os.path.basename(file_path)] = file_hash
-
-    # 4. Verify each JAR listed in Kototoro index
-    print(f"[+] Verifying {len(index_data)} packages in Kototoro index...")
-    for entry in index_data:
-        jar_name = entry["apk"]
-        jar_url = f"{base_raw}/apk/{jar_name}"
-        print(f"  -> Verifying JAR: {jar_name} ...")
-        jar_bytes, status = fetch_url(jar_url, retries=retries, delay=delay)
-        if status != 200:
-            raise ValueError(f"JAR {jar_name} returned HTTP {status}")
-        if not jar_bytes.startswith(b"PK\x03\x04"):
-            raise ValueError(f"JAR {jar_name} has invalid ZIP magic: {jar_bytes[:4].hex()}")
-
-        actual_sha = hashlib.sha256(jar_bytes).hexdigest()
-        expected_sha = sha_map.get(jar_name) or sha_map.get(f"apk/{jar_name}")
-        if not expected_sha:
-            raise ValueError(f"JAR {jar_name} missing from sha256sums.txt")
-        if actual_sha != expected_sha:
-            raise ValueError(f"SHA-256 mismatch for {jar_name}: got {actual_sha}, expected {expected_sha}")
-
-        local_jar = os.path.join(ROOT_DIR, "repo", "jar", "apk", jar_name)
-        if not os.path.exists(local_jar):
-            local_jar = os.path.join(ROOT_DIR, "repo", "jar", jar_name)
-        if os.path.exists(local_jar):
-            local_size = os.path.getsize(local_jar)
-            if len(jar_bytes) != local_size:
-                raise ValueError(f"Size mismatch for {jar_name}: downloaded {len(jar_bytes)}, local {local_size}")
-
-    print("[+] All published Kototoro JAR repository assets successfully verified!")
-    return 0
-
 def main():
-    parser = argparse.ArgumentParser(description="Verify published Kaziyami repository (Variants A and B)")
+    parser = argparse.ArgumentParser(description="Verify published Kaziyami repository (Aniyomi APK format)")
     parser.add_argument("--repo", default="kenewjr/kaziyami", help="GitHub repository (owner/repo)")
     parser.add_argument("--branch", default="repo", help="Branch serving repository assets")
-    parser.add_argument("--mode", choices=["all", "aniyomi", "kototoro"], default="all", help="Repository variant to verify")
+    parser.add_argument("--mode", choices=["all", "aniyomi"], default="aniyomi", help="Repository mode (default: aniyomi)")
     parser.add_argument("--retries", type=int, default=5, help="Number of retry attempts")
     parser.add_argument("--delay", type=int, default=5, help="Delay between retries in seconds")
     parser.add_argument("--check-local-size", action="store_true", help="Assert downloaded assets match local files on disk")
     args = parser.parse_args()
 
     try:
-        if args.mode in ("all", "aniyomi"):
-            verify_published_repo(
-                args.repo,
-                branch=args.branch,
-                retries=args.retries,
-                delay=args.delay,
-                check_local_size=args.check_local_size
-            )
-        if args.mode in ("all", "kototoro"):
-            verify_published_kototoro_repo(args.repo, branch=args.branch, retries=args.retries, delay=args.delay)
+        verify_published_repo(
+            args.repo,
+            branch=args.branch,
+            retries=args.retries,
+            delay=args.delay,
+            check_local_size=args.check_local_size
+        )
         return 0
     except Exception as e:
         print(f"[!] verifyPublishedRepo FAILED: {e}", file=sys.stderr)

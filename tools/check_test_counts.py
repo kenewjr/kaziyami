@@ -2,7 +2,7 @@
 """
 tools/check_test_counts.py
 Parses JUnit XML test results from all modules, verifies per-module test execution,
-enforces non-zero test counts for all 6 sources and core, and outputs summary to
+enforces non-zero test counts for all 8 sources, core, and multisrc generic, and outputs summary to
 GitHub Step Summary and console.
 """
 

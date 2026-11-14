@@ -56,18 +56,18 @@ Aniyomi (and compatible forks like Kototoro v2.3+) provides core networking, par
 
 ## 5. Artifact Versioning Convention & Dual-Format Reconciliation
 
-Kaziyami distributes extensions across two distinct packaging formats derived from a single unified codebase:
+Kaziyami distributes video extensions adhering strictly to the host extension contract:
 
 1. **Variant A: Aniyomi APK Extension Convention (`v14.x`)**
    - **`libVersion`**: `"14"` (integer 14 representing upstream Aniyomi Extension API 14 compatibility).
-   - **`extVersionCode`**: Monotonically increasing integer (e.g. `2`).
-   - **APK Filename**: `kaziyami-<lang>.<slug>-v<libVersion>.<extVersionCode>.apk` (e.g. `kaziyami-id.nekopoi-v14.2.apk`).
-   - **Manifest**: `android:versionCode="2"`, `android:versionName="14.2"`.
-   - **Index (`repo/index.json`)**: `"version": "14.2"`, `"code": 2`.
+   - **`extVersionCode`**: Monotonically increasing integer (e.g. `10`).
+   - **APK Filename**: `kaziyami-<lang>.<slug>-v<libVersion>.<extVersionCode>.apk` (e.g. `kaziyami-id.nekopoi-v14.10.apk`).
+   - **Manifest**: `android:versionCode="10"`, `android:versionName="14.10"`.
+   - **Index (`repo/index.json`)**: `"version": "14.10"`, `"code": 10`.
+   - **Target Hosts**: Aniyomi (Stable/Preview) and Kototoro (via built-in `AniyomiExtensionLoader`).
 
-2. **Variant B: Kototoro JAR Plugin Convention (`v1.4.x`)**
-   - **Semantic Version**: `1.4.<extVersionCode>` (derived by mapping `libVersion` 14 to major/minor `1.4` and appending monotonic integer code).
-   - **JAR Filename**: `kaziyami-all-v1.4.<extVersionCode>.jar` and `kaziyami-<slug>-v1.4.<extVersionCode>.jar`.
+2. **Variant B: Kototoro JAR Plugin Convention (Discontinued for Video)**
+   - *Status*: Discontinued per Decision 40. Kototoro's `ContentParser` interface models only manga images and novel text. Kototoro delegates all video playback to its built-in `AniyomiExtensionLoader` (Variant A APK). See [docs/KOTOTORO_JAR_FORMAT.md](KOTOTORO_JAR_FORMAT.md).
    - **Index (`repo/jar/index.json`)**: `"versionCode": 2`, `"versionName": "1.4.2"`.
 
 3. **Parity Invariant**:

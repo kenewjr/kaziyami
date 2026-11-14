@@ -38,7 +38,7 @@ class ThreeXChinaTest {
 
     @Test
     fun popularAnimeParse_extractsItemsAndNextPage() {
-        val resp = mockResponse("https://3xchina.net/most-viewed/page/1/", "popular.html")
+        val resp = mockResponse("https://3xchina.page/most-viewed/page/1/", "popular.html")
         val page = source.popularAnimeParse(resp)
 
         assertThat(page.animes).hasSize(2)
@@ -51,7 +51,7 @@ class ThreeXChinaTest {
 
     @Test
     fun animeDetailsParse_extractsMetadata() {
-        val resp = mockResponse("https://3xchina.net/ama-628/", "details.html")
+        val resp = mockResponse("https://3xchina.page/ama-628/", "details.html")
         val anime = source.animeDetailsParse(resp)
 
         assertThat(anime.title).contains("深閨少婦")
@@ -61,17 +61,17 @@ class ThreeXChinaTest {
 
     @Test
     fun episodeListParse_extractsSingleVideo() {
-        val resp = mockResponse("https://3xchina.net/ama-628/", "details.html")
+        val resp = mockResponse("https://3xchina.page/ama-628/", "details.html")
         val eps = source.episodeListParse(resp)
 
         assertThat(eps).hasSize(1)
         assertThat(eps[0].name).isEqualTo("Full Video")
-        assertThat(eps[0].url).isEqualTo("https://3xchina.net/ama-628/")
+        assertThat(eps[0].url).isEqualTo("https://3xchina.page/ama-628/")
     }
 
     @Test
     fun videoListParse_extractsIframes() {
-        val resp = mockResponse("https://3xchina.net/ama-628/", "video_player.html")
+        val resp = mockResponse("https://3xchina.page/ama-628/", "video_player.html")
         val videos = source.videoListParse(resp)
 
         assertThat(videos).isNotEmpty

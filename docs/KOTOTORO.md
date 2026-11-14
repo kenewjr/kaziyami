@@ -12,7 +12,7 @@ Kototoro is a unified multiplatform reader/player supporting multiple source eco
 |---|---|---|---|---|
 | **Aniyomi Anime Extensions (Variant A)** | `org.skepsun.kototoro.aniyomi.AniyomiExtensionLoader` | `source-host/AniyomiSourceRuntime` | `<uses-feature android:name="tachiyomi.animeextension" />` | **Native (Android APK & Desktop JVM)** |
 | **Mihon Manga Extensions** | `org.skepsun.kototoro.mihon.MihonExtensionLoader` | `source-host/MihonSourceRuntime` | `<uses-feature android:name="tachiyomi.extension" />` | **Native (Android APK & Desktop JVM)** |
-| **Kototoro Plugin JARs (Variant B)** | `parser-host/ParserPluginInspector` & `ParserPluginRegistry` | `parser-host/ParserSourceRuntime` | `org/skepsun/kototoro/parsers/ContentParserFactoryKt.class` | **Native (Desktop JVM & Android ART)** |
+| **Kototoro Plugin JARs (Variant B)** | `parser-host/ParserPluginInspector` & `ParserPluginRegistry` | `parser-host/ParserSourceRuntime` | `org/skepsun/kototoro/parsers/ContentParserFactoryKt.class` | **Discontinued for Video** (Manga/Novel text only; see Decision 40) |
 | **Tsundoku Novel Extensions** | `org.skepsun.kototoro.tsundoku.TsundokuNovelRepository` | `source-host/MihonSourceRuntime` | `<uses-feature android:name="tachiyomi.novelextension" />` | **Native (Android APK & Desktop JVM)** |
 | **TVBox & CloudStream** | `source-tvbox/MacCmsSourceRuntime` | `source-tvbox` | JSON / Dex descriptors | **Cross-Platform** |
 
@@ -24,7 +24,10 @@ Citations:
 
 ---
 
-## 2. Kototoro JAR Plugin Architecture & Contract (Variant B)
+## 2. Kototoro JAR Plugin Architecture & Contract (Variant B - Discontinued for Video)
+
+> [!WARNING]
+> **Variant B JAR Discontinued for Video Sources**: Per Decision 40 and [docs/KOTOTORO_JAR_FORMAT.md](KOTOTORO_JAR_FORMAT.md), Kototoro's `ContentParser` interface models only manga images and novel text. Kototoro video playback routes strictly through Variant A (Aniyomi Extension APKs). Attempting to load video parsers via JAR triggers "manga is not supported" or "This video source is not supported". This section is retained for historical/architectural reference.
 
 ### 2.1 Entrypoint & Factory
 Kototoro detects and loads standalone JAR parser plugins via reflection without requiring Android manifest files or Dex conversion on Desktop:

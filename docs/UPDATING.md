@@ -1,17 +1,17 @@
-# Kaziyami Extension & Plugin Update Guide
+# Kaziyami Extension Update Guide
 
-This document explains how updates arrive for each distribution variant (Variant A: Aniyomi APKs and Variant B: Kototoro JAR plugins), how update detection works, how to force a refresh, how to roll back, and common troubleshooting steps.
+This document explains how updates arrive for Kaziyami video extensions (Variant A: Aniyomi APKs, used by both Aniyomi and Kototoro), how update detection works, how to force a refresh, how to roll back, and common troubleshooting steps.
 
 ---
 
 ## 1. How Updates Arrive
 
-Kaziyami publishes dual distribution variants from a single unified engine:
+Kaziyami distributes video extensions as signed Aniyomi extension APKs:
 
 | Variant | Target App(s) | Update Detection Rule | Where Updates Appear | Action Required |
 |---|---|---|---|---|
 | **Variant A (APKs)** | Aniyomi, Aniyomi Forks, Kototoro (Aniyomi repo) | `remote.code > installed.code` | **Extensions** tab -> "Update" badge next to extension | Tap **Update** button (or "Update all") |
-| **Variant B (JARs)** | Kototoro (Desktop JVM & Android ART) | `remote.versionCode > installed.versionCode` | **Settings** -> **Extension management** -> **Packages** tab | Tap **Update** on package row (or "Update all") |
+| **Variant B (JARs)** | *Discontinued for Video* | N/A | Discontinued per Decision 40. Video sources route strictly via Variant A APKs. | Migrate to Variant A APK repository in Kototoro. |
 
 > [!NOTE]
 > Background auto-installation does not occur silently in either app. In both Aniyomi and Kototoro, users must tap **Update** (or **Update all**). Kototoro does not run background update workers for extension catalogs; update checks happen when the management screen opens or upon manual pull-to-refresh.
@@ -20,15 +20,6 @@ Kaziyami publishes dual distribution variants from a single unified engine:
 
 ## 2. Step-by-Step Update Testing
 
-### In Kototoro (Variant B: JAR Repository)
-1. Open Kototoro -> **Settings** -> **Extension management**.
-2. Navigate to the **Packages** tab.
-3. If an update is available (e.g. repo has version code `3` and installed has version code `2`):
-   - An **Update all** button appears in the top header.
-   - The package card displays a tag indicating the currently installed version: `Installed: 1.4.2`.
-   - The primary button on the card reads **Update**.
-4. Tap **Update**. Kototoro downloads the new JAR into its private plugin storage (`files/plugins/<pkg>.jar`), updates its version registry, and re-initializes parsers dynamically without restarting the application.
-
 ### In Aniyomi (Variant A: APK Repository)
 1. Open Aniyomi -> **Browse** -> **Extensions** tab.
 2. Pull down to refresh the repository index.
@@ -36,15 +27,20 @@ Kaziyami publishes dual distribution variants from a single unified engine:
    - An **Update** button appears next to the extension.
 4. Tap **Update** to download and install the updated APK via Android Package Installer.
 
+### In Kototoro (Variant A: APK Repository)
+1. Open Kototoro -> **Explore** -> **Manage** (layers icon) -> **Repositories**.
+2. Locate the Kaziyami repository and tap refresh.
+3. Switch to the **Aniyomi** extension list.
+4. If an update is available, tap **Update** on the extension card.
+
 ---
 
 ## 3. How to Force a Catalog Refresh
 
 If a newly published update does not appear immediately:
 - **Kototoro**:
-  1. Open **Settings** -> **Extension management**.
-  2. Switch to the **Repositories** tab.
-  3. Locate the Kaziyami repository and tap the **Refresh** icon, or swipe down to pull-to-refresh on the Packages list.
+  1. Open **Explore** -> **Manage** -> **Repositories**.
+  2. Locate the Kaziyami repository and tap the **Refresh** icon.
 - **Aniyomi**:
   1. Open **Browse** -> **Extensions**.
   2. Swipe down on the extensions list to trigger an index reload from GitHub raw CDN.
@@ -53,11 +49,11 @@ If a newly published update does not appear immediately:
 
 ## 4. Rollback Using Previous Versions
 
-Kaziyami retains the **previous 3 versions** of every APK and JAR file on the `repo` branch to allow immediate rollback if an unexpected site layout change or regression occurs:
+Kaziyami retains the **previous 3 versions** of every APK file on the `repo` branch to allow immediate rollback if an unexpected site layout change occurs:
 
-1. **Kototoro (Local JAR Rollback)**:
-   - Download the previous version JAR from GitHub Releases or the repository branch (e.g. `repo/jar/kaziyami-all-v1.4.1.jar`).
-   - Open Kototoro -> **Settings** -> **Extension management** -> **Packages** tab.
+1. Download the previous version APK from the `repo` branch (`repo/apk/kaziyami-<lang>.<slug>-v<version>.apk`).
+2. Sideload the APK onto your Android device (`adb install -r -d <path_to_apk>` or open in Android file manager).
+3. If the host app refuses to downgrade, uninstall the broken extension from Android Apps settings first, then install the earlier APK.
    - Tap **Import local JAR** and select the downloaded file.
 2. **Aniyomi (APK Rollback)**:
    - Uninstall the current version of the extension from Android Settings or Aniyomi.

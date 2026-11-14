@@ -287,10 +287,18 @@
   - [x] 35.4 Comprehensive README Synchronization: Updated `README.md` to reflect current source catalog versions (`Hanime1` v14.15, `NontonHentai` v14.12, `3xchina` v14.10 @ `https://3xchina.page`, `Nekopoi` v14.10, `Hanime` v14.9, `RuleVid` v14.9, `Rule34Video` v14.9, `Hentaimama` v14.8), highlighted network optimizations (SmartDns IPv4 prioritization, socket keep-alive, 3m search caching), and linked developer skill references (`SKILLS.md`, `.agents/skills/kaziyami-extension`).
   - [x] 35.5 Verification: Executed full 8-step verification pipeline: `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 36: Repository-Wide Deep Synchronization, Dead Code Elimination & Invariant Alignment**:
+  - [x] 36.1 Cleaned Untracked Build Artifacts: Purged old untracked build/bin directories for discontinued sources (`src/id/indohentai`, `src/en/javsubbed`) from disk. Removed obsolete paths from `tools/bump_changed.py`.
+  - [x] 36.2 Dead Script Function Elimination: Removed unused `generate_kototoro_repo` from `tools/generate_repo_index.py` and `verify_published_kototoro_repo` from `tools/verify_published_repo.py`.
+  - [x] 36.3 3xchina Domain Synchronization: Updated base URLs to `https://3xchina.page` in `tools/generate_repo_index.py` and `ThreeXChinaTest.kt`.
+  - [x] 36.4 Multi-Doc Alignment: Synchronized `docs/KOTOTORO.md`, `docs/STACK.md`, `docs/UPDATING.md`, `docs/RELEASING.md`, `docs/SOURCES.md`, and `CHANGELOG.md` to reflect 8 active production sources and exclusive video routing via Variant A APKs.
+  - [x] 36.5 Tool Usability Enhancements: Added `src/zh/` discovery support in `tools/bump_source.py` and updated test count descriptions in `tools/check_test_counts.py`.
+  - [x] 36.6 Verification: Passed full 8-step verification pipeline: `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 35 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.12 (code 12); `3xchina` at v14.10 (code 10); `Nekopoi` at v14.10 (code 10); `Hanime` at v14.9 (code 9); `RuleVid` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hentaimama` at v14.8 (code 8). Full optimizations active, dead files pruned, docs synchronized.
+- **Overall Status**: Phase 36 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.12 (code 12); `3xchina` at v14.10 (code 10); `Nekopoi` at v14.10 (code 10); `Hanime` at v14.9 (code 9); `RuleVid` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hentaimama` at v14.8 (code 8). Full optimizations active, 0 dead code, docs 100% synchronized across repo.
 - **Last Green Run**: `./gradlew check` (70 actionable tasks, all 8 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: Ready for remote push and CI monitoring.
 

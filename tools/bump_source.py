@@ -21,7 +21,7 @@ def bump_source(slug: str):
             break
 
     if not found:
-        print(f"[-] Source '{slug}' not found under src/id/ or src/en/")
+        print(f"[-] Source '{slug}' not found under src/id/, src/en/, or src/zh/")
         sys.exit(1)
 
     with open(found, "r", encoding="utf-8") as f:

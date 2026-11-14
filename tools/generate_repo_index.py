@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
 generate_repo_index.py:
-Generates repository indexes for both distribution variants:
-- Mode A (Aniyomi): repo/index.json, repo/index.min.json, repo/repo.json, repo/sha256sums.txt
-- Mode B (Kototoro JAR): repo/jar/index.json, repo/jar/index.min.json, repo/jar/repo.json, repo/jar/sha256sums.txt
+Generates repository indexes for Mode A (Aniyomi APK):
+repo/index.json, repo/index.min.json, repo/repo.json, repo/sha256sums.txt
 """
 
 import argparse
@@ -18,7 +17,6 @@ import zipfile
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.join(ROOT_DIR, "repo")
 APK_DIR = os.path.join(REPO_DIR, "apk")
-JAR_DIR = os.path.join(REPO_DIR, "jar")
 
 KNOWN_BASE_URLS = {
     "Nekopoi": "https://nekopoi.care",
@@ -28,7 +26,7 @@ KNOWN_BASE_URLS = {
     "RuleVid": "https://rulevid.com",
     "Rule34Video": "https://rule34video.com",
     "Hanime1": "https://hanime1.me",
-    "3xchina": "https://3xchina.net"
+    "3xchina": "https://3xchina.page"
 }
 
 SOURCES_DEF = [
@@ -39,7 +37,7 @@ SOURCES_DEF = [
     {"name": "RuleVid", "lang": "en", "slug": "rulevid", "url": "https://rulevid.com"},
     {"name": "Rule34Video", "lang": "en", "slug": "rule34video", "url": "https://rule34video.com"},
     {"name": "Hanime1", "lang": "zh", "slug": "hanime1", "url": "https://hanime1.me"},
-    {"name": "3xchina", "lang": "zh", "slug": "3xchina", "url": "https://3xchina.net"}
+    {"name": "3xchina", "lang": "zh", "slug": "3xchina", "url": "https://3xchina.page"}
 ]
 
 def load_source_ids():
@@ -246,92 +244,6 @@ def generate_aniyomi_repo(fingerprint=None):
     print(f"[+] Mode A: Wrote Aniyomi repo index files ({len(repo_entries)} entries)")
 
 build_index = generate_aniyomi_repo
-
-def generate_kototoro_repo():
-    """Generates Mode B Kototoro JAR repository metadata matching verified ExtensionIndexDto schema."""
-    os.makedirs(JAR_DIR, exist_ok=True)
-    jar_apk_dir = os.path.join(JAR_DIR, "apk")
-    os.makedirs(jar_apk_dir, exist_ok=True)
-    source_ids = load_source_ids()
-
-    # Prune older JARs (keep latest 3)
-    prune_old_artifacts(JAR_DIR, ".jar", keep=3)
-    prune_old_artifacts(jar_apk_dir, ".jar", keep=3)
-
-    print(f"[+] Mode B (Kototoro JAR): Inspecting JARs in {JAR_DIR} and {jar_apk_dir}...")
-
-    # Build List<ExtensionIndexDto> schema verified in Kototoro ground truth
-    extensions = []
-
-    # 1. Main all-in-one suite entry
-    suite_code = max(get_source_version(f"src/{s['lang']}/{s['slug']}")["versionCode"] for s in SOURCES_DEF)
-    suite_ver = "1.0.0"
-    all_jar = f"kaziyami-all-v{suite_ver}.jar"
-
-    all_sources = []
-    for s in SOURCES_DEF:
-        name, lang = s["name"], s["lang"]
-        sid = source_ids.get((name, lang), "0")
-        all_sources.append({
-            "name": name,
-            "id": sid,
-            "lang": lang
-        })
-
-    all_jar_path = os.path.join(jar_apk_dir, all_jar)
-    if not os.path.exists(all_jar_path):
-        all_jar_path = os.path.join(JAR_DIR, all_jar)
-    all_jar_size = os.path.getsize(all_jar_path) if os.path.exists(all_jar_path) else 0
-    all_jar_sha = sha256_file(all_jar_path) if os.path.exists(all_jar_path) else ""
-
-    extensions.append({
-        "name": "Kaziyami: Adult Anime Suite",
-        "pkg": "app.kaziyami.kototoro",
-        "apk": all_jar,
-        "lang": "all",
-        "code": suite_code,
-        "version": suite_ver,
-        "nsfw": 1,
-        "icon": "app.kaziyami.kototoro.png",
-        "sha256": all_jar_sha,
-        "size": all_jar_size,
-        "sources": all_sources
-    })
-
-    # Note: Kototoro repository index exposes unified suite (app.kaziyami.kototoro)
-    # containing all sources, identical to official Kototoro parser repositories.
-
-    # 1. repo/jar/index.json
-    jar_index_path = os.path.join(JAR_DIR, "index.json")
-    with open(jar_index_path, "w", encoding="utf-8") as f:
-        json.dump(extensions, f, indent=2)
-
-    # 2. repo/jar/index.min.json
-    jar_min_path = os.path.join(JAR_DIR, "index.min.json")
-    with open(jar_min_path, "w", encoding="utf-8") as f:
-        json.dump(extensions, f, separators=(",", ":"))
-
-    # 3. repo/jar/repo.json
-    jar_repo_meta = {
-        "meta": {
-            "name": "Kaziyami Kototoro JARs",
-            "shortName": "kaziyami-jar",
-            "website": "https://github.com/kenewjr/kaziyami",
-            "signingKeyFingerprint": ""
-        }
-    }
-    with open(os.path.join(JAR_DIR, "repo.json"), "w", encoding="utf-8") as f:
-        json.dump(jar_repo_meta, f, indent=2)
-
-    # 4. repo/jar/sha256sums.txt
-    jar_sums = os.path.join(JAR_DIR, "sha256sums.txt")
-    with open(jar_sums, "w", encoding="utf-8") as f:
-        for fname in sorted(os.listdir(JAR_DIR)):
-            if fname.endswith(".jar"):
-                h = sha256_file(os.path.join(JAR_DIR, fname))
-                f.write(f"{h}  apk/{fname}\n")
-
-    print(f"[+] Mode B: Wrote Kototoro JAR repo index files ({len(extensions)} extensions)")
 
 def main():
     parser = argparse.ArgumentParser(description="Generate Kaziyami repository index (Aniyomi APK format).")

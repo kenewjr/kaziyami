@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.15] - 2026-11-15
+
+### Added & Optimized
+- **Network Performance & Resource Tuning**:
+  - `SmartDns` IPv4 Prioritization: sorts `Inet4Address` first, eliminating 5-15s stalls from mobile carrier IPv6 black-hole routes on dual-stack devices.
+  - Connection Pooling & Socket Reuse: attached `ConnectionPool(10, 5, TimeUnit.MINUTES)` across `GenericThemeSource.client` and `NetworkFactory`, eliminating repeated SSL/TLS handshakes.
+  - In-Memory Search Caching (`searchCache`): 3-minute TTL caching for search queries and filter compositions, preventing redundant network roundtrips during pagination.
+  - Embed Host DNS Pre-Validation: dynamic host reachability check via `canResolveHost` in `VideoExtractors` and `HgCloudExtractor` before returning stream candidates.
+- **Stream Playback Hygiene & Header Scrubbing**:
+  - Centralized `BrowserHeaders.mediaHeaders`: preserves browser `User-Agent` and valid `Referer` while stripping navigation headers (`Sec-Fetch-Dest: document`, `Upgrade-Insecure-Requests: 1`) to eliminate HTTP 403/404 CDN media rejections.
+  - Single-Character Search Padding: automatic query padding (`cleanQuery + cleanQuery`) for KVS engines (`RuleVid`, `Rule34Video`) preventing 2-character rewrite 404s.
+- **Cleanup & Maintenance**:
+  - Pruned discontinued Kototoro JAR tools (`package_kototoro_plugin.py`, `verify_jars.py`, `package_hello_jar.py`, `samples/kototoro-hello/`) following Decision 40 unification on Variant A APKs.
+  - Synchronized documentation, release checklists, and developer operational skills (`SKILLS.md`, `.agents/skills/kaziyami-extension`).
+  - Switched 3xchina primary mirror to `https://3xchina.page` across config, index generator, and unit tests.
+
 ## [14.8] - 2026-11-08
 
 ### Added

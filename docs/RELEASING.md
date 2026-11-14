@@ -40,8 +40,8 @@ Step-by-step release process for publishing Kaziyami extensions to the Aniyomi r
    ./gradlew assembleRelease
    ```
 2. Confirm the outputs:
-   - [ ] 6 APKs created under `repo/apk/` named `kaziyami-<lang>.<source>-v<version>.apk`.
-   - [ ] `repo/sha256sums.txt` contains valid SHA-256 hashes for all 6 APKs.
+   - [ ] 8 APKs created under `repo/apk/` named `kaziyami-<lang>.<source>-v<version>.apk`.
+   - [ ] `repo/sha256sums.txt` contains valid SHA-256 hashes for all 8 APKs.
    - [ ] `repo/index.json` and `repo/index.min.json` generated and schema-valid.
    - [ ] `repo/repo.json` contains your release certificate SHA-256 fingerprint.
 
