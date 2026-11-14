@@ -14,8 +14,7 @@ kaziyami/
 │   │   │   ├── engine/                    # Platform-neutral contracts: KaziyamiSource, HttpClientProvider,
 │   │   │   │                              #   ChallengeSolver, CookieStore, PreferenceStore, Logger
 │   │   │   ├── adapter/
-│   │   │   │   ├── aniyomi/               # AniyomiSourceAdapter: bridges KaziyamiSource to AnimeHttpSource
-│   │   │   │   └── kototoro/              # KototoroPlugin, KototoroSourceWrapper: Kototoro source-host bridge
+│   │   │   │   └── aniyomi/               # AniyomiSourceAdapter: bridges KaziyamiSource to AnimeHttpSource
 │   │   │   ├── filters/                   # Dynamic FilterSpec, DynamicSelect, TriState, and FilterBuilder
 │   │   │   ├── core/                      # Utilities: UrlUtils, LazyImage, EpisodeNumberParser, DateParser,
 │   │   │   │                              #   HtmlText, MirrorManager, SourceConfig, ExtractorRegistry
@@ -38,7 +37,7 @@ kaziyami/
 ├── schemas/                               # JSON schema definitions (source_config, index)
 ├── sources/                               # Declarative site configuration JSON files
 ├── scripts/                               # Developer tooling, preflight gate, diagnostics
-└── tools/                                 # Build & release automations (build_apks, package_kototoro_plugin)
+└── tools/                                 # Build & release automations (build_apks, verify_apks)
 ```
 
 ---

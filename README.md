@@ -91,16 +91,16 @@ For detailed update workflows, troubleshooting, and rollback steps, see [docs/UP
 
 All 8 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
 
-| Source Label | Language | Engine / CMS | Base URL | Primary Stream Providers |
-|---|---|---|---|---|
-| **Kaziyami: Nekopoi** | Indonesian (`id`) | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
-| **Kaziyami: NontonHentai** | Indonesian (`id`) | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
-| **Kaziyami: Hentaimama** | English (`en`) | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
-| **Kaziyami: Hanime** | English (`en`) | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
-| **Kaziyami: RuleVid** | English (`en`) | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
-| **Kaziyami: Rule34Video** | English (`en`) | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
-| **Kaziyami: Hanime1** | Chinese (`zh`) | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
-| **Kaziyami: 3xchina** | Chinese (`zh`) | WordPress (RetroTube) | `https://3xchina.net` | HGCloud / VidHide / StreamHide embeds, WebView fallback |
+| Source Label | Language | Version | Engine / CMS | Base URL | Primary Stream Providers |
+|---|---|---|---|---|---|
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.10` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
+| **Kaziyami: NontonHentai** | Indonesian (`id`) | `v14.12` | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
+| **Kaziyami: Hentaimama** | English (`en`) | `v14.8` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
+| **Kaziyami: Hanime** | English (`en`) | `v14.9` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
+| **Kaziyami: RuleVid** | English (`en`) | `v14.9` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
+| **Kaziyami: Rule34Video** | English (`en`) | `v14.9` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.15` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: 3xchina** | Chinese (`zh`) | `v14.10` | WordPress (RetroTube) | `https://3xchina.page` | HGCloud / VidHide / StreamHide embeds, WebView fallback |
 
 > [!NOTE]
 > **Discontinued Sources**: `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
@@ -110,7 +110,20 @@ All 8 active adult sources are configured with permanent 64-bit Source IDs locke
 
 ---
 
-## 4. Frequently Asked Questions (FAQ)
+## 4. Network & Stream Resilience
+
+Kaziyami extensions incorporate battle-tested networking hygiene to survive hostile anti-scraping and volatile mobile networks:
+
+- **Smart DNS with IPv4 Prioritization**: Resolves hosts via custom `SmartDns` sorting `Inet4Address` first. This eliminates 10-20s mobile IPv6 black-hole connection timeouts on carrier networks.
+- **Connection Pooling & Socket Reuse**: Shared `ConnectionPool(10, 5, TimeUnit.MINUTES)` eliminates repeated TLS handshakes across catalog browsing and pagination.
+- **Search Query Caching (TTL 3m)**: Caches search responses in-memory to prevent duplicate network round-trips when host apps paginate or re-query.
+- **Embed Host DNS Pre-Validation**: Dynamically checks host reachability via `canResolveHost` before appending stream candidates, skipping dead or ephemeral embed host mirrors.
+- **Stream Playback Hygiene**: Strips navigation headers (`Sec-Fetch-Dest: document`) and preserves browser `User-Agent` and valid `Referer` to ensure CDN media delivery (HTTP 403/404 prevention).
+- **Rate-Limiting & Micro-Jitter**: Per-host token bucket limits requests to <=3 req/s with randomized delays to avoid burst triggers.
+
+---
+
+## 5. Frequently Asked Questions (FAQ)
 
 ### Cloudflare "Open in WebView"
 - **Why do I see a challenge error?** Adult sites frequently use Cloudflare Managed Challenges or Turnstile to prevent automated scraping.
@@ -124,7 +137,7 @@ All 8 active adult sources are configured with permanent 64-bit Source IDs locke
 
 ---
 
-## 5. Development & Verification
+## 6. Development & Verification
 
 ### Running Offline Tests & Code Coverage
 All tests run 100% offline using deterministic HTML fixtures under `src/<lang>/<source>/src/test/resources/`:
@@ -132,6 +145,31 @@ All tests run 100% offline using deterministic HTML fixtures under `src/<lang>/<
 ```bash
 # Run all unit tests and generate JaCoCo coverage
 ./gradlew check jacocoTestReport
+```
+
+### Mandatory Verification Suite
+Every change must pass the full 8-step verification pipeline:
+
+```bash
+# 1. Unit & Contract Tests + Host API Binding Checks + APK Verification
+./gradlew check
+
+# 2. Host Class Exclusion & Bytecode Linkage Verification
+python tools/verify_no_host_classes.py
+python tools/verify_host_api_binding.py
+
+# 3. Stream Hygiene & Header Invariant Verification
+python tools/verify_stream_hygiene.py
+
+# 4. Monotonic Auto-Update Simulation
+python tools/test_update_simulation.py
+
+# 5. Preflight & Diagnostic Sanitization
+python tools/test_preflight.py
+python tools/test_collect_diagnostics.py
+
+# 6. Secret Scanner (Zero Leaks Required)
+python tools/scan_secrets.py
 ```
 
 ### Assembling & Signing Release APKs
@@ -151,8 +189,9 @@ Outputs signed APKs to `repo/apk/`, generates `repo/sha256sums.txt`, and builds 
 
 ---
 
-## 6. Architecture & Contributing
+## 7. Architecture, Skills & Contributing
 
+- Developer & AI operational skills: [SKILLS.md](SKILLS.md) / [.agents/skills/kaziyami-extension](.agents/skills/kaziyami-extension/SKILL.md)
 - System design details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Technology versions: [docs/STACK.md](docs/STACK.md)
 - Kototoro integration & invariants: [docs/KOTOTORO.md](docs/KOTOTORO.md)
