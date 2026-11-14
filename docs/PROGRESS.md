@@ -258,10 +258,16 @@
   - [x] 31.6 Complete CI/CD Pipeline Alignment: Wired all Python verifiers (`verify_no_host_classes.py`, `verify_host_api_binding.py`, `verify_stream_hygiene.py`, `test_update_simulation.py`, `test_preflight.py`, `test_collect_diagnostics.py`) into `.github/workflows/ci.yml`.
   - [x] 31.7 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green, 0 failures), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (passed), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 32: Extension Development Skill Integration (`SKILLS.md` & `.agents/skills/kaziyami-extension`)**:
+  - [x] 32.1 Synthesized Extension Runbook: Authored comprehensive guide combining Kototoro 7-step test harness standards (`SourceTester`), Aniyomi compileOnly ABI contract (`extensions-lib:14`, 0 host classes), permanent 64-bit source IDs, and multisrc theme architectures (`generic`, `animestream`, `dooplay`, `kvs`, `retrotube`).
+  - [x] 32.2 Stream Hygiene & Anti-Bot Documentation: Documented `BrowserHeaders.mediaHeaders()` requirements, document navigation header stripping, single-character search padding, ephemeral host DNS pre-validation (`canResolveHost`), and native host Cloudflare WebView client prioritization.
+  - [x] 32.3 Dual Location Deployment: Added native agent skill at `.agents/skills/kaziyami-extension/SKILL.md` (for automatic Antigravity/AI agent discovery) and repository root `SKILLS.md` (for developer and assistant access).
+  - [x] 32.4 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 31 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.11 (code 11); `3xchina` at v14.10 (code 10); `RuleVid` at v14.9 (code 9); `Nekopoi` at v14.9 (code 9); `Rule34Video` bumped to v14.9 (code 9); remaining 2 active sources (`Hanime`, `Hentaimama`) at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Overall Status**: Phase 32 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.11 (code 11); `3xchina` at v14.10 (code 10); `RuleVid` at v14.9 (code 9); `Nekopoi` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hanime` at v14.8 (code 8); `Hentaimama` at v14.8 (code 8). Unified extension skill and runbook integrated.
 - **Last Green Run**: `./gradlew check` (70 actionable tasks, all 8 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: Ready for remote push and CI monitoring.
 
