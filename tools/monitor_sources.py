@@ -13,43 +13,57 @@ SOURCES = [
     {
         "name": "Nekopoi",
         "url": "https://nekopoi.care",
-        "item_regex": r"<article[^>]*>",
+        "item_regex": r"class=['\"][^'\"]*(?:nk-search-item|eropost|nk-thumb|box)[^'\"]*['\"]",
         "episode_regex": r"<li[^>]*><a[^>]*href=['\"]https?://nekopoi\.[^>]*['\"]",
-        "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
-    },
-    {
-        "name": "IndoHentai",
-        "url": "https://indohentai.net",
-        "item_regex": r"<article[^>]*class=['\"][^'\"]*post[^'\"]*['\"]",
-        "episode_regex": r"<a[^>]*class=['\"][^'\"]*ep-link[^'\"]*['\"]",
         "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
     },
     {
         "name": "NontonHentai",
         "url": "https://nontonhentai.net",
-        "item_regex": r"<article[^>]*|class=['\"][^'\"]*animposx[^'\"]*['\"]",
+        "item_regex": r"class=['\"][^'\"]*(?:animposx|article)[^'\"]*['\"]",
         "episode_regex": r"<li[^>]*><a[^>]*href=['\"][^'\"]*episode[^'\"]*['\"]",
         "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
     },
     {
         "name": "Hentaimama",
         "url": "https://hentaimama.io",
-        "item_regex": r"<article[^>]*class=['\"][^'\"]*item[^'\"]*['\"]",
+        "item_regex": r"class=['\"][^'\"]*(?:series-card|item)[^'\"]*['\"]",
         "episode_regex": r"<div[^>]*class=['\"][^'\"]*episodiotitle[^'\"]*['\"]",
-        "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
-    },
-    {
-        "name": "JAVSubbed",
-        "url": "https://javsubbed.net",
-        "item_regex": r"<div[^>]*class=['\"][^'\"]*item[^'\"]*['\"]",
-        "episode_regex": r"<a[^>]*href=['\"][^'\"]*watch[^'\"]*['\"]",
         "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
     },
     {
         "name": "Hanime",
         "url": "https://hanime.tv",
-        "item_regex": r"<div[^>]*class=['\"][^'\"]*video[^'\"]*['\"]|<a[^>]*href=['\"][^'\"]*/hentai/[^'\"]*['\"]",
+        "item_regex": r"/videos/hentai/|video-card",
         "episode_regex": r"/videos/hentai/",
+        "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
+    },
+    {
+        "name": "RuleVid",
+        "url": "https://rulevid.com",
+        "item_regex": r"class=['\"][^'\"]*(?:video-card|item)[^'\"]*['\"]",
+        "episode_regex": r"/video/",
+        "iframe_regex": r"<video|<iframe"
+    },
+    {
+        "name": "Rule34Video",
+        "url": "https://rule34video.com",
+        "item_regex": r"class=['\"][^'\"]*(?:video-card|item)[^'\"]*['\"]",
+        "episode_regex": r"/video/",
+        "iframe_regex": r"<video|<iframe"
+    },
+    {
+        "name": "Hanime1",
+        "url": "https://hanime1.me",
+        "item_regex": r"comic-hover|home-rows-videos-div",
+        "episode_regex": r"/watch\?v=",
+        "iframe_regex": r"<video|<iframe"
+    },
+    {
+        "name": "3xchina",
+        "url": "https://3xchina.page",
+        "item_regex": r"class=['\"][^'\"]*(?:loop-video|thumb-block|post)[^'\"]*['\"]",
+        "episode_regex": r"href=['\"][^'\"]*/(?:ama|video)/[^'\"]*['\"]",
         "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
     }
 ]
