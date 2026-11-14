@@ -56,7 +56,7 @@ open class KvsTheme(
             },
             itemUrl = customSelectors.itemUrl.takeIf { it != "a[href]" } ?: "a.video-card-thumb-wrap, a.th, a[href*='/video/']",
             itemThumbnail = customSelectors.itemThumbnail.takeIf { it != "img" } ?: "img.video-card-thumb, img.thumb, img[data-original], img",
-            nextPage = customSelectors.nextPage ?: ".pagination .item.active + .item a, .pagination .active + a, .pagination a:contains(Next), a[data-parameters*='from']",
+            nextPage = customSelectors.nextPage.takeIf { it.isNotBlank() } ?: ".pagination .item.active + .item a, .pagination .active + a, .pagination a:contains(Next), a[data-parameters*='from']",
             detailsTitle = customSelectors.detailsTitle.takeIf { it != "h1" } ?: "h1, .headline h1, h1.title",
             detailsTitleAlternates = customSelectors.detailsTitleAlternates.ifEmpty {
                 listOf("h1", ".headline h1", "h1.title")
@@ -75,14 +75,14 @@ open class KvsTheme(
 
     override fun popularAnimeRequest(page: Int): Request {
         checkAgeConfirmed()
-        val path = if (page == 1) "/most-popular/" else String.format(config.popularPath, page)
+        val path = if (page == 1) "/most-popular/" else config.popularPath.replace("%d", page.toString())
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
         checkAgeConfirmed()
-        val path = if (page == 1) "/latest-updates/" else String.format(config.latestPath, page)
+        val path = if (page == 1) "/latest-updates/" else config.latestPath.replace("%d", page.toString())
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
@@ -90,18 +90,10 @@ open class KvsTheme(
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         checkAgeConfirmed()
         val path = if (query.isBlank()) {
-            if (page == 1) "/most-popular/" else String.format(config.popularPath, page)
+            if (page == 1) "/most-popular/" else config.popularPath.replace("%d", page.toString())
         } else {
             val encodedQuery = URLEncoder.encode(query, "UTF-8")
-            if (config.searchPath.contains("%d")) {
-                try {
-                    String.format(config.searchPath, encodedQuery, page)
-                } catch (_: Exception) {
-                    String.format(config.searchPath, encodedQuery)
-                }
-            } else {
-                String.format(config.searchPath, encodedQuery)
-            }
+            config.searchPath.replace("%s", encodedQuery).replace("%d", page.toString())
         }
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)

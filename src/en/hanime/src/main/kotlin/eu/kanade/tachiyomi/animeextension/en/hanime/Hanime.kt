@@ -288,7 +288,7 @@ class Hanime : GenericThemeSource(
         // 1. Embedded HLS m3u8 streams
         val m3u8Matcher = M3U8_REGEX.matcher(unescapedBody)
         while (m3u8Matcher.find()) {
-            val streamUrl = m3u8Matcher.group(1)
+            val streamUrl = m3u8Matcher.group(1) ?: continue
             videoList.add(
                 Video(
                     url = streamUrl,
@@ -302,7 +302,7 @@ class Hanime : GenericThemeSource(
         // 2. Embedded MP4 streams
         val mp4Matcher = MP4_REGEX.matcher(unescapedBody)
         while (mp4Matcher.find()) {
-            val streamUrl = mp4Matcher.group(1)
+            val streamUrl = mp4Matcher.group(1) ?: continue
             videoList.add(
                 Video(
                     url = streamUrl,

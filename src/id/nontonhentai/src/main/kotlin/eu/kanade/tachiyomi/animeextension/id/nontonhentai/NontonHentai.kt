@@ -106,6 +106,7 @@ class NontonHentai : AnimeStreamTheme(
         return result
     }
 
+    @Suppress("DEPRECATION")
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         val cleanQuery = query.trim()
         if (cleanQuery.isEmpty()) {

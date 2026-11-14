@@ -272,10 +272,18 @@
   - [x] 33.5 Independent Version Bumps: Bumped `Nekopoi` to v14.10 (code 10) and `NontonHentai` to v14.12 (code 12). Unmodified extensions remain at their existing versions.
   - [x] 33.6 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 34: Holistic Stream Extraction & Code Hygiene Hardening**:
+  - [x] 34.1 DoodStream User-Agent Alignment: Replaced hardcoded Windows User-Agent strings in `DoodExtractor` with dynamic `BrowserProfile.resolve().userAgent` to prevent Android bot fingerprint mismatches.
+  - [x] 34.2 HgCloud DNS Pre-Validation: Promoted `canResolveHost` to internal extractor utility and wired DNS check into `HgCloudExtractor` streams, eliminating dead embed mirrors from crashing playback.
+  - [x] 34.3 KvsTheme String Formatting Cleanup: Replaced `String.format` with safe `.replace("%d", ...)` and `.replace("%s", ...)` across `popularAnimeRequest`, `latestUpdatesRequest`, and `searchAnimeRequest` in `KvsTheme.kt`.
+  - [x] 34.4 Compiler Cleanliness & Warning Elimination: Fixed Kotlin regex group nullability warnings in `Hanime.kt` and suppressed deprecated RxJava overrides in `Nekopoi.kt` and `NontonHentai.kt`.
+  - [x] 34.5 Independent Version Bump: Bumped `Hanime` to v14.9 (code 9). Unmodified extensions remain at their existing versions.
+  - [x] 34.6 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 33 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` bumped to v14.12 (code 12); `3xchina` at v14.10 (code 10); `Nekopoi` bumped to v14.10 (code 10); `RuleVid` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hanime` at v14.8 (code 8); `Hentaimama` at v14.8 (code 8). Network optimizations active.
+- **Overall Status**: Phase 34 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.12 (code 12); `3xchina` at v14.10 (code 10); `Nekopoi` at v14.10 (code 10); `Hanime` bumped to v14.9 (code 9); `RuleVid` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hentaimama` at v14.8 (code 8). Full optimizations active.
 - **Last Green Run**: `./gradlew check` (70 actionable tasks, all 8 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: Ready for remote push and CI monitoring.
 

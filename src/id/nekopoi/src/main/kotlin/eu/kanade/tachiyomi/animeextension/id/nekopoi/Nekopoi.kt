@@ -120,6 +120,7 @@ class Nekopoi : GenericThemeSource(
         return combined
     }
 
+    @Suppress("DEPRECATION")
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
         val p1 = (page - 1) * 2 + 1
         val p2 = p1 + 1
@@ -166,6 +167,7 @@ class Nekopoi : GenericThemeSource(
         return combined
     }
 
+    @Suppress("DEPRECATION")
     override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
         val p1 = (page - 1) * 2 + 1
         val p2 = p1 + 1
@@ -212,6 +214,7 @@ class Nekopoi : GenericThemeSource(
         return result
     }
 
+    @Suppress("DEPRECATION")
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         val p1 = (page - 1) * 2 + 1
         val p2 = p1 + 1

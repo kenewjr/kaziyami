@@ -98,11 +98,12 @@ class DoodExtractor : VideoExtractor {
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
+        val ua = BrowserProfile.resolve().userAgent
         val embedUrl = if (!url.contains("/e/")) url.replace("/d/", "/e/") else url
         val reqBuilder = Request.Builder().url(embedUrl)
         val effectiveRef = if (referer.isNotBlank()) referer else "https://nekopoi.care/"
         reqBuilder.header("Referer", effectiveRef)
-        reqBuilder.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        reqBuilder.header("User-Agent", ua)
         val req = reqBuilder.build()
         val html = try {
             client.newCall(req).execute().use { it.body?.string() ?: "" }
@@ -119,7 +120,7 @@ class DoodExtractor : VideoExtractor {
         val passReq = Request.Builder()
             .url(passUrl)
             .header("Referer", embedUrl)
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .header("User-Agent", ua)
             .build()
         val passBody = try {
             client.newCall(passReq).execute().use { it.body?.string() ?: "" }
@@ -317,6 +318,16 @@ class StreamPoiExtractor : VideoExtractor {
     }
 }
 
+internal fun canResolveHost(streamUrl: String): Boolean {
+    return try {
+        val uri = java.net.URI(streamUrl)
+        val host = uri.host ?: return false
+        SmartDns.instance.lookup(host).isNotEmpty()
+    } catch (_: Throwable) {
+        false
+    }
+}
+
 class HentaiCopExtractor : VideoExtractor {
     override val name = "HentaiCop"
     private val hostRegex = Pattern.compile("hentaicop\\.com|hepidrive\\.com|gdplayer\\.(?:top|to|co|xyz)", Pattern.CASE_INSENSITIVE)
@@ -432,16 +443,6 @@ class HentaiCopExtractor : VideoExtractor {
 
         return videos.distinctBy { it.videoUrl }
     }
-
-    private fun canResolveHost(streamUrl: String): Boolean {
-        return try {
-            val uri = java.net.URI(streamUrl)
-            val host = uri.host ?: return false
-            SmartDns.instance.lookup(host).isNotEmpty()
-        } catch (_: Throwable) {
-            false
-        }
-    }
 }
 
 class HgCloudExtractor : VideoExtractor {
@@ -491,7 +492,7 @@ class HgCloudExtractor : VideoExtractor {
             val fileMatcher = filePattern.matcher(block)
             while (fileMatcher.find()) {
                 val streamUrl = fileMatcher.group(1)
-                if (streamUrl.isNotBlank() && (streamUrl.contains(".m3u8") || streamUrl.contains(".mp4"))) {
+                if (streamUrl.isNotBlank() && canResolveHost(streamUrl) && (streamUrl.contains(".m3u8") || streamUrl.contains(".mp4"))) {
                     videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
                 }
             }
@@ -503,7 +504,9 @@ class HgCloudExtractor : VideoExtractor {
             val directMatcher = directPattern.matcher(unpacked)
             while (directMatcher.find()) {
                 val streamUrl = directMatcher.group(1)
-                videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+                if (canResolveHost(streamUrl)) {
+                    videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+                }
             }
         }
 
@@ -513,7 +516,9 @@ class HgCloudExtractor : VideoExtractor {
             val rawMatcher = rawM3u8Pattern.matcher(unpacked)
             while (rawMatcher.find()) {
                 val streamUrl = rawMatcher.group(1)
-                videos.add(Video(url, "HgCloud HD (HLS)", streamUrl, videoHeaders))
+                if (canResolveHost(streamUrl)) {
+                    videos.add(Video(url, "HgCloud HD (HLS)", streamUrl, videoHeaders))
+                }
             }
         }
 
