@@ -244,6 +244,11 @@
   - [x] 29.5 Independent Version Bumps: Bumped `RuleVid` to v14.9 (`extVersionCode = 9`), `Nekopoi` to v14.9 (`extVersionCode = 9`), `NontonHentai` to v14.11 (`extVersionCode = 11`), and `Hanime1` to v14.15 (`extVersionCode = 15`). Unchanged extensions (`Hanime`, `Hentaimama`, `Rule34Video`, `3xchina`) remain at their current versions.
   - [x] 29.6 Verification: Passed `./gradlew check` (69 actionable tasks, 252 unit tests green, 0 failures), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 30: Host Cloudflare Client Prioritization & Anti-Bot Hardening**:
+  - [x] 30.1 Host Cloudflare Client Ordering: Swapped client resolution in `GenericThemeSource.client` to prioritize `network.cloudflareClient` before `network.client`. In Kototoro and Aniyomi, this attaches the host's native Cloudflare interceptor that handles 403/503 challenges and triggers the in-app WebView verification flow.
+  - [x] 30.2 Anti-Bot & Captcha Boundaries Enforced: Maintained strict prohibition against automated 3rd-party captcha solving / bypasses. Confirmed runtime User-Agent sync, `SimpleCookieJar` WebView cookie syncing, and rate-limiting safeguards are active across all 8 sources.
+  - [x] 30.3 Verification: Passed `./gradlew check` (69 actionable tasks, 252 tests green, 0 failures), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `test_update_simulation.py` (4/4 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status

@@ -94,8 +94,8 @@ open class GenericThemeSource(
 
     override val client: OkHttpClient by lazy {
         @Suppress("DEPRECATION")
-        runCatching { network.client }
-            .recoverCatching { network.cloudflareClient }
+        runCatching { network.cloudflareClient }
+            .recoverCatching { network.client }
             .getOrElse { app.kaziyami.network.NetworkHelper().client }
     }
 
