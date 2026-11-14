@@ -3,6 +3,7 @@ package app.kaziyami.extractors
 import eu.kanade.tachiyomi.animesource.model.Video
 import app.kaziyami.network.BrowserHeaders
 import app.kaziyami.network.BrowserProfile
+import app.kaziyami.network.SmartDns
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -436,7 +437,7 @@ class HentaiCopExtractor : VideoExtractor {
         return try {
             val uri = java.net.URI(streamUrl)
             val host = uri.host ?: return false
-            java.net.InetAddress.getByName(host) != null
+            SmartDns.instance.lookup(host).isNotEmpty()
         } catch (_: Throwable) {
             false
         }

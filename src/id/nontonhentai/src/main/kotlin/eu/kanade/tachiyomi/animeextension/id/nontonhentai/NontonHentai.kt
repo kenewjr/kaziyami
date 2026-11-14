@@ -73,8 +73,14 @@ class NontonHentai : AnimeStreamTheme(
 
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val cleanQuery = query.trim()
+        val cacheKey = "search_${cleanQuery.lowercase()}_${page}_${filters.hashCode()}"
+        val cached = searchCache.get(cacheKey)
+        if (cached != null) return cached
+
         if (cleanQuery.isEmpty()) {
-            return super.getSearchAnime(page, query, filters)
+            val res = super.getSearchAnime(page, query, filters)
+            searchCache.put(cacheKey, res)
+            return res
         }
 
         val p1 = (page - 1) * 2 + 1
@@ -82,6 +88,7 @@ class NontonHentai : AnimeStreamTheme(
 
         val page1 = fetchAnimePage(searchAnimeRequest(p1, query, filters), ::searchAnimeParse)
         if (!page1.hasNextPage || page1.animes.isNotEmpty()) {
+            searchCache.put(cacheKey, page1)
             return page1
         }
 
@@ -89,12 +96,14 @@ class NontonHentai : AnimeStreamTheme(
             fetchAnimePage(searchAnimeRequest(p2, query, filters), ::searchAnimeParse)
         }.getOrNull()
 
-        return if (page2 != null && page2.animes.isNotEmpty()) {
+        val result = if (page2 != null && page2.animes.isNotEmpty()) {
             val distinct = (page1.animes + page2.animes).distinctBy { it.url }
             AnimesPage(distinct, page2.hasNextPage)
         } else {
             page1
         }
+        searchCache.put(cacheKey, result)
+        return result
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {

@@ -264,10 +264,18 @@
   - [x] 32.3 Dual Location Deployment: Added native agent skill at `.agents/skills/kaziyami-extension/SKILL.md` (for automatic Antigravity/AI agent discovery) and repository root `SKILLS.md` (for developer and assistant access).
   - [x] 32.4 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 33: Maximum Network Optimization & Lightweight Runtime Tuning**:
+  - [x] 33.1 SmartDns IPv4 Prioritization: Sorted resolved IP addresses with IPv4 first (`Inet4Address` before IPv6), eliminating 5-15s stalls from mobile carrier IPv6 black-hole routes on dual-stack Android devices.
+  - [x] 33.2 Shared Singleton DNS & Embed Fast-Fail: Linked `SmartDns.instance` across `GenericThemeSource.client`, `NetworkFactory`, and `canResolveHost` in `VideoExtractors.kt` to ensure 0ms in-memory cache lookups and DoH fallback without redundant socket creation.
+  - [x] 33.3 Connection Pooling & Keep-Alive: Attached `ConnectionPool(10, 5, TimeUnit.MINUTES)` to `client` across all extensions, keeping TCP/TLS connections warm and eliminating SSL handshake overhead across multi-call catalogue fetches and stream extraction.
+  - [x] 33.4 In-Memory Search Caching (`searchCache`): Added 3-minute TTL caching for search queries and filter compositions in `GenericThemeSource`, `Nekopoi`, and `NontonHentai` to prevent redundant network roundtrips when re-querying or navigating back.
+  - [x] 33.5 Independent Version Bumps: Bumped `Nekopoi` to v14.10 (code 10) and `NontonHentai` to v14.12 (code 12). Unmodified extensions remain at their existing versions.
+  - [x] 33.6 Verification: Passed `./gradlew check` (70 actionable tasks, 252 unit tests green), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 32 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` at v14.11 (code 11); `3xchina` at v14.10 (code 10); `RuleVid` at v14.9 (code 9); `Nekopoi` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hanime` at v14.8 (code 8); `Hentaimama` at v14.8 (code 8). Unified extension skill and runbook integrated.
+- **Overall Status**: Phase 33 complete. 8 active production sources. `Hanime1` at v14.15 (code 15); `NontonHentai` bumped to v14.12 (code 12); `3xchina` at v14.10 (code 10); `Nekopoi` bumped to v14.10 (code 10); `RuleVid` at v14.9 (code 9); `Rule34Video` at v14.9 (code 9); `Hanime` at v14.8 (code 8); `Hentaimama` at v14.8 (code 8). Network optimizations active.
 - **Last Green Run**: `./gradlew check` (70 actionable tasks, all 8 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 - **Open Items**: Ready for remote push and CI monitoring.
 

@@ -38,6 +38,7 @@ import app.kaziyami.engine.KaziyamiVideo
 import app.kaziyami.network.BrowserHeaders
 import app.kaziyami.network.NetworkConfig
 import app.kaziyami.network.TtlCache
+import okhttp3.ConnectionPool
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -47,6 +48,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Universal declarative base class for anime extension sources.
@@ -69,6 +71,7 @@ open class GenericThemeSource(
     val pageCache = TtlCache<String, AnimesPage>(defaultTtlMs = NetworkConfig.POPULAR_CACHE_TTL_MS)
     val detailCache = TtlCache<String, SAnime>(defaultTtlMs = NetworkConfig.DETAIL_PAGE_CACHE_TTL_MS)
     val episodeListCache = TtlCache<String, List<SEpisode>>(defaultTtlMs = NetworkConfig.EPISODE_LIST_CACHE_TTL_MS)
+    val searchCache = TtlCache<String, AnimesPage>(defaultTtlMs = NetworkConfig.SEARCH_CACHE_TTL_MS)
 
     override val name: String = config.name
     override val lang: String = config.lang
@@ -93,10 +96,18 @@ open class GenericThemeSource(
     }
 
     override val client: OkHttpClient by lazy {
-        @Suppress("DEPRECATION")
+        val base = @Suppress("DEPRECATION")
         runCatching { network.cloudflareClient }
             .recoverCatching { network.client }
             .getOrElse { app.kaziyami.network.NetworkHelper().client }
+
+        base.newBuilder()
+            .dns(app.kaziyami.network.SmartDns.instance)
+            .connectionPool(ConnectionPool(10, 5, TimeUnit.MINUTES))
+            .connectTimeout(NetworkConfig.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(NetworkConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(NetworkConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
     }
 
     override fun headersBuilder(): Headers.Builder {
@@ -592,6 +603,15 @@ open class GenericThemeSource(
         if (cached != null) return cached
         val fresh = super.getEpisodeList(anime)
         episodeListCache.put(anime.url, fresh)
+        return fresh
+    }
+
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
+        val cacheKey = "search_${query.trim().lowercase()}_${page}_${filters.hashCode()}"
+        val cached = searchCache.get(cacheKey)
+        if (cached != null) return cached
+        val fresh = super.getSearchAnime(page, query, filters)
+        searchCache.put(cacheKey, fresh)
         return fresh
     }
 

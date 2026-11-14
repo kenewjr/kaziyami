@@ -1,8 +1,8 @@
 val extName = "NontonHentai"
 val extClass = "eu.kanade.tachiyomi.animeextension.id.nontonhentai.NontonHentai"
-val extVersionCode = 11
+val extVersionCode = 12
 val libVersion = "14"
-val extVersion = "14.11"
+val extVersion = "14.12"
 val isNsfw = true
 
 extra["extName"] = extName

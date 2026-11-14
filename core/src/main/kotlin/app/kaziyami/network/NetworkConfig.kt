@@ -30,4 +30,5 @@ object NetworkConfig {
     val FILTER_OPTIONS_CACHE_TTL_MS: Long = TimeUnit.HOURS.toMillis(1)
     val POPULAR_CACHE_TTL_MS: Long = TimeUnit.MINUTES.toMillis(5)
     val EPISODE_LIST_CACHE_TTL_MS: Long = TimeUnit.MINUTES.toMillis(10)
+    val SEARCH_CACHE_TTL_MS: Long = TimeUnit.MINUTES.toMillis(3)
 }

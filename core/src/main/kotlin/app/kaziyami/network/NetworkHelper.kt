@@ -473,10 +473,13 @@ class SimpleCookieJar : CookieJar {
  */
 class SmartDns(
     private val systemDns: Dns = Dns.SYSTEM,
-    private val enableDohFallback: Boolean = true
+    private val enableDohFallback: Boolean = true,
+    private val cache: ConcurrentHashMap<String, List<InetAddress>> = ConcurrentHashMap()
 ) : Dns {
 
-    private val cache = ConcurrentHashMap<String, List<InetAddress>>()
+    fun clearCache() {
+        cache.clear()
+    }
 
     override fun lookup(hostname: String): List<InetAddress> {
         cache[hostname]?.let { return it }
@@ -498,8 +501,9 @@ class SmartDns(
             val isLoopback = systemAddresses.any { it.isLoopbackAddress || it.hostAddress == "127.0.0.1" }
             val isSinkholed = systemAddresses.any { it.hostAddress in SINKHOLE_IPS }
             if ((isLoopback || !isSinkholed) && systemAddresses.isNotEmpty()) {
-                cache[hostname] = systemAddresses
-                return systemAddresses
+                val sorted = systemAddresses.sortedBy { if (it is java.net.Inet4Address) 0 else 1 }
+                cache[hostname] = sorted
+                return sorted
             }
         } catch (_: UnknownHostException) {
             // System DNS failed, fallback to DoH
@@ -513,8 +517,9 @@ class SmartDns(
 
         val dohAddresses = resolveDoh(hostname)
         if (dohAddresses.isNotEmpty()) {
-            cache[hostname] = dohAddresses
-            return dohAddresses
+            val sorted = dohAddresses.sortedBy { if (it is java.net.Inet4Address) 0 else 1 }
+            cache[hostname] = sorted
+            return sorted
         }
 
         throw UnknownHostException("Unable to resolve host: $hostname (System & DoH failed)")
@@ -553,6 +558,8 @@ class SmartDns(
     }
 
     companion object {
+        val instance: SmartDns by lazy { SmartDns() }
+
         val SINKHOLE_IPS = setOf(
             "36.86.63.181",
             "36.86.63.182",
@@ -574,13 +581,13 @@ object NetworkFactory {
         maxRetries: Int = NetworkConfig.MAX_RETRIES_ON_429.coerceAtLeast(2),
         cookieJar: CookieJar = SimpleCookieJar(),
         circuitBreaker: HostCircuitBreaker = HostCircuitBreaker(),
-        dns: Dns = SmartDns()
+        dns: Dns = SmartDns.instance
     ): OkHttpClient {
         val rateLimiter = TokenBucketRateLimiter(
             defaultCapacity = permitsPerSecond.coerceAtLeast(1.0),
             defaultRefillRatePerSec = permitsPerSecond.coerceAtLeast(0.5)
         )
-        val pool = ConnectionPool(5, 5, TimeUnit.MINUTES)
+        val pool = ConnectionPool(10, 5, TimeUnit.MINUTES)
 
         return baseClient.newBuilder()
             .dns(dns)
