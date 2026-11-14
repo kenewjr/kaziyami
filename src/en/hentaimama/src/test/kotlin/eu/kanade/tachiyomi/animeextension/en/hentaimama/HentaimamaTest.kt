@@ -13,9 +13,7 @@ import java.io.InputStreamReader
 
 class HentaimamaTest {
 
-    private val source = Hentaimama().apply {
-        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
-    }
+    private val source = Hentaimama()
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/hentaimama/$path")

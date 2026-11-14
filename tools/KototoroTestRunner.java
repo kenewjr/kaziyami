@@ -68,22 +68,6 @@ public class KototoroTestRunner {
         String name = (String) sc.getMethod("getName").invoke(source);
         String baseUrl = (String) sc.getMethod("getBaseUrl").invoke(source);
 
-        try {
-            Method getPrefs = sc.getMethod("getPreferences");
-            Object prefs = getPrefs.invoke(source);
-            if (prefs != null) {
-                Class<?> editorIface = Class.forName("android.content.SharedPreferences$Editor");
-                Method edit = prefs.getClass().getMethod("edit");
-                Object editor = edit.invoke(prefs);
-                Method putBool = editorIface.getMethod("putBoolean", String.class, boolean.class);
-                putBool.invoke(editor, "age_gate_confirmed", true);
-                Method apply = editorIface.getMethod("apply");
-                apply.invoke(editor);
-            }
-        } catch (Throwable t) {
-            System.err.println("PREFS_INIT_ERROR: " + t.getMessage());
-        }
-
         String sourceKey = "ANIYOMI_" + id;
 
         boolean listOk = false;

@@ -18,7 +18,6 @@ class ThreeXChinaTest {
     @BeforeEach
     fun setup() {
         source = ThreeXChina()
-        source.preferences.edit().putBoolean("age_gate_confirmed", true).apply()
     }
 
     private fun mockResponse(url: String, fixtureName: String): Response {

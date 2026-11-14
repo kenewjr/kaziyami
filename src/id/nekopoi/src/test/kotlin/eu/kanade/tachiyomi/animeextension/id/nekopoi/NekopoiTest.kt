@@ -15,9 +15,7 @@ import java.io.InputStreamReader
 
 class NekopoiTest {
 
-    private val source = Nekopoi().apply {
-        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
-    }
+    private val source = Nekopoi()
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/nekopoi/$path")

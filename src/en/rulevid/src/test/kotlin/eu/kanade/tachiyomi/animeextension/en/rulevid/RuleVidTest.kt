@@ -12,9 +12,7 @@ import java.io.InputStreamReader
 
 class RuleVidTest {
 
-    private val source = RuleVid().apply {
-        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
-    }
+    private val source = RuleVid()
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/rulevid/$path")

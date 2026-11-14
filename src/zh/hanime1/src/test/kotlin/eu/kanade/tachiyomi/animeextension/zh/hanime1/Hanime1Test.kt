@@ -19,7 +19,6 @@ class Hanime1Test {
     @BeforeEach
     fun setup() {
         source = Hanime1()
-        source.preferences.edit().putBoolean("age_gate_confirmed", true).apply()
     }
 
     private fun mockResponse(url: String, fixtureName: String): Response {

@@ -13,9 +13,7 @@ import java.io.InputStreamReader
 
 class HanimeTest {
 
-    private val source = Hanime().apply {
-        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
-    }
+    private val source = Hanime()
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/hanime/$path")

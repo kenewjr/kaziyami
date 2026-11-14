@@ -12,9 +12,7 @@ import java.io.InputStreamReader
 
 class Rule34VideoTest {
 
-    private val source = Rule34Video().apply {
-        preferences.edit().putBoolean("age_gate_confirmed", true).apply()
-    }
+    private val source = Rule34Video()
 
     private fun loadFixture(path: String): String {
         val stream = javaClass.getResourceAsStream("/rule34video/$path")

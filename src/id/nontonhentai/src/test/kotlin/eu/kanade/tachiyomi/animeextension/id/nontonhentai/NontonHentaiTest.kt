@@ -100,7 +100,6 @@ class NontonHentaiTest {
 
     @Test
     fun searchAnimeRequestFormatsQueryAndPagination() {
-        source.preferences.edit().putBoolean("age_gate_confirmed", true).apply()
         val filters = source.getFilterList()
 
         val req1 = source.searchAnimeRequest(1, "tate", filters)
@@ -112,7 +111,6 @@ class NontonHentaiTest {
 
     @Test
     fun searchAnimeRequestFormatsFiltersWhenQueryBlank() {
-        source.preferences.edit().putBoolean("age_gate_confirmed", true).apply()
         val filters = source.getFilterList()
         val sortFilter = filters.filterIsInstance<NontonHentai.NontonHentaiSortFilter>().first()
         sortFilter.state = 1 // Popular
