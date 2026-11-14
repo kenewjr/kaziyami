@@ -35,7 +35,6 @@ class RuleVid : KvsTheme(
 ) {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         val cleanQuery = query.trim()
         val genre = filters.filterIsInstance<RuleVidGenreFilter>().firstOrNull()?.toSlug().orEmpty()
         val sort = filters.filterIsInstance<RuleVidSortFilter>().firstOrNull()?.toSlug().orEmpty()

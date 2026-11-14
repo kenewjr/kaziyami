@@ -68,9 +68,9 @@ Kototoro executes 7 sequential verification steps (`SourceTester`):
 - Sequential extraction via `ExtractorRegistry.resolveSequential`; stop on first working playable stream.
 - Ephemeral embed domains must pre-validate DNS resolution (`canResolveHost`) before appending stream candidates to avoid unresolvable host exceptions.
 
-### Content Safety & Age Gate
+### Content Safety & Host NSFW Flags
 - Zero tolerance for minors, CSAM, voyeurism, and non-consensual content ([core/src/main/kotlin/app/kaziyami/ContentPolicy.kt](file:///e:/project/kaziyami/core/src/main/kotlin/app/kaziyami/ContentPolicy.kt)).
-- Mandatory client-side age gate preference (`SwitchPreferenceCompat`, key `age_gate_confirmed`).
+- Host application manages adult filtering natively via `tachiyomi.animeextension.nsfw=1` manifest metadata.
 
 ---
 

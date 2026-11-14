@@ -39,7 +39,6 @@ class NontonHentai : AnimeStreamTheme(
 ) {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         val cleanQuery = query.trim()
         val genre = filters.filterIsInstance<NontonHentaiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
         val order = filters.filterIsInstance<NontonHentaiSortFilter>().firstOrNull()?.toSlug().orEmpty()

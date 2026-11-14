@@ -39,7 +39,6 @@ class Hentaimama : DooPlayTheme(
     )
 ) {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         var category = "tvshows"
         var genre = ""
         var sort = ""

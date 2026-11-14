@@ -42,7 +42,6 @@ class ThreeXChina : RetroTubeTheme(
 ) {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         val cleanQuery = query.trim()
         val category = filters.filterIsInstance<ThreeXChinaCategoryFilter>().firstOrNull()?.toSlug().orEmpty()
         val tag = filters.filterIsInstance<ThreeXChinaTagFilter>().firstOrNull()?.toSlug().orEmpty()

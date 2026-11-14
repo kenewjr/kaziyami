@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -135,14 +134,6 @@ open class GenericThemeSource(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val context = screen.context
 
-        val agePref = SwitchPreferenceCompat(context).apply {
-            key = "age_gate_confirmed"
-            title = "I am 18 or older"
-            summary = "Confirm age requirement (18+) to access adult content"
-            setDefaultValue(false)
-        }
-        screen.addPreference(agePref)
-
         val mirrorsList = (listOf(config.baseUrl) + config.mirrors).distinct().toTypedArray()
 
         val domainPref = ListPreference(context).apply {
@@ -182,13 +173,9 @@ open class GenericThemeSource(
         screen.addPreference(hostPref)
     }
 
-    open fun isAgeConfirmed(): Boolean = preferences.getBoolean("age_gate_confirmed", false)
+    open fun isAgeConfirmed(): Boolean = true
 
-    protected fun checkAgeConfirmed() {
-        if (!isAgeConfirmed()) {
-            throw IllegalStateException("Age verification required: Confirm 'I am 18 or older' in extension settings to access $name.")
-        }
-    }
+    protected fun checkAgeConfirmed() {}
 
     /**
      * Tries an ordered list of candidate selectors (primary + alternates), remembers which one
@@ -213,7 +200,6 @@ open class GenericThemeSource(
     // ============================= Popular Anime =============================
 
     public override fun popularAnimeRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = safeFormatPage(config.popularPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
@@ -278,7 +264,6 @@ open class GenericThemeSource(
     // ============================= Latest Updates =============================
 
     public override fun latestUpdatesRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = safeFormatPage(config.latestPath, page)
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
@@ -495,7 +480,6 @@ open class GenericThemeSource(
     // ============================= Video List =============================
 
     public override fun videoListRequest(episode: SEpisode): Request {
-        checkAgeConfirmed()
         return GET(UrlUtils.resolve(baseUrl, episode.url), headers)
     }
 

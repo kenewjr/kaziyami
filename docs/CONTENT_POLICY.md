@@ -19,18 +19,12 @@ Kaziyami extensions strictly target adult animation:
 
 ---
 
-## 2. Age Gate Architecture
+## 2. Age Gate Architecture & Host NSFW Management
 
-Every Kaziyami extension enforces a strict client-side age confirmation gate before initiating any network requests:
-
-1. **Preference Key**: `age_gate_confirmed`
-2. **UI Component**: `SwitchPreferenceCompat` in host Extension Settings.
-3. **Title**: "I am 18 or older"
-4. **Summary**: "Confirm you are 18 years of age or older to enable media requests for this source."
-5. **Default Value**: `false` (Unchecked).
-6. **Enforcement**:
-   - Evaluated in `GenericThemeSource.checkAgeConfirmed()` prior to executing `popularAnimeRequest`, `latestUpdatesRequest`, `searchAnimeRequest`, `animeDetailsRequest`, `episodeListRequest`, and video stream extraction.
-   - If `age_gate_confirmed` is `false`, requests immediately fail-fast with `IllegalStateException("Age verification required: please confirm you are 18 or older in Extension Settings.")` without contacting the network.
+Adult content gating is handled natively by the host application (Aniyomi and Kototoro):
+1. **Manifest NSFW Flag**: Every extension declares `tachiyomi.animeextension.nsfw=1` in its Android manifest.
+2. **Host-Level NSFW Toggles**: Both Aniyomi and Kototoro provide global 18+/NSFW toggles in their respective Settings and Sources screens to hide or display adult sources.
+3. **Zero Friction**: In-extension manual age switches are omitted to prevent redundant configuration; enabling the host app's NSFW filter grants immediate access to the catalog.
 
 ---
 

@@ -74,21 +74,18 @@ open class KvsTheme(
 ) {
 
     override fun popularAnimeRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = if (page == 1) "/most-popular/" else config.popularPath.replace("%d", page.toString())
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = if (page == 1) "/latest-updates/" else config.latestPath.replace("%d", page.toString())
         val url = UrlUtils.resolve(baseUrl, path)
         return GET(url, headers)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         val path = if (query.isBlank()) {
             if (page == 1) "/most-popular/" else config.popularPath.replace("%d", page.toString())
         } else {

@@ -49,19 +49,16 @@ class Hanime1 : GenericThemeSource(
 ) {
 
     public override fun popularAnimeRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = if (page > 1) "/search?sort=本日排行&page=$page" else "/search?sort=本日排行"
         return GET(UrlUtils.resolve(baseUrl, path), headers)
     }
 
     public override fun latestUpdatesRequest(page: Int): Request {
-        checkAgeConfirmed()
         val path = if (page > 1) "/search?sort=最新上市&page=$page" else "/search?sort=最新上市"
         return GET(UrlUtils.resolve(baseUrl, path), headers)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         val cleanQuery = query.trim()
         val sort = filters.filterIsInstance<Hanime1SortFilter>().firstOrNull()?.toSlug().orEmpty()
         val genre = filters.filterIsInstance<Hanime1GenreFilter>().firstOrNull()?.toSlug().orEmpty()

@@ -93,20 +93,17 @@ All 8 active adult sources are configured with permanent 64-bit Source IDs locke
 
 | Source Label | Language | Version | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|---|
-| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.10` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
-| **Kaziyami: NontonHentai** | Indonesian (`id`) | `v14.12` | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
-| **Kaziyami: Hentaimama** | English (`en`) | `v14.8` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
-| **Kaziyami: Hanime** | English (`en`) | `v14.9` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
-| **Kaziyami: RuleVid** | English (`en`) | `v14.9` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
-| **Kaziyami: Rule34Video** | English (`en`) | `v14.9` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
-| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.15` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
-| **Kaziyami: 3xchina** | Chinese (`zh`) | `v14.10` | WordPress (RetroTube) | `https://3xchina.page` | HGCloud / VidHide / StreamHide embeds, WebView fallback |
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.11` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
+| **Kaziyami: NontonHentai** | Indonesian (`id`) | `v14.13` | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
+| **Kaziyami: Hentaimama** | English (`en`) | `v14.9` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
+| **Kaziyami: Hanime** | English (`en`) | `v14.10` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
+| **Kaziyami: RuleVid** | English (`en`) | `v14.10` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
+| **Kaziyami: Rule34Video** | English (`en`) | `v14.10` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.16` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: 3xchina** | Chinese (`zh`) | `v14.11` | WordPress (RetroTube) | `https://3xchina.page` | HGCloud / VidHide / StreamHide embeds, WebView fallback |
 
 > [!NOTE]
 > **Discontinued Sources**: `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
-
-> [!IMPORTANT]
-> **Age Gate Confirmation**: Every source requires enabling the "I am 18 or older" toggle in Extension Settings before initiating media requests. See [docs/CONTENT_POLICY.md](docs/CONTENT_POLICY.md) for automated safety filters and policies.
 
 ---
 

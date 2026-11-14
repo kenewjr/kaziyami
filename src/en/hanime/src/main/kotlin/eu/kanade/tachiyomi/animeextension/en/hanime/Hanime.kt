@@ -148,7 +148,6 @@ class Hanime : GenericThemeSource(
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        checkAgeConfirmed()
         var genreSlug = ""
         var sortIndex = 0
 
