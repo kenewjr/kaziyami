@@ -236,10 +236,18 @@
   - [x] 28.4 Independent Version Bumps: Bumped `Hanime1` to v14.14 (`extVersionCode = 14`), `NontonHentai` to v14.10 (`extVersionCode = 10`), and `3xchina` to v14.10 (`extVersionCode = 10`). Unmodified 5 extensions remain at their previous versions.
   - [x] 28.5 Verification: Passed `./gradlew check` (69 actionable tasks, 252 unit tests green, 0 failures), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
 
+- [x] **Phase 29: Stream Header Scrubbing, Unresolvable DNS Filtering, Single-Page Search & Cover Optimization (RuleVid, NontonHentai, Nekopoi, Hanime1)**:
+  - [x] 29.1 RuleVid Playback & Search Query Fix: Added browser User-Agent to `videoHeaders` in `KvsTheme.kt` resolving CDN HTTP 403. Padded single-character search queries (`a` -> `aa`) in `RuleVid.kt` to prevent RuleVid's 2-character rewrite 404.
+  - [x] 29.2 NontonHentai Dead DNS Filtering & Search Optimization: Added `canResolveHost` check in `HentaiCopExtractor` to drop unresolvable ephemeral hosts (`9385b44eef82e4b1ce998.site`). Returned page 1 immediately in `getSearchAnime` and `fetchSearchAnime` when `animes.isNotEmpty()`, reducing search latency from 21s to ~8s and resolving Kototoro 20s timeouts.
+  - [x] 29.3 Nekopoi Inline CSS Thumbnail & Latency Optimization: Updated `itemThumbnail` to match inline CSS `style="background-image: url(...)"` in `.nk-thumb-crop` and details thumbnail to `meta[property='og:image']`. Returned page 1 immediately when `animes.size >= 10`, cutting LIST duration from 18s to 4s and preventing cumulative 90s test timeout.
+  - [x] 29.4 Hanime1 Navigation Header Scrubbing & Video Matching: Stripped HTML navigation headers (`Sec-Fetch-Dest: document`, `Upgrade-Insecure-Requests: 1`) from video playback headers to prevent CDN HTTP 404 rejection. Restricted JS source regex strictly to valid media extensions (`.mp4`, `.m3u8`, `/video/`, `vdownload`).
+  - [x] 29.5 Independent Version Bumps: Bumped `RuleVid` to v14.9 (`extVersionCode = 9`), `Nekopoi` to v14.9 (`extVersionCode = 9`), `NontonHentai` to v14.11 (`extVersionCode = 11`), and `Hanime1` to v14.15 (`extVersionCode = 15`). Unchanged extensions (`Hanime`, `Hentaimama`, `Rule34Video`, `3xchina`) remain at their current versions.
+  - [x] 29.6 Verification: Passed `./gradlew check` (69 actionable tasks, 252 unit tests green, 0 failures), `verify_no_host_classes.py` (0 host classes across 8 APKs), `verify_host_api_binding.py` (100% host API compatibility), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 28 complete. 8 active production sources. `Hanime1` bumped to v14.14 (code 14); `NontonHentai` and `3xchina` at v14.10 (code 10); remaining 5 active sources at v14.8 (code 8). All 8 extension APKs assembled and verified.
+- **Overall Status**: Phase 29 complete. 8 active production sources. `Hanime1` bumped to v14.15 (code 15); `NontonHentai` to v14.11 (code 11); `3xchina` at v14.10 (code 10); `RuleVid` to v14.9 (code 9); `Nekopoi` to v14.9 (code 9); remaining 3 active sources (`Hanime`, `Hentaimama`, `Rule34Video`) at v14.8 (code 8). All 8 extension APKs assembled and verified.
 - **Last Green Run**: `./gradlew check` (69 tasks, all 8 sources green in `kototoroSelfTest` 100%, `testSourceInstantiation`, host API binding, and 252 unit tests), `verify_no_host_classes.py` (0 host classes across all 8 APKs), `verify_host_api_binding.py` (all bindings resolved), `check_test_counts.py` (252 tests across 10 modules), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks).
-- **Open Items**: None. Ready for remote push and CI monitoring.
+- **Open Items**: Ready for remote push and CI monitoring.
 

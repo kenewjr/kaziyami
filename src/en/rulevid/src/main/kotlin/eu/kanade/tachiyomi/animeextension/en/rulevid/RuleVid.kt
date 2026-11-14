@@ -42,7 +42,8 @@ class RuleVid : KvsTheme(
 
         val path = when {
             cleanQuery.isNotBlank() -> {
-                val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
+                val effectiveQuery = if (cleanQuery.length == 1) cleanQuery + cleanQuery else cleanQuery
+                val encoded = URLEncoder.encode(effectiveQuery, "UTF-8")
                 if (page > 1) "/search/$encoded/?from_videos=$page" else "/search/$encoded/"
             }
             genre.isNotEmpty() -> {

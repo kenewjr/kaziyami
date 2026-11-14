@@ -39,7 +39,7 @@ class Hanime1 : GenericThemeSource(
             detailsDescription = "div[class=video-details-wrapper] .video-caption-text, meta[name=description], .description",
             detailsGenre = "div.video-tags-wrapper a, a[href*='search?genre='], a[href*='search?tag=']",
             detailsAuthor = "div.video-details-wrapper a[href*='search?brand='], #video-artist-name",
-            episodeList = ".related-watch-wrap a[href*='watch?v='], .video-playlist-wrapper a[href*='watch?v=']",
+            episodeList = ".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']",
             playerIframes = "video#player source[src], video#player, iframe[src]"
         ),
         quirks = QuirksConfig(
@@ -104,27 +104,30 @@ class Hanime1 : GenericThemeSource(
 
     public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val relatedLinks = document.select(".related-watch-wrap a[href*='watch?v='], .video-playlist-wrapper a[href*='watch?v=']")
-        if (relatedLinks.isNotEmpty()) {
-            return relatedLinks.mapIndexed { index, el ->
+        val playlistLinks = document.select(".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']")
+        if (playlistLinks.isNotEmpty()) {
+            return playlistLinks.mapIndexed { index, el ->
                 val ep = SEpisode.create()
                 val href = el.attr("href")
                 ep.url = UrlUtils.resolve(baseUrl, href)
-                ep.name = HtmlText.clean(el.text()).ifEmpty { "Episode ${index + 1}" }
+                val title = el.selectFirst(".card-mobile-title, .video-item-title, h4, h5")?.text()
+                    ?: el.attr("title").takeIf { it.isNotBlank() }
+                    ?: el.text()
+                ep.name = HtmlText.clean(title).ifEmpty { "Episode ${index + 1}" }
                 ep.episode_number = (index + 1).toFloat()
                 ep
             }
         }
 
-        // Single video fallback
-        val ep = SEpisode.create()
-        ep.url = response.request.url.toString()
-        ep.name = "Full Episode"
-        ep.episode_number = 1.0f
-
-        val dateEl = document.selectFirst(".released-date, time, .upload-date")
-        if (dateEl != null) {
-            ep.date_upload = DateParser.parse(dateEl.text())
+        // Single video fallback (current watch page)
+        val ep = SEpisode.create().apply {
+            url = UrlUtils.resolve(baseUrl, response.request.url.toString())
+            name = document.selectFirst("#shareBtn-title, h1")?.text()?.let { HtmlText.clean(it) } ?: "Full Episode"
+            episode_number = 1.0f
+            val dateEl = document.selectFirst(".released-date, time, .upload-date")
+            if (dateEl != null) {
+                date_upload = DateParser.parse(dateEl.text())
+            }
         }
 
         return listOf(ep)
@@ -135,38 +138,52 @@ class Hanime1 : GenericThemeSource(
         val unescapedBody = body.replace("\\/", "/")
         val videoList = mutableListOf<Video>()
 
+        val videoHeaders = headers.newBuilder()
+            .set("Referer", "https://hanime1.me/")
+            .removeAll("Sec-Fetch-Dest")
+            .removeAll("Sec-Fetch-Mode")
+            .removeAll("Sec-Fetch-User")
+            .removeAll("Upgrade-Insecure-Requests")
+            .build()
+
+        val isVideoUrl: (String) -> Boolean = { u ->
+            val l = u.lowercase()
+            (l.contains(".mp4") || l.contains(".m3u8") || l.contains("/video/") || l.contains("vdownload")) &&
+                !l.endsWith(".js") && !l.endsWith(".css") && !l.endsWith(".png") && !l.endsWith(".jpg")
+        }
+
         // 1. Direct <video id="player"> or <source> elements
         val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
         val sources = doc.select("video#player source[src], video[src] source[src], video#player, video[src]")
         for (srcEl in sources) {
             val src = srcEl.attr("src").trim()
-            if (src.isNotBlank()) {
+            if (src.isNotBlank() && isVideoUrl(src)) {
                 val fullUrl = UrlUtils.resolve(baseUrl, src)
                 val quality = srcEl.attr("size").takeIf { it.isNotBlank() }?.let { "${it}p" } ?: "Hanime1 720p/1080p"
-                videoList.add(Video(fullUrl, quality, fullUrl, headers))
+                videoList.add(Video(fullUrl, quality, fullUrl, videoHeaders))
             }
         }
 
         // 2. JavaScript `const source = '...'` or `var source = '...'`
-        val jsSourceMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
+        val jsSourceMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
         while (jsSourceMatcher.find()) {
             val streamUrl = jsSourceMatcher.group(1) ?: continue
             val label = if (streamUrl.contains(".m3u8")) "Hanime1 HLS (1080p)" else "Hanime1 Direct MP4"
-            videoList.add(Video(streamUrl, label, streamUrl, headers))
+            videoList.add(Video(streamUrl, label, streamUrl, videoHeaders))
         }
 
         // 3. Embedded M3U8 regex
         val m3u8Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
         while (m3u8Matcher.find()) {
             val streamUrl = m3u8Matcher.group(1) ?: continue
-            videoList.add(Video(streamUrl, "Hanime1 HLS (1080p)", streamUrl, headers))
+            videoList.add(Video(streamUrl, "Hanime1 HLS (1080p)", streamUrl, videoHeaders))
         }
 
         // 4. Embedded MP4 regex
         val mp4Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.mp4[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
         while (mp4Matcher.find()) {
             val streamUrl = mp4Matcher.group(1) ?: continue
-            videoList.add(Video(streamUrl, "Hanime1 Direct MP4", streamUrl, headers))
+            videoList.add(Video(streamUrl, "Hanime1 Direct MP4", streamUrl, videoHeaders))
         }
 
         // 5. Extractor registry iframes
@@ -184,7 +201,7 @@ class Hanime1 : GenericThemeSource(
                     url = epUrl,
                     quality = "Stream (Open in WebView if blocked)",
                     videoUrl = epUrl,
-                    headers = headers
+                    headers = videoHeaders
                 )
             )
         }

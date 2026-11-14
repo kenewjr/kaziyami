@@ -81,7 +81,7 @@ class NontonHentai : AnimeStreamTheme(
         val p2 = p1 + 1
 
         val page1 = fetchAnimePage(searchAnimeRequest(p1, query, filters), ::searchAnimeParse)
-        if (!page1.hasNextPage || page1.animes.size >= 20 || page1.animes.isEmpty()) {
+        if (!page1.hasNextPage || page1.animes.isNotEmpty()) {
             return page1
         }
 
@@ -107,7 +107,7 @@ class NontonHentai : AnimeStreamTheme(
         val p2 = p1 + 1
         return client.newCall(searchAnimeRequest(p1, query, filters)).asObservableSuccess().flatMap { res1 ->
             val page1 = searchAnimeParse(res1)
-            if (!page1.hasNextPage || page1.animes.size >= 20 || page1.animes.isEmpty()) {
+            if (!page1.hasNextPage || page1.animes.isNotEmpty()) {
                 Observable.just(page1)
             } else {
                 client.newCall(searchAnimeRequest(p2, query, filters)).asObservableSuccess().map { res2 ->

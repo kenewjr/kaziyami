@@ -262,7 +262,7 @@ class FilemoonExtractor : VideoExtractor {
 
 class StreamPoiExtractor : VideoExtractor {
     override val name = "StreamPoi"
-    private val hostRegex = Pattern.compile("streampoi\\.com|streamruby\\.(?:net|com)", Pattern.CASE_INSENSITIVE)
+    private val hostRegex = Pattern.compile("streampoi\\.com|stmpoi\\.com|streamruby\\.(?:net|com)", Pattern.CASE_INSENSITIVE)
 
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
@@ -387,11 +387,30 @@ class HentaiCopExtractor : VideoExtractor {
                 val fileM = Pattern.compile("""['"]?(?:file|src)['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
                 if (fileM.find()) {
                     val streamUrl = fileM.group(1)
-                    val labelM = Pattern.compile("""['"]?label['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
-                    val rawLabel = if (labelM.find()) labelM.group(1) else ""
+                    if (canResolveHost(streamUrl)) {
+                        val labelM = Pattern.compile("""['"]?label['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
+                        val rawLabel = if (labelM.find()) labelM.group(1) else ""
+                        val quality = when {
+                            rawLabel.contains("Original", ignoreCase = true) -> "HentaiCop 1080p (Original)"
+                            rawLabel.isNotBlank() -> "HentaiCop $rawLabel"
+                            streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
+                            streamUrl.contains("720p", ignoreCase = true) -> "HentaiCop 720p"
+                            streamUrl.contains("480p", ignoreCase = true) -> "HentaiCop 480p"
+                            else -> "HentaiCop HD"
+                        }
+                        videos.add(Video(url, quality, streamUrl, videoHeaders))
+                    }
+                }
+            }
+        }
+
+        if (videos.isEmpty()) {
+            val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
+            val directMatcher = directPattern.matcher(normalized)
+            while (directMatcher.find()) {
+                val streamUrl = directMatcher.group(1)
+                if (canResolveHost(streamUrl)) {
                     val quality = when {
-                        rawLabel.contains("Original", ignoreCase = true) -> "HentaiCop 1080p (Original)"
-                        rawLabel.isNotBlank() -> "HentaiCop $rawLabel"
                         streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
                         streamUrl.contains("720p", ignoreCase = true) -> "HentaiCop 720p"
                         streamUrl.contains("480p", ignoreCase = true) -> "HentaiCop 480p"
@@ -403,30 +422,27 @@ class HentaiCopExtractor : VideoExtractor {
         }
 
         if (videos.isEmpty()) {
-            val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
-            val directMatcher = directPattern.matcher(normalized)
-            while (directMatcher.find()) {
-                val streamUrl = directMatcher.group(1)
-                val quality = when {
-                    streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
-                    streamUrl.contains("720p", ignoreCase = true) -> "HentaiCop 720p"
-                    streamUrl.contains("480p", ignoreCase = true) -> "HentaiCop 480p"
-                    else -> "HentaiCop HD"
-                }
-                videos.add(Video(url, quality, streamUrl, videoHeaders))
-            }
-        }
-
-        if (videos.isEmpty()) {
             val videoTagPattern = Pattern.compile("""<source[^>]+src=['"]([^'"]+)['"]""")
             val videoTagMatcher = videoTagPattern.matcher(normalized)
             while (videoTagMatcher.find()) {
                 val streamUrl = videoTagMatcher.group(1)
-                videos.add(Video(url, "HentaiCop HD", streamUrl, videoHeaders))
+                if (canResolveHost(streamUrl)) {
+                    videos.add(Video(url, "HentaiCop HD", streamUrl, videoHeaders))
+                }
             }
         }
 
         return videos.distinctBy { it.videoUrl }
+    }
+
+    private fun canResolveHost(streamUrl: String): Boolean {
+        return try {
+            val uri = java.net.URI(streamUrl)
+            val host = uri.host ?: return false
+            java.net.InetAddress.getByName(host) != null
+        } catch (_: Throwable) {
+            false
+        }
     }
 }
 

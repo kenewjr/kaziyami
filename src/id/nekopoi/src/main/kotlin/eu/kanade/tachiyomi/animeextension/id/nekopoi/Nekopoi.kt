@@ -28,10 +28,10 @@ class Nekopoi : GenericThemeSource(
             item = ".nk-search-results > ul > li, .nk-search-results li, .nk-post-card, article.type-post, .result ul li, .post-item, .eropost",
             itemTitle = "h2, .nk-search-info h2, h2 a, .title a, a[title]",
             itemUrl = "a.nk-search-item, h2 a, .title a, a[href]",
-            itemThumbnail = ".nk-search-thumb, img",
+            itemThumbnail = ".nk-thumb-crop, .nk-post-thumb, .nk-search-thumb, img, [style*='background-image']",
             nextPage = "a.next, .pagination a.next, .nav-links a.next, a.next.page-numbers, .next.page-numbers",
             detailsTitle = "h1.entry-title, .title h1, h1",
-            detailsThumbnail = ".imgdesc img, .thumb img, .entry-content img",
+            detailsThumbnail = "meta[property='og:image'], .imgdesc img, .thumb img, .entry-content img, [class*='thumb'] img",
             detailsDescription = ".nk-search-desc, .entry-content, .desc",
             detailsGenre = ".genre a, .genres a, .tag-links a",
             detailsStatus = ".status, span:contains(Status)",
@@ -100,7 +100,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
 
         val page1 = fetchAnimePage(popularAnimeRequest(p1), ::popularAnimeParse)
-        if (!page1.hasNextPage || page1.animes.isEmpty()) {
+        if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
             pageCache.put(cacheKey, page1)
             return page1
         }
@@ -125,7 +125,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
         return client.newCall(popularAnimeRequest(p1)).asObservableSuccess().flatMap { res1 ->
             val page1 = popularAnimeParse(res1)
-            if (!page1.hasNextPage || page1.animes.isEmpty()) {
+            if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
                 Observable.just(page1)
             } else {
                 client.newCall(popularAnimeRequest(p2)).asObservableSuccess().map { res2 ->
@@ -146,7 +146,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
 
         val page1 = fetchAnimePage(latestUpdatesRequest(p1), ::latestUpdatesParse)
-        if (!page1.hasNextPage || page1.animes.isEmpty()) {
+        if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
             pageCache.put(cacheKey, page1)
             return page1
         }
@@ -171,7 +171,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
         return client.newCall(latestUpdatesRequest(p1)).asObservableSuccess().flatMap { res1 ->
             val page1 = latestUpdatesParse(res1)
-            if (!page1.hasNextPage || page1.animes.isEmpty()) {
+            if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
                 Observable.just(page1)
             } else {
                 client.newCall(latestUpdatesRequest(p2)).asObservableSuccess().map { res2 ->
@@ -188,7 +188,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
 
         val page1 = fetchAnimePage(searchAnimeRequest(p1, query, filters), ::searchAnimeParse)
-        if (!page1.hasNextPage || page1.animes.isEmpty()) {
+        if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
             return page1
         }
 
@@ -209,7 +209,7 @@ class Nekopoi : GenericThemeSource(
         val p2 = p1 + 1
         return client.newCall(searchAnimeRequest(p1, query, filters)).asObservableSuccess().flatMap { res1 ->
             val page1 = searchAnimeParse(res1)
-            if (!page1.hasNextPage || page1.animes.isEmpty()) {
+            if (!page1.hasNextPage || page1.animes.size >= 10 || page1.animes.isEmpty()) {
                 Observable.just(page1)
             } else {
                 client.newCall(searchAnimeRequest(p2, query, filters)).asObservableSuccess().map { res2 ->
