@@ -5,16 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2026-11-15
+
+### Fixed & Enhanced
+- **3xchina Re-Activation**:
+  - Re-enabled `3xchina` (`https://3xchina.page`) across `settings.gradle.kts`, `build.gradle.kts`, `tools/build_apks.py`, repo index, icons, and test runner suite per user request. Bumped to `v14.12` (code 12).
+  - Isolated filter headers in `ThreeXChina.kt`: `排序 (Sorting Order)`, `分類 (Category)`, `標籤 (Tag)`.
+- **Sorting Default & Filter Composition**:
+  - Added `Option("預設 (Default)", "")` to `Hanime1.kt` and `ThreeXChina.kt` to ensure default search ordering does not override Kototoro's top "Sorting order" dropdown when tags/genres are active. Bumped `Hanime1` to `v14.19` (code 19).
+- **8 Active Sources Operational**:
+  - Complete 8-source catalog assembled, signed, and passing all verification checks: `Hanime1` (`v14.19`), `3xchina` (`v14.12`), `NontonHentai` (`v14.15`), `Nekopoi` (`v14.13`), `Hanime` (`v14.12`), `RuleVid` (`v14.12`), `Rule34Video` (`v14.12`), `Hentaimama` (`v14.11`).
+
 ## [1.4.4] - 2026-11-15
 
 ### Fixed & Enhanced
 - **Kototoro Android Sorting Order & Filter Header Separation**:
-  - Inserted explicit `AnimeFilter.Header` and `AnimeFilter.Separator` markers before each filter component (`Urutan (Sorting Order)`, `Kategori / Status`, `Genre / Tema`) across all 7 active extensions and multisrc themes.
+  - Inserted explicit `AnimeFilter.Header` and `AnimeFilter.Separator` markers before each filter component (`Urutan (Sorting Order)`, `Kategori / Status`, `Genre / Tema`) across all 8 active extensions and multisrc themes.
   - Solved upstream `AniyomiFilterMapper.kt` tag-merging issue where single-header sources collapsed all sorts, categories, and hundreds of genres into one unseparated chip group on Android HP. Sorting order is now cleanly isolated into its own functional chip section in Kototoro Android's filter bottom sheet.
   - Added dedicated "Default (Popular Hentai)" and explicit "Latest Updates" handling in `Nekopoi.kt` search request routing.
-  - Added `testKototoroFilterHeaderSeparation` regression test suite across all 7 extensions.
+  - Added `Option("預設 (Default)", "")` to `Hanime1.kt` and `ThreeXChina.kt` to ensure default search ordering does not override Kototoro's top "Sorting order" dropdown when tags/genres are active.
+  - Added `testKototoroFilterHeaderSeparation` regression test suite across all 8 extensions.
+- **3xchina Re-Activation**:
+  - Re-enabled `3xchina` module in `settings.gradle.kts`, `tools/build_apks.py`, repo index, icons, and test suite. Bumped to `v14.12` (code 12).
 - **Monotonic Version Bumps**:
-  - Bumped all 7 active sources: Hanime1 (`v14.18`), NontonHentai (`v14.15`), Nekopoi (`v14.13`), Hanime (`v14.12`), RuleVid (`v14.12`), Rule34Video (`v14.12`), Hentaimama (`v14.11`).
+  - Bumped all 8 active sources: Hanime1 (`v14.19`), 3xchina (`v14.12`), NontonHentai (`v14.15`), Nekopoi (`v14.13`), Hanime (`v14.12`), RuleVid (`v14.12`), Rule34Video (`v14.12`), Hentaimama (`v14.11`).
 
 ## [1.4.3] - 2026-11-15
 

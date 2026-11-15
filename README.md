@@ -89,7 +89,7 @@ For detailed update workflows, troubleshooting, and rollback steps, see [docs/UP
 
 ## 3. Catalog of Sources
 
-All 7 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
+All 8 active adult sources are configured with permanent 64-bit Source IDs locked in [docs/SOURCE_IDS.md](docs/SOURCE_IDS.md):
 
 | Source Label | Language | Version | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|---|
@@ -99,10 +99,11 @@ All 7 active adult sources are configured with permanent 64-bit Source IDs locke
 | **Kaziyami: Hanime** | English (`en`) | `v14.12` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
 | **Kaziyami: RuleVid** | English (`en`) | `v14.12` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
 | **Kaziyami: Rule34Video** | English (`en`) | `v14.12` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
-| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.18` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.19` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: 3xchina** | Chinese (`zh`) | `v14.12` | WordPress (RetroTube) | `https://3xchina.page` | Direct iframes / Streamtape, VOE, DoodStream, WebView fallback |
 
 > [!NOTE]
-> **Discontinued & Retired Sources**: `3xchina` was retired following adult animated-only scope enforcement (live-action RetroTube cleanup). `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
+> **Discontinued Sources**: `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
 
 ---
 

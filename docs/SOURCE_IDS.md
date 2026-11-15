@@ -25,7 +25,7 @@ val id = (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF)
 | **RuleVid** | `en` | Active | `3619818370138619659L` | `rulevid/en/1` |
 | **Rule34Video** | `en` | Active | `9212790518101043860L` | `rule34video/en/1` |
 | **Hanime1** | `zh` | Active | `8940914386632787357L` | `hanime1/zh/1` |
-| **3xchina** | `zh` | Retired (live-action scope cleanup) | `6860252144607113410L` | `3xchina/zh/1` |
+| **3xchina** | `zh` | Active | `6860252144607113410L` | `3xchina/zh/1` |
 | **JavSubIndo** | `id` | Backup | `3834839640077976573L` | `javsubindo/id/1` |
 | **Ohentai** | `en` | Backup | `7247837649602913976L` | `ohentai/en/1` |
 

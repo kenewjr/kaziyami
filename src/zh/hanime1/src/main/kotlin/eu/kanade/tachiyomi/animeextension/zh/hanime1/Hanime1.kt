@@ -348,6 +348,7 @@ class Hanime1 : GenericThemeSource(
         data class Option(val name: String, val slug: String)
 
         val SORTS = arrayOf(
+            Option("預設 (Default)", ""),
             Option("本日排行 (Daily Ranking)", "本日排行"),
             Option("最新上市 (New Arrival)", "最新上市"),
             Option("最新上傳 (New Upload)", "最新上傳"),

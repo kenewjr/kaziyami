@@ -63,6 +63,12 @@ EXTENSIONS = [
         "name": "Hanime1",
         "dir": "src/zh/hanime1",
         "multisrc": "lib-multisrc/generic"
+    },
+    {
+        "lang": "zh",
+        "name": "3xchina",
+        "dir": "src/zh/3xchina",
+        "multisrc": "lib-multisrc/retrotube"
     }
 ]
 

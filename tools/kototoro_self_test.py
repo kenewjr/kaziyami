@@ -69,6 +69,13 @@ SOURCES_CONFIG = [
         "ext_class": "eu.kanade.tachiyomi.animeextension.zh.hanime1.Hanime1",
         "fixture_dir": os.path.join(ROOT_DIR, "src", "zh", "hanime1", "src", "test", "resources", "hanime1"),
     },
+    {
+        "slug": "3xchina",
+        "name": "3xchina",
+        "lang": "zh",
+        "ext_class": "eu.kanade.tachiyomi.animeextension.zh.threexchina.ThreeXChina",
+        "fixture_dir": os.path.join(ROOT_DIR, "src", "zh", "3xchina", "src", "test", "resources", "3xchina"),
+    },
 ]
 
 def compile_runner(runner_dir):

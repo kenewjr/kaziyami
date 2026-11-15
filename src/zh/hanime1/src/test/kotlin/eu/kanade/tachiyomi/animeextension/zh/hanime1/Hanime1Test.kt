@@ -111,7 +111,7 @@ class Hanime1Test {
         val dateFilter = filters.filterIsInstance<Hanime1.Hanime1DateFilter>().first()
         val brandFilter = filters.filterIsInstance<Hanime1.Hanime1BrandFilter>().first()
 
-        sortFilter.state = 4 // 本月排行
+        sortFilter.state = Hanime1.SORTS.indexOfFirst { it.slug == "本月排行" }
         genreFilter.state = 4 // 3D動畫 (slug = 3DCG)
         durationFilter.state = 2 // 5分鐘以上 (slug = 5 分鐘 +)
         dateFilter.state = 1 // 過去24小時 (slug = 過去 24 小時)

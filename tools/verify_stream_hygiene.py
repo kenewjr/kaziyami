@@ -49,6 +49,11 @@ SOURCES = [
         "name": "Hanime1",
         "file": os.path.join(ROOT_DIR, "src", "zh", "hanime1", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "zh", "hanime1", "Hanime1.kt"),
     },
+    {
+        "slug": "3xchina",
+        "name": "3xchina",
+        "file": os.path.join(ROOT_DIR, "src", "zh", "3xchina", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "zh", "threexchina", "ThreeXChina.kt"),
+    },
 ]
 
 def verify_stream_hygiene():

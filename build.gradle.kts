@@ -136,7 +136,8 @@ val checkExtensionIcons by tasks.registering {
             "src/en/hanime",
             "src/en/rulevid",
             "src/en/rule34video",
-            "src/zh/hanime1"
+            "src/zh/hanime1",
+            "src/zh/3xchina"
         )
         for (ext in extensions) {
             val xmlIcon = file("$ext/src/main/res/drawable/ic_launcher.xml")

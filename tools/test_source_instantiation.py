@@ -27,6 +27,7 @@ EXPECTED_SOURCES = {
     "RuleVid": {"name": "RuleVid", "lang": "en", "id": 3619818370138619659},
     "Rule34Video": {"name": "Rule34Video", "lang": "en", "id": 9212790518101043860},
     "Hanime1": {"name": "Hanime1", "lang": "zh", "id": 8940914386632787357},
+    "3xchina": {"name": "3xchina", "lang": "zh", "id": 6860252144607113410},
 }
 
 class TestSourceInstantiation(unittest.TestCase):

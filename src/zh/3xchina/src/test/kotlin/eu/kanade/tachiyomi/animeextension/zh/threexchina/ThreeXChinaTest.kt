@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.zh.threexchina
 
 import app.kaziyami.core.InMemorySharedPreferences
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
@@ -90,6 +91,16 @@ class ThreeXChinaTest {
 
         val reqFilter = source.searchAnimeRequest(1, "", filters)
         assertThat(reqFilter.url.encodedPath).isEqualTo("/category/chinese-av/")
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertThat(headers.any { it.contains("排序") || it.contains("Sort") }).isTrue()
+        assertThat(headers.any { it.contains("分類") || it.contains("Category") }).isTrue()
+        assertThat(headers.any { it.contains("標籤") || it.contains("Tag") }).isTrue()
+        assertThat(headers.size).isGreaterThanOrEqualTo(3)
     }
 }
 

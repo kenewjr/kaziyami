@@ -120,9 +120,13 @@ class ThreeXChina : RetroTubeTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("3xchina 華語成人過濾器"),
+            AnimeFilter.Header("排序 (Sorting Order)"),
             ThreeXChinaSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("分類 (Category)"),
             ThreeXChinaCategoryFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("標籤 (Tag)"),
             ThreeXChinaTagFilter()
         )
     }
@@ -155,6 +159,7 @@ class ThreeXChina : RetroTubeTheme(
         data class Option(val name: String, val slug: String)
 
         val SORTS = arrayOf(
+            Option("預設 (Default)", ""),
             Option("最新發佈 (Recent)", "latest"),
             Option("觀看最多 (Most Viewed)", "most-viewed"),
             Option("最受歡迎 (Popular)", "popular"),
