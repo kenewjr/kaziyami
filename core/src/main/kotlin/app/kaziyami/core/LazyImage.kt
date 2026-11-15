@@ -55,7 +55,7 @@ object LazyImage {
         if (style.isNotEmpty()) {
             val matcher = BG_IMG_PATTERN.matcher(style)
             if (matcher.find()) {
-                val url = matcher.group(1).trim()
+                val url = matcher.group(1)?.trim().orEmpty()
                 if (url.isNotEmpty() && !isPlaceholder(url)) {
                     return UrlUtils.resolve(baseUrl, url)
                 }

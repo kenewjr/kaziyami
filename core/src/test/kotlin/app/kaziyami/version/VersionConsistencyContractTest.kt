@@ -21,8 +21,7 @@ class VersionConsistencyContractTest {
         Triple("en", "hanime", "Hanime"),
         Triple("en", "rulevid", "RuleVid"),
         Triple("en", "rule34video", "Rule34Video"),
-        Triple("zh", "hanime1", "Hanime1"),
-        Triple("zh", "3xchina", "3xchina")
+        Triple("zh", "hanime1", "Hanime1")
     )
 
     @Test
@@ -45,7 +44,7 @@ class VersionConsistencyContractTest {
         val aniyomiArray = json.parseToJsonElement(aniyomiIndexFile.readText()).jsonArray
         val aniyomiMap = aniyomiArray.associateBy { it.jsonObject["pkg"]?.jsonPrimitive?.content }
 
-        for ((lang, slug, name) in sources) {
+        for ((lang, slug, _) in sources) {
             val buildFile = File(rootDir, "src/$lang/$slug/build.gradle.kts")
             assertTrue(buildFile.exists(), "Source build file must exist: ${buildFile.path}")
 

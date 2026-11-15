@@ -498,9 +498,8 @@ class SmartDns(
 
         try {
             val systemAddresses = systemDns.lookup(hostname)
-            val isLoopback = systemAddresses.any { it.isLoopbackAddress || it.hostAddress == "127.0.0.1" }
-            val isSinkholed = systemAddresses.any { it.hostAddress in SINKHOLE_IPS }
-            if ((isLoopback || !isSinkholed) && systemAddresses.isNotEmpty()) {
+            val isSinkholed = systemAddresses.any { addr -> addr.hostAddress?.let { it in SINKHOLE_IPS } ?: false }
+            if (!isSinkholed && systemAddresses.isNotEmpty()) {
                 val sorted = systemAddresses.sortedBy { if (it is java.net.Inet4Address) 0 else 1 }
                 cache[hostname] = sorted
                 return sorted

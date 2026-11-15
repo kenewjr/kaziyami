@@ -39,34 +39,31 @@ class BytecodeVersionContractTest {
             }
         }
 
-        // 2. If suite JAR exists in build/libs or repo/jar, also inspect its classes
-        val jarDirs = listOf(File(rootDir, "build/libs"), File(rootDir, "repo/jar"))
-        val jarFile = jarDirs.firstNotNullOfOrNull { dir ->
-            if (dir.exists()) {
-                dir.listFiles { f -> f.name.startsWith("kaziyami-all-v") && f.name.endsWith(".jar") }?.firstOrNull()
-            } else null
-        }
+        // 2. Inspect classes inside packaged extension jars
+        val packagedDir = File(rootDir, "build/packaged-jars")
+        if (packagedDir.exists()) {
+            val jarFiles = packagedDir.listFiles { f -> f.name.endsWith(".jar") } ?: emptyArray()
+            for (jarFile in jarFiles) {
+                ZipFile(jarFile).use { zip ->
+                    val classEntries = zip.entries().asSequence()
+                        .filter { it.name.endsWith(".class") }
+                        .toList()
 
-        if (jarFile != null && jarFile.exists()) {
-            ZipFile(jarFile).use { zip ->
-                val classEntries = zip.entries().asSequence()
-                    .filter { it.name.endsWith(".class") }
-                    .toList()
-
-                for (entry in classEntries) {
-                    DataInputStream(zip.getInputStream(entry)).use { dis ->
-                        val magic = dis.readInt()
-                        assertEquals(
-                            0xCAFEBABE.toInt(),
-                            magic,
-                            "JAR class ${entry.name} must start with standard JVM magic 0xCAFEBABE"
-                        )
-                        dis.skipBytes(2)
-                        val major = dis.readUnsignedShort()
-                        assertTrue(
-                            major in 55..61,
-                            "JAR class ${entry.name} has major version $major, outside allowed JDK 11..17 range (55..61)"
-                        )
+                    for (entry in classEntries) {
+                        DataInputStream(zip.getInputStream(entry)).use { dis ->
+                            val magic = dis.readInt()
+                            assertEquals(
+                                0xCAFEBABE.toInt(),
+                                magic,
+                                "JAR class ${entry.name} in ${jarFile.name} must start with standard JVM magic 0xCAFEBABE"
+                            )
+                            dis.skipBytes(2)
+                            val major = dis.readUnsignedShort()
+                            assertTrue(
+                                major in 55..61,
+                                "JAR class ${entry.name} in ${jarFile.name} has major version $major, outside allowed JDK 11..17 range (55..61)"
+                            )
+                        }
                     }
                 }
             }

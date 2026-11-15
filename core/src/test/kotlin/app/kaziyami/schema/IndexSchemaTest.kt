@@ -23,8 +23,7 @@ class IndexSchemaTest {
         "Hanime" to "2150907185602526076",
         "RuleVid" to "3619818370138619659",
         "Rule34Video" to "9212790518101043860",
-        "Hanime1" to "8940914386632787357",
-        "3xchina" to "6860252144607113410"
+        "Hanime1" to "8940914386632787357"
     )
 
     private fun getRepoDir(): File {
@@ -39,7 +38,7 @@ class IndexSchemaTest {
         val repoJson = File(repoDir, "repo.json")
         val iconDir = File(repoDir, "icon")
 
-        val pythonCommands = if (System.getProperty("os.name").lowercase().contains("win")) {
+        val pythonCommands = if (System.getProperty("os.name")?.lowercase()?.contains("win") == true) {
             listOf("python", "py")
         } else {
             listOf("python3", "python")
@@ -87,7 +86,7 @@ class IndexSchemaTest {
 
         val content = indexFile.readText()
         val array = json.parseToJsonElement(content).jsonArray
-        assertEquals(8, array.size, "Must contain all 8 sources")
+        assertEquals(7, array.size, "Must contain all 7 sources")
 
         val expectedPkgs = setOf(
             "eu.kanade.tachiyomi.animeextension.id.nekopoi",
@@ -96,8 +95,7 @@ class IndexSchemaTest {
             "eu.kanade.tachiyomi.animeextension.en.hanime",
             "eu.kanade.tachiyomi.animeextension.en.rulevid",
             "eu.kanade.tachiyomi.animeextension.en.rule34video",
-            "eu.kanade.tachiyomi.animeextension.zh.hanime1",
-            "eu.kanade.tachiyomi.animeextension.zh.threexchina"
+            "eu.kanade.tachiyomi.animeextension.zh.hanime1"
         )
 
         val seenPkgs = mutableSetOf<String>()
@@ -175,7 +173,7 @@ class IndexSchemaTest {
         val content = minFile.readText()
         assertFalse(content.contains("\n"), "index.min.json must be minified")
         val array = json.parseToJsonElement(content).jsonArray
-        assertEquals(8, array.size)
+        assertEquals(7, array.size)
     }
 
     @Test

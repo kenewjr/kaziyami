@@ -9,14 +9,18 @@ import eu.kanade.tachiyomi.util.asJsoup
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
+import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
 import app.kaziyami.multisrc.generic.GenericThemeSource
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.generic.SourceConfig
+import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 class Hanime1 : GenericThemeSource(
@@ -63,8 +67,13 @@ class Hanime1 : GenericThemeSource(
         val sort = filters.filterIsInstance<Hanime1SortFilter>().firstOrNull()?.toSlug().orEmpty()
         val genre = filters.filterIsInstance<Hanime1GenreFilter>().firstOrNull()?.toSlug().orEmpty()
         val duration = filters.filterIsInstance<Hanime1DurationFilter>().firstOrNull()?.toSlug().orEmpty()
-        val tag = filters.filterIsInstance<Hanime1TagFilter>().firstOrNull()?.toSlug().orEmpty()
+        val date = filters.filterIsInstance<Hanime1DateFilter>().firstOrNull()?.toSlug().orEmpty()
         val brand = filters.filterIsInstance<Hanime1BrandFilter>().firstOrNull()?.toSlug().orEmpty()
+
+        val selectedTags = filters.filterIsInstance<AnimeFilter.Group<*>>()
+            .flatMap { it.state.filterIsInstance<TagCheckBox>() }
+            .filter { it.state }
+            .map { it.slug }
 
         val params = mutableListOf<String>()
         if (cleanQuery.isNotEmpty()) {
@@ -79,11 +88,14 @@ class Hanime1 : GenericThemeSource(
         if (duration.isNotEmpty()) {
             params.add("duration=" + URLEncoder.encode(duration, "UTF-8"))
         }
-        if (tag.isNotEmpty()) {
-            params.add("tag=" + URLEncoder.encode(tag, "UTF-8"))
+        if (date.isNotEmpty()) {
+            params.add("date=" + URLEncoder.encode(date, "UTF-8"))
         }
         if (brand.isNotEmpty()) {
-            params.add("brand=" + URLEncoder.encode(brand, "UTF-8"))
+            params.add("brands[]=" + URLEncoder.encode(brand, "UTF-8"))
+        }
+        for (tag in selectedTags) {
+            params.add("tags[]=" + URLEncoder.encode(tag, "UTF-8"))
         }
         if (page > 1) {
             params.add("page=$page")
@@ -92,7 +104,7 @@ class Hanime1 : GenericThemeSource(
         val path = if (params.isNotEmpty()) {
             "/search?" + params.joinToString("&")
         } else {
-            if (page > 1) "/search?sort=最新上市&page=$page" else "/search?sort=最新上市"
+            if (page > 1) "/search?sort=本日排行&page=$page" else "/search?sort=本日排行"
         }
 
         val url = UrlUtils.resolve(baseUrl, path)
@@ -133,70 +145,133 @@ class Hanime1 : GenericThemeSource(
     public override fun videoListParse(response: Response): List<Video> {
         val body = response.body?.string().orEmpty()
         val unescapedBody = body.replace("\\/", "/")
-        val videoList = mutableListOf<Video>()
+        val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
 
         val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime1.me/", headers)
 
-        val isVideoUrl: (String) -> Boolean = { u ->
-            val l = u.lowercase()
-            (l.contains(".mp4") || l.contains(".m3u8") || l.contains("/video/") || l.contains("vdownload")) &&
-                !l.endsWith(".js") && !l.endsWith(".css") && !l.endsWith(".png") && !l.endsWith(".jpg")
-        }
+        val candidateSources = mutableListOf<Pair<String, String>>() // (url, quality)
 
-        // 1. Direct <video id="player"> or <source> elements
-        val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
+        // 1. Direct <video id="player"> or <source> elements (primary and most reliable)
         val sources = doc.select("video#player source[src], video[src] source[src], video#player, video[src]")
         for (srcEl in sources) {
             val src = srcEl.attr("src").trim()
-            if (src.isNotBlank() && isVideoUrl(src)) {
+            if (src.isNotBlank() && isDirectMediaCandidate(src)) {
                 val fullUrl = UrlUtils.resolve(baseUrl, src)
-                val quality = srcEl.attr("size").takeIf { it.isNotBlank() }?.let { "${it}p" } ?: "Hanime1 720p/1080p"
-                videoList.add(Video(fullUrl, quality, fullUrl, videoHeaders))
+                val rawSize = srcEl.attr("size").trim()
+                val quality = when {
+                    rawSize.isNotBlank() -> "${rawSize}p"
+                    fullUrl.contains("1080p", ignoreCase = true) -> "1080p"
+                    fullUrl.contains("720p", ignoreCase = true) -> "720p"
+                    fullUrl.contains("480p", ignoreCase = true) -> "480p"
+                    else -> "720p"
+                }
+                candidateSources.add(fullUrl to quality)
             }
         }
 
         // 2. JavaScript `const source = '...'` or `var source = '...'`
-        val jsSourceMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
-        while (jsSourceMatcher.find()) {
-            val streamUrl = jsSourceMatcher.group(1) ?: continue
-            val label = if (streamUrl.contains(".m3u8")) "Hanime1 HLS (1080p)" else "Hanime1 Direct MP4"
-            videoList.add(Video(streamUrl, label, streamUrl, videoHeaders))
+        if (candidateSources.isEmpty()) {
+            val jsMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
+            while (jsMatcher.find()) {
+                val streamUrl = jsMatcher.group(1) ?: continue
+                if (isDirectMediaCandidate(streamUrl)) {
+                    val quality = if (streamUrl.contains("1080p", ignoreCase = true)) "1080p" else "720p"
+                    candidateSources.add(streamUrl to quality)
+                }
+            }
         }
 
-        // 3. Embedded M3U8 regex
-        val m3u8Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
-        while (m3u8Matcher.find()) {
-            val streamUrl = m3u8Matcher.group(1) ?: continue
-            videoList.add(Video(streamUrl, "Hanime1 HLS (1080p)", streamUrl, videoHeaders))
+        // 3. Fallback regex strictly matching direct stream URLs (excluding images, thumbs, preview assets)
+        if (candidateSources.isEmpty()) {
+            val streamRegex = Pattern.compile("""(https?://[^\s"'<>]+\.(?:mp4|m3u8)(?:\?[^\s"'<>]*)?)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
+            while (streamRegex.find()) {
+                val url = streamRegex.group(1) ?: continue
+                if (isDirectMediaCandidate(url)) {
+                    val quality = if (url.contains("1080p", ignoreCase = true)) "1080p" else "720p"
+                    candidateSources.add(url to quality)
+                }
+            }
         }
 
-        // 4. Embedded MP4 regex
-        val mp4Matcher = Pattern.compile("""(https?://[^\s"'<>]+\.mp4[^\s"'<>]*)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
-        while (mp4Matcher.find()) {
-            val streamUrl = mp4Matcher.group(1) ?: continue
-            videoList.add(Video(streamUrl, "Hanime1 Direct MP4", streamUrl, videoHeaders))
-        }
-
-        // 5. Extractor registry iframes
-        val iframes = doc.select("iframe[src]").mapNotNull {
-            val src = it.attr("src")
-            if (src.isNotBlank()) UrlUtils.resolve(baseUrl, src) else null
-        }
-        videoList.addAll(ExtractorRegistry.extractAll(iframes, client))
-
-        val deduped = videoList.distinctBy { it.videoUrl }
-        if (deduped.isEmpty()) {
-            val epUrl = response.request.url.toString()
-            return listOf(
-                Video(
-                    url = epUrl,
-                    quality = "Stream (Open in WebView if blocked)",
-                    videoUrl = epUrl,
-                    headers = videoHeaders
-                )
+        if (candidateSources.isEmpty()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = "video#player",
+                urlPath = "No playable video streams reachable from Hanime1"
             )
         }
-        return deduped
+
+        // Deduplicate candidates by URL and sort by quality (1080p first)
+        val sortedCandidates = candidateSources.distinctBy { it.first }.sortedWith(
+            compareByDescending { (_, q) ->
+                when {
+                    q.contains("1080") -> 100
+                    q.contains("720") -> 70
+                    q.contains("480") -> 40
+                    else -> 20
+                }
+            }
+        )
+
+        // Health probe: drop candidates that return 404 or unresolvable DNS
+        val probedVideos = mutableListOf<Video>()
+        for ((streamUrl, q) in sortedCandidates) {
+            if (isStreamReachable(streamUrl, videoHeaders, client)) {
+                probedVideos.add(Video(streamUrl, "Hanime1 $q", streamUrl, videoHeaders))
+            }
+        }
+
+        if (probedVideos.isEmpty()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = "video#player",
+                urlPath = "No playable video streams reachable from Hanime1 (all candidate streams returned 404 or unresolvable host)"
+            )
+        }
+
+        return probedVideos
+    }
+
+    private fun isDirectMediaCandidate(url: String): Boolean {
+        val lower = url.lowercase().trim()
+        if (lower.isEmpty() || lower.startsWith("javascript:") || lower.startsWith("data:")) return false
+        if (lower.endsWith(".jpg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif") || lower.endsWith(".js") || lower.endsWith(".css")) return false
+        if (lower.contains("/image/") || lower.contains("/preview/") || lower.contains("/cover/") || lower.contains("/thumb")) return false
+        return lower.contains(".mp4") || lower.contains(".m3u8") || lower.contains("vdownload")
+    }
+
+    private fun isStreamReachable(streamUrl: String, headers: Headers, client: OkHttpClient): Boolean {
+        return try {
+            val uri = java.net.URI(streamUrl)
+            val host = uri.host ?: return false
+            val addresses = java.net.InetAddress.getAllByName(host)
+            if (addresses.isEmpty() || addresses.any { it.isLoopbackAddress || it.hostAddress in app.kaziyami.network.SmartDns.SINKHOLE_IPS }) {
+                return false
+            }
+
+            val probeClient = client.newBuilder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(2, TimeUnit.SECONDS)
+                .build()
+            val probeReq = Request.Builder()
+                .url(streamUrl)
+                .headers(headers)
+                .header("Range", "bytes=0-1024")
+                .head()
+                .build()
+            probeClient.newCall(probeReq).execute().use { resp ->
+                if (resp.code == 404 || resp.code == 410) {
+                    return false
+                }
+                true
+            }
+        } catch (_: java.net.UnknownHostException) {
+            false
+        } catch (_: Throwable) {
+            true
+        }
     }
 
     override fun getFilterList(): AnimeFilterList {
@@ -205,10 +280,21 @@ class Hanime1 : GenericThemeSource(
             Hanime1SortFilter(),
             Hanime1GenreFilter(),
             Hanime1DurationFilter(),
-            Hanime1TagFilter(),
-            Hanime1BrandFilter()
+            Hanime1DateFilter(),
+            Hanime1BrandFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("標籤多選 (Multi-select Tags)"),
+            TagGroup("規格 (Specifications)", SPEC_TAGS.map { TagCheckBox(it.name, it.slug) }),
+            TagGroup("劇情主題 (Story & Plot)", THEME_TAGS.map { TagCheckBox(it.name, it.slug) }),
+            TagGroup("角色關係 (Relationships)", RELATION_TAGS.map { TagCheckBox(it.name, it.slug) }),
+            TagGroup("角色身分 (Characteristics)", ROLE_TAGS.map { TagCheckBox(it.name, it.slug) }),
+            TagGroup("外貌與體態 (Appearance)", APPEARANCE_TAGS.map { TagCheckBox(it.name, it.slug) }),
+            TagGroup("體位與情節 (Acts & Positions)", ACT_TAGS.map { TagCheckBox(it.name, it.slug) })
         )
     }
+
+    class TagCheckBox(name: String, val slug: String) : AnimeFilter.CheckBox(name, false)
+    class TagGroup(name: String, tags: List<TagCheckBox>) : AnimeFilter.Group<TagCheckBox>(name, tags)
 
     class Hanime1SortFilter : AnimeFilter.Select<String>(
         "排序 (Sort By)",
@@ -234,12 +320,12 @@ class Hanime1 : GenericThemeSource(
         fun toSlug(): String = DURATIONS[state].slug
     }
 
-    class Hanime1TagFilter : AnimeFilter.Select<String>(
-        "標籤 (Tag)",
-        TAGS.map { it.name }.toTypedArray(),
+    class Hanime1DateFilter : AnimeFilter.Select<String>(
+        "發布日期 (Release Date)",
+        DATES.map { it.name }.toTypedArray(),
         0
     ) {
-        fun toSlug(): String = TAGS[state].slug
+        fun toSlug(): String = DATES[state].slug
     }
 
     class Hanime1BrandFilter : AnimeFilter.Select<String>(
@@ -254,9 +340,9 @@ class Hanime1 : GenericThemeSource(
         data class Option(val name: String, val slug: String)
 
         val SORTS = arrayOf(
+            Option("本日排行 (Daily Ranking)", "本日排行"),
             Option("最新上市 (New Arrival)", "最新上市"),
             Option("最新上傳 (New Upload)", "最新上傳"),
-            Option("本日排行 (Daily Ranking)", "本日排行"),
             Option("本週排行 (Weekly Ranking)", "本週排行"),
             Option("本月排行 (Monthly Ranking)", "本月排行"),
             Option("觀看次數 (View Count)", "觀看次數"),
@@ -270,32 +356,69 @@ class Hanime1 : GenericThemeSource(
             Option("裏番 (Hentai)", "裏番"),
             Option("泡麵番 (Short Anime)", "泡麵番"),
             Option("Motion Anime", "Motion Anime"),
-            Option("3D動畫 (3D Animation / 3DCG)", "3D動畫"),
+            Option("3D動畫 (3D Animation / 3DCG)", "3DCG"),
             Option("同人作品 (Doujin Work)", "同人作品"),
             Option("2.5D", "2.5D"),
             Option("2D動畫", "2D動畫"),
             Option("AI生成 (AI Generated)", "AI生成"),
-            Option("MMD", "MMD"),
-            Option("Cosplay", "Cosplay")
+            Option("MMD", "MMD")
         )
 
         val DURATIONS = arrayOf(
             Option("全部時長 (All Durations)", ""),
-            Option("短片 (Short <= 4 min)", "短片"),
-            Option("中長片 (Medium 4-20 min)", "中長片"),
-            Option("長片 (Feature > 20 min)", "長片")
+            Option("1分鐘以上 (1 min+)", "1 分鐘 +"),
+            Option("5分鐘以上 (5 min+)", "5 分鐘 +"),
+            Option("10分鐘以上 (10 min+)", "10 分鐘 +"),
+            Option("20分鐘以上 (20 min+)", "20 分鐘 +"),
+            Option("30分鐘以上 (30 min+)", "30 分鐘 +"),
+            Option("60分鐘以上 (60 min+)", "60 分鐘 +"),
+            Option("0~10分鐘 (0-10 min)", "0 - 10 分鐘"),
+            Option("0~20分鐘 (0-20 min)", "0 - 20 分鐘")
         )
 
-        val TAGS = arrayOf(
-            Option("全部標籤 (All Tags)", ""),
-            // 規格 (Specs)
+        val DATES = arrayOf(
+            Option("全部發行日期 (All Dates)", ""),
+            Option("過去24小時 (Last 24 hours)", "過去 24 小時"),
+            Option("過去2天 (Last 2 days)", "過去 2 天"),
+            Option("過去1週 (Last 1 week)", "過去 1 週"),
+            Option("過去1個月 (Last 1 month)", "過去 1 個月"),
+            Option("過去3個月 (Last 3 months)", "過去 3 個月"),
+            Option("過去1年 (Past 1 year)", "過去 1 年")
+        )
+
+        val BRANDS = arrayOf(
+            Option("全部廠商 (All Studios)", ""),
+            Option("PoRO", "PoRO"),
+            Option("Queen Bee", "Queen Bee"),
+            Option("メリー・ジェーン (Mary Jane)", "メリー・ジェーン"),
+            Option("ピンクパイナップル (Pink Pineapple)", "ピンクパイナップル"),
+            Option("ばにぃうぉ～か～ (Bunnywalker)", "ばにぃうぉ～か～"),
+            Option("魔人 (Majin)", "魔人"),
+            Option("milky (ミルキー)", "milky"),
+            Option("Seven (セブン)", "Seven"),
+            Option("T-Rex", "T-Rex"),
+            Option("ZIZ", "ZIZ"),
+            Option("EDGE", "EDGE"),
+            Option("ショーテン (Showten)", "ショーテン"),
+            Option("妄想実現めでぃあ", "妄想実現めでぃあ"),
+            Option("せるふぃっしゅ (Selfish)", "せるふぃっしゅ"),
+            Option("Collaboration Works", "Collaboration Works"),
+            Option("BOOTLEG", "BOOTLEG"),
+            Option("BOMB!CUTE!BOMB!", "BOMB!CUTE!BOMB!"),
+            Option("GOLD BEAR", "GOLD BEAR"),
+            Option("鈴木みら乃 (Suzuki Mirano)", "鈴木みら乃")
+        )
+
+        val SPEC_TAGS = arrayOf(
             Option("無碼 (Uncensored)", "無碼"),
             Option("AI解碼 (AI Decoded)", "AI解碼"),
             Option("中文字幕 (Chinese Sub)", "中文字幕"),
             Option("中文配音 (Chinese Dub)", "中文配音"),
             Option("1080P", "1080P"),
-            Option("60FPS", "60FPS"),
-            // 劇情主題 (Themes)
+            Option("60FPS", "60FPS")
+        )
+
+        val THEME_TAGS = arrayOf(
             Option("純愛 (Pure Love)", "純愛"),
             Option("戀愛喜劇 (Romcom)", "戀愛喜劇"),
             Option("後宮 (Harem)", "後宮"),
@@ -306,8 +429,10 @@ class Hanime1 : GenericThemeSource(
             Option("公眾場合 (Public)", "公眾場合"),
             Option("百合 (Yuri)", "百合"),
             Option("耽美 (Yaoi)", "耽美"),
-            Option("性轉換 (Gender Bender)", "性轉換"),
-            // 角色關係 (Relationships)
+            Option("性轉換 (Gender Bender)", "性轉換")
+        )
+
+        val RELATION_TAGS = arrayOf(
             Option("近親 (Incest)", "近親"),
             Option("姐 (Elder Sister)", "姐"),
             Option("妹 (Younger Sister)", "妹"),
@@ -315,8 +440,10 @@ class Hanime1 : GenericThemeSource(
             Option("女兒 (Daughter)", "女兒"),
             Option("師生 (Teacher Student)", "師生"),
             Option("情侶 (Couple)", "情侶"),
-            Option("青梅竹馬 (Childhood Friend)", "青梅竹馬"),
-            // 角色身分 (Roles)
+            Option("青梅竹馬 (Childhood Friend)", "青梅竹馬")
+        )
+
+        val ROLE_TAGS = arrayOf(
             Option("處女 (Virgin)", "處女"),
             Option("御姐 (Older Sister)", "御姐"),
             Option("熟女 (MILF)", "熟女"),
@@ -344,8 +471,10 @@ class Hanime1 : GenericThemeSource(
             Option("病嬌 (Yandere)", "病嬌"),
             Option("無口 (Dandere)", "無口"),
             Option("偽娘 (Trap / Crossdresser)", "偽娘"),
-            Option("扶他 (Futanari)", "扶他"),
-            // 外貌與服裝 (Appearance & Costumes)
+            Option("扶他 (Futanari)", "扶他")
+        )
+
+        val APPEARANCE_TAGS = arrayOf(
             Option("巨乳 (Big Breasts)", "巨乳"),
             Option("貧乳 (Flat / Small Breasts)", "貧乳"),
             Option("黑皮膚 (Dark Skin)", "黑皮膚"),
@@ -372,8 +501,10 @@ class Hanime1 : GenericThemeSource(
             Option("性感內衣 (Lingerie)", "性感內衣"),
             Option("丁字褲 (Thong)", "丁字褲"),
             Option("高跟鞋 (High Heels)", "高跟鞋"),
-            Option("淫紋 (Crest Tattoo)", "淫紋"),
-            // 體位與情節 (Acts & Positions)
+            Option("淫紋 (Crest Tattoo)", "淫紋")
+        )
+
+        val ACT_TAGS = arrayOf(
             Option("內射 (Creampie)", "內射"),
             Option("口交 (Blowjob)", "口交"),
             Option("口爆 (Facial)", "口爆"),
@@ -398,29 +529,6 @@ class Hanime1 : GenericThemeSource(
             Option("綑綁 (Bondage)", "綑綁"),
             Option("調教 (Training)", "調教"),
             Option("女王樣 (Femdom)", "女王樣")
-        )
-
-        val BRANDS = arrayOf(
-            Option("全部廠商 (All Studios)", ""),
-            Option("PoRO", "PoRO"),
-            Option("Queen Bee", "Queen Bee"),
-            Option("メリー・ジェーン (Mary Jane)", "メリー・ジェーン"),
-            Option("ピンクパイナップル (Pink Pineapple)", "ピンクパイナップル"),
-            Option("ばにぃうぉ～か～ (Bunnywalker)", "ばにぃうぉ～か～"),
-            Option("魔人 (Majin)", "魔人"),
-            Option("milky (ミルキー)", "milky"),
-            Option("Seven (セブン)", "Seven"),
-            Option("T-Rex", "T-Rex"),
-            Option("ZIZ", "ZIZ"),
-            Option("EDGE", "EDGE"),
-            Option("ショーテン (Showten)", "ショーテン"),
-            Option("妄想実現めでぃあ", "妄想実現めでぃあ"),
-            Option("せるふぃっしゅ (Selfish)", "せるふぃっしゅ"),
-            Option("Collaboration Works", "Collaboration Works"),
-            Option("BOOTLEG", "BOOTLEG"),
-            Option("BOMB!CUTE!BOMB!", "BOMB!CUTE!BOMB!"),
-            Option("GOLD BEAR", "GOLD BEAR"),
-            Option("鈴木みら乃 (Suzuki Mirano)", "鈴木みら乃")
         )
     }
 }

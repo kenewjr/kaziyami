@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.zh.hanime1
 
-import app.kaziyami.core.InMemorySharedPreferences
+import app.kaziyami.core.ContentPolicy
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.MediaType.Companion.toMediaType
@@ -107,22 +108,69 @@ class Hanime1Test {
         val sortFilter = filters.filterIsInstance<Hanime1.Hanime1SortFilter>().first()
         val genreFilter = filters.filterIsInstance<Hanime1.Hanime1GenreFilter>().first()
         val durationFilter = filters.filterIsInstance<Hanime1.Hanime1DurationFilter>().first()
-        val tagFilter = filters.filterIsInstance<Hanime1.Hanime1TagFilter>().first()
+        val dateFilter = filters.filterIsInstance<Hanime1.Hanime1DateFilter>().first()
         val brandFilter = filters.filterIsInstance<Hanime1.Hanime1BrandFilter>().first()
 
         sortFilter.state = 4 // 本月排行
-        genreFilter.state = 4 // 3D動畫
-        durationFilter.state = 2 // 中長片
-        tagFilter.state = 3 // 中文字幕
+        genreFilter.state = 4 // 3D動畫 (slug = 3DCG)
+        durationFilter.state = 2 // 5分鐘以上 (slug = 5 分鐘 +)
+        dateFilter.state = 1 // 過去24小時 (slug = 過去 24 小時)
         brandFilter.state = 1 // PoRO
 
         val req = source.searchAnimeRequest(1, "action", filters)
         assertThat(req.url.queryParameter("query")).isEqualTo("action")
         assertThat(req.url.queryParameter("sort")).isEqualTo("本月排行")
-        assertThat(req.url.queryParameter("genre")).isEqualTo("3D動畫")
-        assertThat(req.url.queryParameter("duration")).isEqualTo("中長片")
-        assertThat(req.url.queryParameter("tag")).isEqualTo("中文字幕")
-        assertThat(req.url.queryParameter("brand")).isEqualTo("PoRO")
+        assertThat(req.url.queryParameter("genre")).isEqualTo("3DCG")
+        assertThat(req.url.queryParameter("duration")).isEqualTo("5 分鐘 +")
+        assertThat(req.url.queryParameter("date")).isEqualTo("過去 24 小時")
+        assertThat(req.url.queryParameter("brands[]")).isEqualTo("PoRO")
+    }
+
+    @Test
+    fun searchAnimeRequest_handlesMultiSelectTags() {
+        val filters = source.getFilterList()
+        val tagGroups = filters.filterIsInstance<Hanime1.TagGroup>()
+        assertThat(tagGroups).isNotEmpty
+
+        val specGroup = tagGroups.first { it.name.contains("規格") }
+        val uncensoredTag = specGroup.state.first { it.slug == "無碼" }
+        uncensoredTag.state = true
+
+        val themeGroup = tagGroups.first { it.name.contains("劇情主題") }
+        val pureLoveTag = themeGroup.state.first { it.slug == "純愛" }
+        pureLoveTag.state = true
+
+        val req = source.searchAnimeRequest(1, "", filters)
+        assertThat(req.url.queryParameter("query")).isNull()
+        val tagParams = req.url.queryParameterValues("tags[]")
+        assertThat(tagParams).containsExactlyInAnyOrder("無碼", "純愛")
+    }
+
+    @Test
+    fun searchAnimeRequest_emptyQueryDoesNotEmitQueryParam() {
+        val filters = source.getFilterList()
+        val genreFilter = filters.filterIsInstance<Hanime1.Hanime1GenreFilter>().first()
+        genreFilter.state = 1 // 裏番
+
+        val req = source.searchAnimeRequest(1, "", filters)
+        assertThat(req.url.queryParameter("query")).isNull()
+        assertThat(req.url.queryParameter("genre")).isEqualTo("裏番")
+        assertThat(req.url.toString()).doesNotContain("query=")
+    }
+
+    @Test
+    fun contentPolicy_dropsLiveActionAndCosplay() {
+        val safeAnime = SAnime.create().apply {
+            title = "夜勤病棟 第一話"
+            genre = "裏番, 3DCG"
+        }
+        val liveActionAnime = SAnime.create().apply {
+            title = "Cosplay Show 1"
+            genre = "真人, Cosplay"
+        }
+
+        val filtered = ContentPolicy.filterAnimes(listOf(safeAnime, liveActionAnime))
+        assertThat(filtered).hasSize(1)
+        assertThat(filtered[0].title).isEqualTo("夜勤病棟 第一話")
     }
 }
-

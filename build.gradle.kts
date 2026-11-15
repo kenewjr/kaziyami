@@ -60,14 +60,13 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        options.release.set(11)
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
             jvmTarget = "11"
-            allWarningsAsErrors = false
+            allWarningsAsErrors = (project.name == "core")
             freeCompilerArgs = freeCompilerArgs + listOf(
                 "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
             )
@@ -137,8 +136,7 @@ val checkExtensionIcons by tasks.registering {
             "src/en/hanime",
             "src/en/rulevid",
             "src/en/rule34video",
-            "src/zh/hanime1",
-            "src/zh/3xchina"
+            "src/zh/hanime1"
         )
         for (ext in extensions) {
             val xmlIcon = file("$ext/src/main/res/drawable/ic_launcher.xml")
@@ -148,7 +146,7 @@ val checkExtensionIcons by tasks.registering {
                 throw GradleException("Extension $ext lacks an icon! Missing $xmlIcon")
             }
         }
-        println("[+] All 6 extension icons verified.")
+        println("[+] All ${extensions.size} extension icons verified.")
     }
 }
 

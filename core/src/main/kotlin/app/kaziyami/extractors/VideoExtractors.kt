@@ -64,23 +64,26 @@ class StreamTapeExtractor : VideoExtractor {
         val matcher = pattern.matcher(html)
         var streamUrl: String? = null
         if (matcher.find()) {
-            val part = matcher.group(0)
+            val part = matcher.group(0) ?: ""
             val linkMatch = Pattern.compile("['\"](//[^'\"]+)['\"]").matcher(part)
             if (linkMatch.find()) {
-                streamUrl = "https:" + linkMatch.group(1)
+                val foundLink = linkMatch.group(1) ?: ""
+                streamUrl = "https:$foundLink"
             }
         }
         if (streamUrl == null) {
             val altPattern = Pattern.compile("robotlink['\"]\\s*\\)\\.innerHTML\\s*=\\s*['\"]([^'\"]+)['\"]\\s*\\+\\s*['\"]([^'\"]+)['\"]")
             val altMatch = altPattern.matcher(html)
             if (altMatch.find()) {
-                streamUrl = "https:" + altMatch.group(1) + altMatch.group(2)
+                val p1 = altMatch.group(1) ?: ""
+                val p2 = altMatch.group(2) ?: ""
+                streamUrl = "https:$p1$p2"
             }
         }
         if (streamUrl == null) {
             val directMatch = Pattern.compile("id=['\"]robotlink['\"][^>]*>([^<]+)<").matcher(html)
             if (directMatch.find()) {
-                streamUrl = directMatch.group(1).trim()
+                streamUrl = directMatch.group(1)?.trim() ?: ""
                 if (streamUrl.startsWith("//")) streamUrl = "https:$streamUrl"
             }
         }
@@ -114,7 +117,7 @@ class DoodExtractor : VideoExtractor {
         val passPattern = Pattern.compile("/pass_md5/[^'\"\\s<]*")
         val passMatcher = passPattern.matcher(html)
         if (!passMatcher.find()) return emptyList()
-        val passRel = passMatcher.group(0)
+        val passRel = passMatcher.group(0) ?: ""
         val passUrl = req.url.resolve(passRel)?.toString() ?: "https://${req.url.host}$passRel"
 
         val passReq = Request.Builder()
@@ -130,6 +133,7 @@ class DoodExtractor : VideoExtractor {
 
         val token = "zUEJeL3mUN"
         val finalUrl = passBody + token + "?token=" + passUrl.substringAfterLast("/") + "&expiry=" + System.currentTimeMillis()
+        if (!canResolveHost(finalUrl)) return emptyList()
         val headers = BrowserHeaders.mediaHeaders("https://${req.url.host}/")
         val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "DoodStream"
         return listOf(Video(embedUrl, "$hostName 720p", finalUrl, headers))
@@ -303,10 +307,11 @@ class StreamPoiExtractor : VideoExtractor {
         )
         val matcher = regex.matcher(script)
         if (!matcher.find()) return script
-        var payload = matcher.group(1)
-        val radix = matcher.group(2).toInt()
-        val count = matcher.group(3).toInt()
-        val symTab = matcher.group(4).split("|")
+        var payload = matcher.group(1) ?: return script
+        val radix = matcher.group(2)?.toIntOrNull() ?: return script
+        val count = matcher.group(3)?.toIntOrNull() ?: return script
+        val rawSymTab = matcher.group(4) ?: return script
+        val symTab = rawSymTab.split("|")
         for (i in count - 1 downTo 0) {
             val word = if (i < symTab.size && symTab[i].isNotEmpty()) symTab[i] else null
             if (word != null) {
@@ -322,7 +327,15 @@ internal fun canResolveHost(streamUrl: String): Boolean {
     return try {
         val uri = java.net.URI(streamUrl)
         val host = uri.host ?: return false
-        SmartDns.instance.lookup(host).isNotEmpty()
+        val addresses = java.net.InetAddress.getAllByName(host)
+        if (addresses.isEmpty()) return false
+        addresses.none { addr ->
+            addr.isLoopbackAddress ||
+            addr.isAnyLocalAddress ||
+            addr.hostAddress?.let { ip ->
+                ip in SmartDns.SINKHOLE_IPS || ip == "127.0.0.1" || ip == "0.0.0.0"
+            } ?: true
+        }
     } catch (_: Throwable) {
         false
     }
@@ -366,7 +379,7 @@ class HentaiCopExtractor : VideoExtractor {
         val pMatcher = Pattern.compile("""var\s+p\s*=\s*"([^"]+)"""").matcher(html)
         if (pMatcher.find()) {
             try {
-                val p = pMatcher.group(1)
+                val p = pMatcher.group(1) ?: ""
                 val d1 = p.reversed()
                 val d2 = java.util.Base64.getDecoder().decode(d1.replace("\\s".toRegex(), ""))
                 val d3 = java.net.URLDecoder.decode(String(d2, Charsets.UTF_8), "UTF-8")
@@ -377,7 +390,7 @@ class HentaiCopExtractor : VideoExtractor {
         val rhsMatcher = Pattern.compile("""var\s+kodeRHS\s*=\s*"([^"]+)"""").matcher(unpackedHtml)
         if (rhsMatcher.find()) {
             try {
-                val rhsB64 = rhsMatcher.group(1).replace("\\s".toRegex(), "")
+                val rhsB64 = rhsMatcher.group(1)?.replace("\\s".toRegex(), "") ?: ""
                 val rhsBytes = java.util.Base64.getDecoder().decode(rhsB64)
                 unpackedHtml += "\n" + String(rhsBytes, Charsets.UTF_8)
             } catch (_: Exception) {}
@@ -388,17 +401,17 @@ class HentaiCopExtractor : VideoExtractor {
         val sourcesPattern = Pattern.compile("""['"]?sources['"]?\s*:\s*\[(.*?)]""", Pattern.DOTALL)
         val sourcesMatcher = sourcesPattern.matcher(normalized)
         if (sourcesMatcher.find()) {
-            val block = sourcesMatcher.group(1)
+            val block = sourcesMatcher.group(1) ?: ""
             val itemPattern = Pattern.compile("""\{(.*?)}""", Pattern.DOTALL)
             val itemMatcher = itemPattern.matcher(block)
             while (itemMatcher.find()) {
-                val item = itemMatcher.group(1)
+                val item = itemMatcher.group(1) ?: ""
                 val fileM = Pattern.compile("""['"]?(?:file|src)['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
                 if (fileM.find()) {
-                    val streamUrl = fileM.group(1)
+                    val streamUrl = fileM.group(1) ?: ""
                     if (canResolveHost(streamUrl)) {
                         val labelM = Pattern.compile("""['"]?label['"]?\s*:\s*['"]([^'"]+)['"]""").matcher(item)
-                        val rawLabel = if (labelM.find()) labelM.group(1) else ""
+                        val rawLabel = if (labelM.find()) labelM.group(1) ?: "" else ""
                         val quality = when {
                             rawLabel.contains("Original", ignoreCase = true) -> "HentaiCop 1080p (Original)"
                             rawLabel.isNotBlank() -> "HentaiCop $rawLabel"
@@ -417,7 +430,7 @@ class HentaiCopExtractor : VideoExtractor {
             val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
             val directMatcher = directPattern.matcher(normalized)
             while (directMatcher.find()) {
-                val streamUrl = directMatcher.group(1)
+                val streamUrl = directMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
                     val quality = when {
                         streamUrl.contains("1080p", ignoreCase = true) -> "HentaiCop 1080p"
@@ -434,7 +447,7 @@ class HentaiCopExtractor : VideoExtractor {
             val videoTagPattern = Pattern.compile("""<source[^>]+src=['"]([^'"]+)['"]""")
             val videoTagMatcher = videoTagPattern.matcher(normalized)
             while (videoTagMatcher.find()) {
-                val streamUrl = videoTagMatcher.group(1)
+                val streamUrl = videoTagMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
                     videos.add(Video(url, "HentaiCop HD", streamUrl, videoHeaders))
                 }
@@ -487,11 +500,11 @@ class HgCloudExtractor : VideoExtractor {
         val sourcesPattern = Pattern.compile("""['"]?sources['"]?\s*:\s*\[(.*?)]""", Pattern.DOTALL)
         val sourcesMatcher = sourcesPattern.matcher(unpacked)
         if (sourcesMatcher.find()) {
-            val block = sourcesMatcher.group(1)
+            val block = sourcesMatcher.group(1) ?: ""
             val filePattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+)['"]""")
             val fileMatcher = filePattern.matcher(block)
             while (fileMatcher.find()) {
-                val streamUrl = fileMatcher.group(1)
+                val streamUrl = fileMatcher.group(1) ?: ""
                 if (streamUrl.isNotBlank() && canResolveHost(streamUrl) && (streamUrl.contains(".m3u8") || streamUrl.contains(".mp4"))) {
                     videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
                 }
@@ -503,7 +516,7 @@ class HgCloudExtractor : VideoExtractor {
             val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
             val directMatcher = directPattern.matcher(unpacked)
             while (directMatcher.find()) {
-                val streamUrl = directMatcher.group(1)
+                val streamUrl = directMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
                     videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
                 }
@@ -515,7 +528,7 @@ class HgCloudExtractor : VideoExtractor {
             val rawM3u8Pattern = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""")
             val rawMatcher = rawM3u8Pattern.matcher(unpacked)
             while (rawMatcher.find()) {
-                val streamUrl = rawMatcher.group(1)
+                val streamUrl = rawMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
                     videos.add(Video(url, "HgCloud HD (HLS)", streamUrl, videoHeaders))
                 }
@@ -532,10 +545,11 @@ class HgCloudExtractor : VideoExtractor {
         )
         val matcher = regex.matcher(script)
         if (!matcher.find()) return script
-        var payload = matcher.group(1)
-        val radix = matcher.group(2).toInt()
-        val count = matcher.group(3).toInt()
-        val symTab = matcher.group(4).split("|")
+        var payload = matcher.group(1) ?: return script
+        val radix = matcher.group(2)?.toIntOrNull() ?: return script
+        val count = matcher.group(3)?.toIntOrNull() ?: return script
+        val rawSymTab = matcher.group(4) ?: return script
+        val symTab = rawSymTab.split("|")
         for (i in count - 1 downTo 0) {
             val word = if (i < symTab.size && symTab[i].isNotEmpty()) symTab[i] else null
             if (word != null) {

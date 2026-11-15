@@ -52,6 +52,23 @@ class RuleVidTest {
 
         assertTrue(details.title.contains("Gwen Summer Heat"))
         assertTrue(details.genre!!.isNotEmpty())
+        assertTrue(details.description!!.contains("storyboard"))
+        assertTrue(details.thumbnail_url!!.contains("preview.jpg"))
+    }
+
+    @Test
+    fun animeDetailsRequest_resolvesBothRelativeAndAbsoluteUrls() {
+        val sAnimeRelative = eu.kanade.tachiyomi.animesource.model.SAnime.create().apply {
+            url = "/video/11/gwen-summer-heat-all-wip/"
+        }
+        val req1 = source.animeDetailsRequest(sAnimeRelative)
+        assertEquals("https://rulevid.com/video/11/gwen-summer-heat-all-wip/", req1.url.toString())
+
+        val sAnimeAbsolute = eu.kanade.tachiyomi.animesource.model.SAnime.create().apply {
+            url = "https://rulevid.com/video/11/gwen-summer-heat-all-wip/"
+        }
+        val req2 = source.animeDetailsRequest(sAnimeAbsolute)
+        assertEquals("https://rulevid.com/video/11/gwen-summer-heat-all-wip/", req2.url.toString())
     }
 
     @Test

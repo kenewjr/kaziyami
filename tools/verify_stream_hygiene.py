@@ -49,17 +49,12 @@ SOURCES = [
         "name": "Hanime1",
         "file": os.path.join(ROOT_DIR, "src", "zh", "hanime1", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "zh", "hanime1", "Hanime1.kt"),
     },
-    {
-        "slug": "3xchina",
-        "name": "3xchina",
-        "file": os.path.join(ROOT_DIR, "src", "zh", "3xchina", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "zh", "threexchina", "ThreeXChina.kt"),
-    },
 ]
 
 def verify_stream_hygiene():
     errors = []
 
-    print("[*] Verifying stream hygiene and anti-regression constraints across 8 sources...")
+    print(f"[*] Verifying stream hygiene and anti-regression constraints across {len(SOURCES)} sources...")
 
     # 1. Verify Kototoro self-test report if present
     report_file = os.path.join(ROOT_DIR, "build", "reports", "kototoro-test-report.json")
@@ -67,8 +62,8 @@ def verify_stream_hygiene():
         with open(report_file, "r", encoding="utf-8") as f:
             report = json.load(f)
         sources = report.get("sources", [])
-        if len(sources) < 8:
-            errors.append(f"Kototoro report only tested {len(sources)}/8 sources.")
+        if len(sources) < len(SOURCES):
+            errors.append(f"Kototoro report only tested {len(sources)}/{len(SOURCES)} sources.")
         for src in sources:
             src_name = src.get("name")
             status = src.get("status")

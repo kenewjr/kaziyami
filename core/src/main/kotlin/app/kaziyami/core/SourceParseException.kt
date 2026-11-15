@@ -16,6 +16,13 @@ class SourceParseException(
     "Kaziyami: $source could not read the $pageType; the site layout may have changed",
     cause
 ) {
+    constructor(message: String, cause: Throwable? = null) : this(
+        source = "Kaziyami",
+        pageType = "video streams",
+        selectorName = "video#player",
+        urlPath = message,
+        cause = cause
+    )
     /**
      * Sanitized diagnostic message for developer logs (free of query tokens and cookies).
      */

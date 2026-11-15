@@ -19,7 +19,6 @@ EXTENSIONS = {
     "src/en/rulevid": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rulevid"],
     "src/en/rule34video": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rule34video"],
     "src/zh/hanime1": ["core", "lib-multisrc/generic", "src/zh/hanime1"],
-    "src/zh/3xchina": ["core", "lib-multisrc/retrotube", "lib-multisrc/generic", "src/zh/3xchina"],
 }
 
 def get_affected_extensions(changed_files):

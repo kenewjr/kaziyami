@@ -77,7 +77,7 @@ object DateParser {
         for ((pattern, field) in RELATIVE_PATTERNS) {
             val matcher = pattern.matcher(clean)
             if (matcher.find()) {
-                val amount = matcher.group(1).toIntOrNull() ?: continue
+                val amount = matcher.group(1)?.toIntOrNull() ?: continue
                 val cal = Calendar.getInstance()
                 cal.add(field, -amount)
                 return cal.timeInMillis
@@ -99,9 +99,9 @@ object DateParser {
         val idRegex = Pattern.compile("(\\d{1,2})\\s+([a-zA-Z]+)\\s+(\\d{4})")
         val idMatch = idRegex.matcher(clean)
         if (idMatch.find()) {
-            val day = idMatch.group(1).padStart(2, '0')
-            val monthWord = idMatch.group(2).lowercase()
-            val year = idMatch.group(3)
+            val day = idMatch.group(1)?.padStart(2, '0') ?: "01"
+            val monthWord = idMatch.group(2)?.lowercase().orEmpty()
+            val year = idMatch.group(3) ?: "2026"
             val monthNum = INDONESIAN_MONTHS[monthWord]
             if (monthNum != null) {
                 try {

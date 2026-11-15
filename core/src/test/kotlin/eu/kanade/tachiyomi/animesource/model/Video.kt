@@ -18,6 +18,7 @@ data class Video(
     val audioTracks: List<Track> = emptyList()
 ) : Serializable {
 
+    @Suppress("UNUSED_PARAMETER")
     constructor(
         url: String,
         quality: String,

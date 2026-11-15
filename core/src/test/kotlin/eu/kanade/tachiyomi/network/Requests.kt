@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 val DEFAULT_CACHE_CONTROL: CacheControl = CacheControl.Builder().maxAge(10, TimeUnit.MINUTES).build()
 val DEFAULT_HEADERS: Headers = Headers.Builder().build()
-val DEFAULT_BODY: RequestBody = RequestBody.create(null, ByteArray(0))
+val DEFAULT_BODY: RequestBody = @Suppress("DEPRECATION") RequestBody.create(null, ByteArray(0))
 
 fun GET(
     url: String,

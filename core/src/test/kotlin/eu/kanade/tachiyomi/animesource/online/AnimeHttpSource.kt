@@ -93,12 +93,32 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
         }
     }
 
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> = Observable.just(emptyList())
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> = Observable.just(emptyList())
+
+    @Deprecated("Deprecated upstream in extensions-lib")
+    @Suppress("DEPRECATION")
     open fun fetchVideoUrl(video: Video): Observable<String> = Observable.just(video.videoUrl.orEmpty())
     override fun getFilterList(): AnimeFilterList = AnimeFilterList()
 }

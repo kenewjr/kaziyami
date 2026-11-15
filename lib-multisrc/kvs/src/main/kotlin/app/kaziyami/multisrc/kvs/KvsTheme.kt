@@ -3,21 +3,30 @@ package app.kaziyami.multisrc.kvs
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import app.kaziyami.core.ContentPolicy
 import app.kaziyami.core.DateParser
 import app.kaziyami.core.ExtractorRegistry
 import app.kaziyami.core.HtmlText
+import app.kaziyami.core.LazyImage
+import app.kaziyami.core.SourceParseException
 import app.kaziyami.core.UrlUtils
 import app.kaziyami.multisrc.generic.GenericThemeSource
 import app.kaziyami.multisrc.generic.QuirksConfig
 import app.kaziyami.multisrc.generic.SelectorsConfig
 import app.kaziyami.multisrc.generic.SourceConfig
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import java.net.URLEncoder
 
 /**
@@ -102,6 +111,93 @@ open class KvsTheme(
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+
+    override fun animeDetailsParse(document: Document): SAnime {
+        val anime = SAnime.create()
+
+        // 1. Primary metadata source: JSON-LD VideoObject
+        var foundJsonLd = false
+        val scriptElements = document.select("script[type='application/ld+json']")
+        for (scriptEl in scriptElements) {
+            val content = scriptEl.data().ifBlank { scriptEl.html() }
+            if (content.contains("VideoObject")) {
+                try {
+                    val jsonEl = Json { ignoreUnknownKeys = true }.parseToJsonElement(content)
+                    val obj = jsonEl as? JsonObject
+                    if (obj != null) {
+                        val name = (obj["name"] as? JsonPrimitive)?.content
+                        val desc = (obj["description"] as? JsonPrimitive)?.content
+                        val thumb = when (val t = obj["thumbnailUrl"]) {
+                            is JsonArray -> (t.firstOrNull() as? JsonPrimitive)?.content
+                            is JsonPrimitive -> t.content
+                            else -> null
+                        }
+
+                        if (!name.isNullOrBlank()) {
+                            anime.title = if (config.quirks.stripTitleBoilerplate) HtmlText.stripBoilerplate(name) else HtmlText.clean(name)
+                            anime.description = HtmlText.clean(desc.orEmpty())
+                            anime.thumbnail_url = thumb?.let { UrlUtils.resolve(baseUrl, it) }
+                            foundJsonLd = true
+                            break
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+
+        // 2. Fallback to CSS selectors if JSON-LD is missing or lacks title
+        if (!foundJsonLd || anime.title.isBlank()) {
+            val titleEl = config.selectors.detailsTitleCandidates.asSequence()
+                .mapNotNull { document.selectFirst(it) }
+                .firstOrNull()
+            val rawTitle = titleEl?.text().orEmpty()
+            anime.title = if (config.quirks.stripTitleBoilerplate) HtmlText.stripBoilerplate(rawTitle) else HtmlText.clean(rawTitle)
+        }
+
+        if (anime.thumbnail_url.isNullOrBlank()) {
+            val thumbEl = document.selectFirst(config.selectors.detailsThumbnail)
+            anime.thumbnail_url = LazyImage.extractUrl(thumbEl, baseUrl)
+        }
+
+        if (anime.description.isNullOrBlank()) {
+            val descEl = document.select(config.selectors.detailsDescription)
+            val descText = descEl.toList().filter { it.tagName() != "script" && it.tagName() != "style" }.map { el ->
+                if (el.tagName() == "meta") el.attr("content") else el.text()
+            }.map { HtmlText.clean(it) }.filter { it.isNotBlank() }.distinct().joinToString("\n\n")
+            anime.description = descText
+        }
+
+        // Extract genuine genres from tags / categories, excluding navigation elements
+        val rawGenres = document.select(config.selectors.detailsGenre)
+            .map { HtmlText.clean(it.text()) }
+            .filter { it.isNotBlank() && !it.equals("Tags", ignoreCase = true) && it.length < 50 }
+            .distinct()
+        if (rawGenres.isNotEmpty()) {
+            anime.genre = rawGenres.joinToString(", ")
+        }
+
+        anime.status = SAnime.COMPLETED
+
+        if (anime.title.isBlank()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "anime details",
+                selectorName = config.selectors.detailsTitle,
+                urlPath = "Missing title"
+            )
+        }
+
+        if (!ContentPolicy.isSafeAnime(anime)) {
+            throw SourceParseException(
+                source = name,
+                pageType = "anime details",
+                selectorName = "ContentPolicy",
+                urlPath = "Prohibited content indicator detected"
+            )
+        }
+
+        return anime
+    }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()

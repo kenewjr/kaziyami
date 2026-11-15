@@ -41,7 +41,7 @@ object EpisodeNumberParser {
         if (lower.contains("ova") || lower.contains("special") || lower.contains("sp") || lower.contains("ona")) {
             val spMatch = Pattern.compile("(?:ova|special|sp|ona)\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE).matcher(lower)
             if (spMatch.find()) {
-                val num = spMatch.group(1).toFloatOrNull()
+                val num = spMatch.group(1)?.toFloatOrNull()
                 if (num != null) return num
             }
             return 1.0f
@@ -50,7 +50,7 @@ object EpisodeNumberParser {
         for (pattern in EP_PATTERNS) {
             val matcher = pattern.matcher(episodeName)
             if (matcher.find()) {
-                val candidate = matcher.group(1).toFloatOrNull()
+                val candidate = matcher.group(1)?.toFloatOrNull()
                 if (candidate != null) {
                     return candidate
                 }

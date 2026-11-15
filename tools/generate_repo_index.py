@@ -25,8 +25,7 @@ KNOWN_BASE_URLS = {
     "Hanime": "https://hanime.tv",
     "RuleVid": "https://rulevid.com",
     "Rule34Video": "https://rule34video.com",
-    "Hanime1": "https://hanime1.me",
-    "3xchina": "https://3xchina.page"
+    "Hanime1": "https://hanime1.me"
 }
 
 SOURCES_DEF = [
@@ -36,8 +35,7 @@ SOURCES_DEF = [
     {"name": "Hanime", "lang": "en", "slug": "hanime", "url": "https://hanime.tv"},
     {"name": "RuleVid", "lang": "en", "slug": "rulevid", "url": "https://rulevid.com"},
     {"name": "Rule34Video", "lang": "en", "slug": "rule34video", "url": "https://rule34video.com"},
-    {"name": "Hanime1", "lang": "zh", "slug": "hanime1", "url": "https://hanime1.me"},
-    {"name": "3xchina", "lang": "zh", "slug": "3xchina", "url": "https://3xchina.page"}
+    {"name": "Hanime1", "lang": "zh", "slug": "hanime1", "url": "https://hanime1.me"}
 ]
 
 def load_source_ids():

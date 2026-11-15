@@ -58,13 +58,6 @@ SOURCES = [
         "item_regex": r"comic-hover|home-rows-videos-div",
         "episode_regex": r"/watch\?v=",
         "iframe_regex": r"<video|<iframe"
-    },
-    {
-        "name": "3xchina",
-        "url": "https://3xchina.page",
-        "item_regex": r"class=['\"][^'\"]*(?:loop-video|thumb-block|post)[^'\"]*['\"]",
-        "episode_regex": r"href=['\"][^'\"]*/(?:ama|video)/[^'\"]*['\"]",
-        "iframe_regex": r"<iframe[^>]*src=['\"]([^'\"]+)['\"]"
     }
 ]
 
@@ -78,7 +71,7 @@ def monitor():
     report = {}
     alerts = []
 
-    print("[*] Running structure health monitor on 6 sources...")
+    print("[*] Running structure health monitor on 7 sources...")
     for s in SOURCES:
         name = s["name"]
         url = s["url"]

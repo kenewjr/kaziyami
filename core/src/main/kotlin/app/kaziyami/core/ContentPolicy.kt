@@ -27,7 +27,7 @@ object ContentPolicy {
         // Indonesian
         """\b(pemerkosaan|perkosaan|kamera\s+tersembunyi|intip|rekaman\s+rahasia|bocoran\s+pribadi|skandal\s+nyata)\b""",
         // Live action exclusion (enforce animated-only policy)
-        """\b(live-action|live\s+action|real\s+life|real\s+person|3d\s+real)\b"""
+        """\b(live-action|live\s+action|real\s+life|real\s+person|3d\s+real|真人|cosplay|三次元)\b"""
     ).map { Regex(it, RegexOption.IGNORE_CASE) }
 
     fun isMinorIndicator(text: String): Boolean {
