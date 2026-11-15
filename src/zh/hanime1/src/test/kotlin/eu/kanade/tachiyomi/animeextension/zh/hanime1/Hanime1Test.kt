@@ -51,6 +51,40 @@ class Hanime1Test {
     }
 
     @Test
+    fun popularAnimeParse_filtersOutSponsoredGamesAndExternalAds() {
+        val html = """
+            <div class="search-result-items">
+                <div class="video-item-container">
+                    <a href="https://ero-labs.com/zh/game.html?id=1" title="慾望王座">
+                        <img src="https://example.com/throne.jpg" alt="慾望王座"/>
+                        <h5 class="video-item-title">慾望王座</h5>
+                    </a>
+                </div>
+                <div class="video-item-container">
+                    <a href="https://ero-labs.com/zh/game.html?id=2" title="櫻境物語">
+                        <img src="https://example.com/cherry.jpg" alt="櫻境物語"/>
+                        <h5 class="video-item-title">櫻境物語</h5>
+                    </a>
+                </div>
+                <div class="video-item-container">
+                    <a href="https://hanime1.me/watch?v=10101">
+                        <img src="https://vdownload.hembed.com/image/10101.jpg" alt="夜勤病棟 第一話"/>
+                        <h5 class="video-item-title">夜勤病棟 第一話</h5>
+                    </a>
+                </div>
+            </div>
+        """.trimIndent()
+        val req = Request.Builder().url("https://hanime1.me/search?sort=本日排行").build()
+        val body = html.toResponseBody("text/html; charset=utf-8".toMediaType())
+        val resp = Response.Builder().request(req).protocol(Protocol.HTTP_1_1).code(200).message("OK").body(body).build()
+
+        val page = source.popularAnimeParse(resp)
+        assertThat(page.animes).hasSize(1)
+        assertThat(page.animes[0].title).isEqualTo("夜勤病棟 第一話")
+        assertThat(page.animes.any { it.title.contains("慾望王座") || it.title.contains("櫻境物語") }).isFalse()
+    }
+
+    @Test
     fun animeDetailsParse_extractsMetadata() {
         val resp = mockResponse("https://hanime1.me/watch?v=10101", "details.html")
         val anime = source.animeDetailsParse(resp)

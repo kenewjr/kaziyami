@@ -12,6 +12,8 @@ object LazyImage {
     private val BG_IMG_PATTERN = Pattern.compile("url\\(['\"]?(.*?)['\"]?\\)", Pattern.CASE_INSENSITIVE)
 
     private val CANDIDATE_ATTRIBUTES = listOf(
+        "data-rd-src",
+        "data-rd-jpg",
         "data-src",
         "data-lazy-src",
         "data-original",

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2026-11-15
+
+### Fixed & Enhanced
+- **Rule34Video Lazy-Loaded Thumbnails & Ad Filtering**:
+  - Added `data-rd-src` and `data-rd-jpg` candidate attributes to `LazyImage` to resolve delayed lazy-loaded thumbnails, eliminating placeholder letter tiles (R, A, J, T, etc.) on items 5+.
+  - Filtered `.item.thumb.ads` and ad redirect paths (`/d.php`, `/out.php`, `ku34bh`, `sadbaguette`) in `ContentPolicy` and CSS item selectors, eliminating cards titled "Advertisement".
+- **Hanime1 Pinned Sponsored Game Removal & Playback Error Routing**:
+  - Filtered pinned EROLABS sponsored games ("慾望王座" and "櫻境物語") in `ContentPolicy`, scoped item selectors to require `watch?v=`, and rejected non-video URLs in `popularAnimeFromElement`, preventing invalid details fetch and HTTP 404 errors.
+  - Hardened `videoListParse` to throw informative `SourceParseException` instead of returning HTML watch page as `videoUrl` when direct streams cannot be found, preventing ExoPlayer `Content-Type: text/html` crashes ("an error occured").
+- **Nekopoi Clean 1-to-1 Pagination & Blog Announcement Removal**:
+  - Switched `latestPath` to `/category/hentai/page/%d/` and dropped `.nk-post-card` from item selectors, isolating pure hentai anime releases.
+  - Filtered non-hentai site blog posts ("Selamat Tahun Baru 2022", "Happy 6th Anniversary NekoPoi", "NekoPoi Mengucapkan Dirgahayu Indonesia ke-76") in `ContentPolicy`.
+  - Removed custom 2-page pagination aggregation override `(page - 1) * 2 + 1` which skipped even pages when page 1 had >= 10 items, restoring smooth 1-to-1 pagination.
+- **3xchina Video Stream Error Prevention**:
+  - Removed returning HTML watch page URL as playable stream in `videoListParse`; throws clear `SourceParseException` on empty candidates.
+- **ContentPolicy Lateinit URL Safety**:
+  - Wrapped `anime.url` access with exception handling to safely handle uninitialized properties during test fixture instantiation.
+- **Monotonic Version Bumps**:
+  - Bumped all 6 active sources: Hanime1 (`v14.22`), 3xchina (`v14.15`), Nekopoi (`v14.16`), Hanime (`v14.15`), Rule34Video (`v14.15`), Hentaimama (`v14.14`).
+
 ## [1.4.7] - 2026-11-15
 
 ### Fixed & Enhanced

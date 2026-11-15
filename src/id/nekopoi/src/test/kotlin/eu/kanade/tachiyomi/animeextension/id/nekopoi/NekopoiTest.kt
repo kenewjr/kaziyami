@@ -51,6 +51,34 @@ class NekopoiTest {
     }
 
     @Test
+    fun parsePopularAnime_excludesSiteAnnouncements() {
+        val html = """
+            <div class="site-content">
+                <div class="result">
+                    <article class="type-post post-item">
+                        <h2 class="entry-title"><a href="https://nekopoi.care/hentai/kanojo-x-kanojo-episode-1/" title="Kanojo x Kanojo Episode 1">Kanojo x Kanojo Episode 1</a></h2>
+                        <div class="thumb"><div class="nk-thumb-crop" style="background-image: url('https://nekopoi.care/thumbs/kanojo1.jpg')"></div></div>
+                    </article>
+                    <article class="type-post post-item nk-post-card">
+                        <h2 class="entry-title"><a href="https://nekopoi.care/selamat-tahun-baru-2022/" title="Selamat Tahun Baru 2022">Selamat Tahun Baru 2022</a></h2>
+                        <div class="thumb"><img src="https://nekopoi.care/banner1.png" alt="Selamat Tahun Baru"/></div>
+                    </article>
+                    <article class="type-post post-item nk-post-card">
+                        <h2 class="entry-title"><a href="https://nekopoi.care/happy-6th-anniversary-nekopoi/" title="Happy 6th Anniversary NekoPoi">Happy 6th Anniversary NekoPoi</a></h2>
+                        <div class="thumb"><img src="https://nekopoi.care/banner2.png" alt="Happy 6th Anniversary NekoPoi"/></div>
+                    </article>
+                </div>
+            </div>
+        """.trimIndent()
+        val response = mockResponse("https://nekopoi.care/category/hentai/page/1/", html)
+        val page = source.popularAnimeParse(response)
+
+        assertEquals(1, page.animes.size)
+        assertEquals("Kanojo x Kanojo Episode 1", page.animes[0].title)
+        assertFalse(page.animes.any { it.title.contains("Selamat Tahun Baru") || it.title.contains("Anniversary") })
+    }
+
+    @Test
     fun parseAnimeDetails() {
         val html = loadFixture("details.html")
         val response = mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", html)

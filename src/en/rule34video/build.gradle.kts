@@ -1,8 +1,8 @@
 val extName = "Rule34Video"
 val extClass = "eu.kanade.tachiyomi.animeextension.en.rule34video.Rule34Video"
-val extVersionCode = 14
+val extVersionCode = 15
 val libVersion = "14"
-val extVersion = "14.14"
+val extVersion = "14.15"
 val isNsfw = true
 
 extra["extName"] = extName

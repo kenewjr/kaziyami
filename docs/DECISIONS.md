@@ -103,3 +103,12 @@ Per user directives:
 - Stored relative paths `UrlUtils.getPath(href)` in `Hanime1.episodeListParse`.
 - Bumped extension versions monotonically: Hanime1 (`v14.21`), 3xchina (`v14.14`), Nekopoi (`v14.15`), Hanime (`v14.14`), Rule34Video (`v14.14`), Hentaimama (`v14.13`). Alternative rejected: Swallowing Cloudflare interstitials without user action or throwing layout drift errors on bot challenges.
 
+75. **Rule34Video Lazy Thumbnails, Hanime1 Sponsored Game Removal, Nekopoi 1-to-1 Pagination & Stream Error Hygiene (Phase 42)**: Resolved image loading, unwanted listings, and stream crashes across sources:
+- Added `data-rd-src` and `data-rd-jpg` to `LazyImage` candidate attributes and refined `Rule34Video.customSelectors`, resolving lazy-loaded thumbnails and eliminating placeholder letter tiles (R, A, J, T, etc.) on items 5+.
+- Filtered `.item.thumb.ads` and ad redirect paths (`/d.php`, `/out.php`, `ku34bh`, `sadbaguette`) in `ContentPolicy` and item selectors, eliminating cards titled "Advertisement".
+- Filtered pinned EROLABS sponsored games ("慾望王座" and "櫻境物語") in `ContentPolicy`, scoped `Hanime1` item selectors strictly to `watch?v=`, and rejected non-video URLs in `popularAnimeFromElement`, preventing invalid details fetch and HTTP 404 errors.
+- Hardened `videoListParse` in `Hanime1` and `ThreeXChina` to throw informative `SourceParseException` instead of returning HTML watch page URLs as playable streams when candidate streams are empty, eliminating ExoPlayer `Content-Type: text/html` crashes ("an error occured").
+- Isolated pure hentai anime on `Nekopoi` by switching `latestPath` to `/category/hentai/page/%d/` and dropping `.nk-post-card` from item selectors. Filtered non-hentai site blog posts ("Selamat Tahun Baru 2022", "Happy 6th Anniversary NekoPoi", "NekoPoi Mengucapkan Dirgahayu Indonesia ke-76") in `ContentPolicy`. Removed broken custom 2-page aggregation override `(page - 1) * 2 + 1` which skipped even pages when page 1 had >= 10 items, restoring smooth 1-to-1 pagination.
+- Wrapped `anime.url` access with exception handling in `ContentPolicy` to safely handle uninitialized properties during test fixture instantiation.
+- Bumped extension versions monotonically: Hanime1 (`v14.22`), 3xchina (`v14.15`), Nekopoi (`v14.16`), Hanime (`v14.15`), Rule34Video (`v14.15`), Hentaimama (`v14.14`). Alternative rejected: Returning HTML watch URLs to media players or allowing site blog announcements and sponsored games to pollute video feeds.
+

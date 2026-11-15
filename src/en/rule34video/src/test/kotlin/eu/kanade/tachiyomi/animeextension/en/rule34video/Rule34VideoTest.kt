@@ -46,6 +46,29 @@ class Rule34VideoTest {
     }
 
     @Test
+    fun popularAnimeParse_extractsLazyThumbnailsAndExcludesAds() {
+        val html = """
+            <div class="item thumb">
+                <a class="th" href="/video/1001/rainy-day/" title="Rainy Day">
+                    <img class="thumb rd-lz" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-rd-src="https://rule34video.com/contents/videos_screenshots/1.jpg" alt="Rainy Day"/>
+                </a>
+            </div>
+            <div class="item thumb ads">
+                <a class="th" href="https://s.ku34bh9la09.com/v1/d.php?z=2644" title="Advertisement">
+                    <img src="https://example.com/ad.jpg" alt="Advertisement"/>
+                </a>
+            </div>
+        """.trimIndent()
+        val response = mockResponse("https://rule34video.com/most-popular/", html)
+        val page = source.popularAnimeParse(response)
+
+        assertEquals(1, page.animes.size)
+        assertEquals("Rainy Day", page.animes[0].title)
+        assertEquals("https://rule34video.com/contents/videos_screenshots/1.jpg", page.animes[0].thumbnail_url)
+        assertFalse(page.animes.any { it.title.equals("Advertisement", ignoreCase = true) })
+    }
+
+    @Test
     fun parseAnimeDetails() {
         val html = loadFixture("detail.html")
         val response = mockResponse("https://rule34video.com/video/3063279/jackerman-mother-s-warmth-ep-2-60fps/", html)

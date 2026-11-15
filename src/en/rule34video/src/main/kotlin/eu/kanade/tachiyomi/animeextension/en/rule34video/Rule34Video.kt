@@ -19,10 +19,10 @@ class Rule34Video : KvsTheme(
     latestPath = "/latest-updates/%d/",
     searchPath = "/search/%s/?from_videos=%d",
     customSelectors = SelectorsConfig(
-        item = "div[data-video-card-id], .item.thumb, div.item.thumb",
+        item = "div[data-video-card-id], .item.thumb:has(a[href*='/video/']), div.item.thumb:has(a[href*='/video/'])",
         itemTitle = "a.th[title], a[title], img[alt], .title",
-        itemThumbnail = "img.thumb, img[data-original], img",
-        itemUrl = "a.th, a[href*='/video/']",
+        itemThumbnail = "img.thumb, img[data-rd-src], img[data-original], img",
+        itemUrl = "a[href*='/video/'], a.th",
         nextPage = ".pagination .item.active + .item a, .pagination .active + a, a[data-parameters*='from']",
         detailsTitle = "h1, .headline h1",
         detailsThumbnail = ".img.wrap_image img, img.thumb, img",

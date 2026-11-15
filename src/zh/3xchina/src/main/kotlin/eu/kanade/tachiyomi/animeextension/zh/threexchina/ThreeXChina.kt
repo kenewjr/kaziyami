@@ -140,25 +140,25 @@ class ThreeXChina : RetroTubeTheme(
         }
 
         if (candidateUrls.isEmpty()) {
-            val watchUrl = UrlUtils.resolve(baseUrl, response.request.url.toString())
+            throw SourceParseException(
+                "Kaziyami: $name video stream tidak ditemukan atau dilindungi Cloudflare. Buka di WebView (⋮) untuk memutar."
+            )
+        }
+
+        val fallback = candidateUrls.first()
+        if (fallback.contains(".mp4") || fallback.contains(".m3u8") || fallback.contains("embed") || fallback.contains("play")) {
             return listOf(
                 Video(
-                    url = watchUrl,
-                    quality = "Stream (Open in WebView if blocked)",
-                    videoUrl = watchUrl,
+                    url = fallback,
+                    quality = "3xchina Stream",
+                    videoUrl = fallback,
                     headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
                 )
             )
         }
 
-        val fallback = candidateUrls.first()
-        return listOf(
-            Video(
-                url = fallback,
-                quality = "Stream (Open in WebView if blocked)",
-                videoUrl = fallback,
-                headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
-            )
+        throw SourceParseException(
+            "Kaziyami: $name video stream tidak ditemukan atau dilindungi Cloudflare. Buka di WebView (⋮) untuk memutar."
         )
     }
 

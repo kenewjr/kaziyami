@@ -33,7 +33,7 @@ class Hanime1 : GenericThemeSource(
         latestPath = "/search?sort=最新上市&page=%d",
         searchPath = "/search?query=%s&page=%d",
         selectors = SelectorsConfig(
-            item = "div.video-item-container, div[class*='video-item-container'], .search-result-items div:has(a[href*='watch?v=']), div.home-rows-videos-div",
+            item = "div.video-item-container:has(a[href*='watch?v=']), div[class*='video-item-container']:has(a[href*='watch?v=']), .search-result-items div:has(a[href*='watch?v=']), div.home-rows-videos-div:has(a[href*='watch?v='])",
             itemAlternates = listOf(
                 ".search-result-items > div:not(.card):has(a[href*='watch?v='])",
                 "div:not(.card):has(a[href*='watch?v='])"
@@ -118,6 +118,14 @@ class Hanime1 : GenericThemeSource(
         return GET(url, headers)
     }
 
+    override fun popularAnimeFromElement(element: org.jsoup.nodes.Element): eu.kanade.tachiyomi.animesource.model.SAnime {
+        val anime = super.popularAnimeFromElement(element)
+        if (!anime.url.contains("watch?v=")) {
+            anime.title = ""
+        }
+        return anime
+    }
+
     public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         if (isCloudflareChallenge(document)) {
@@ -165,9 +173,9 @@ class Hanime1 : GenericThemeSource(
         val candidateSources = mutableListOf<Pair<String, String>>() // (url, quality)
 
         // 1. Direct <video> or <source> elements (primary and most reliable)
-        val sources = doc.select("video source[src], video[src], source[src], video#player")
+        val sources = doc.select("video source[src], video source[data-src], video[src], video[data-src], source[src], source[data-src], video#player")
         for (srcEl in sources) {
-            val src = srcEl.attr("src").trim()
+            val src = srcEl.attr("src").ifEmpty { srcEl.attr("data-src") }.trim()
             if (src.isNotBlank() && isDirectMediaCandidate(src)) {
                 val fullUrl = UrlUtils.resolve(baseUrl, src)
                 val rawSize = srcEl.attr("size").trim()
@@ -182,7 +190,18 @@ class Hanime1 : GenericThemeSource(
             }
         }
 
-        // 2. JavaScript `const source = '...'` or `var source = '...'`
+        // 2. Direct iframes or player tabs
+        if (candidateSources.isEmpty()) {
+            doc.select("iframe[src], iframe[data-src]").forEach { iframe ->
+                val src = iframe.attr("data-src").ifEmpty { iframe.attr("src") }.trim()
+                if (src.isNotBlank() && isDirectMediaCandidate(src)) {
+                    val fullUrl = UrlUtils.resolve(baseUrl, src)
+                    candidateSources.add(fullUrl to "720p")
+                }
+            }
+        }
+
+        // 3. JavaScript `const source = '...'` or `var source = '...'`
         if (candidateSources.isEmpty()) {
             val jsMatcher = Pattern.compile("""(?:const|var|let)?\s*source\s*=\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
             while (jsMatcher.find()) {
@@ -194,7 +213,7 @@ class Hanime1 : GenericThemeSource(
             }
         }
 
-        // 3. Fallback regex strictly matching direct stream URLs (excluding images, thumbs, preview assets)
+        // 4. Fallback regex strictly matching direct stream URLs (excluding images, thumbs, preview assets)
         if (candidateSources.isEmpty()) {
             val streamRegex = Pattern.compile("""(https?://[^\s"'<>]+\.(?:mp4|m3u8)(?:\?[^\s"'<>]*)?)""", Pattern.CASE_INSENSITIVE).matcher(unescapedBody)
             while (streamRegex.find()) {
@@ -207,13 +226,8 @@ class Hanime1 : GenericThemeSource(
         }
 
         if (candidateSources.isEmpty()) {
-            return listOf(
-                Video(
-                    url = watchUrl,
-                    quality = "Stream (Open in WebView if blocked)",
-                    videoUrl = watchUrl,
-                    headers = videoHeaders
-                )
+            throw SourceParseException(
+                "Kaziyami: $name video stream tidak ditemukan atau dilindungi Cloudflare. Buka di WebView (⋮) untuk memutar."
             )
         }
 
