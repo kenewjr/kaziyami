@@ -327,7 +327,7 @@ internal fun canResolveHost(streamUrl: String): Boolean {
     return try {
         val uri = java.net.URI(streamUrl)
         val host = uri.host ?: return false
-        val addresses = java.net.InetAddress.getAllByName(host)
+        val addresses = SmartDns.instance.lookup(host)
         if (addresses.isEmpty()) return false
         addresses.none { addr ->
             addr.isLoopbackAddress ||

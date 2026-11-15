@@ -95,3 +95,11 @@ Per user directives:
 - Icon Retrieval Alignment: Added Android vector drawable `ic_launcher.xml` and glyph for `rule34video`. Synchronized icon aliases in `repo/icon/` so both `${repo.baseUrl}/icon/${pkg}.png` and `${repo.baseUrl}/icon/${apk.replace('.apk', '.png')}` resolve cleanly in Kototoro Android and Desktop.
 - Bumped version codes monotonically for all 6 active extensions: Nekopoi (`v14.14`), Hentaimama (`v14.12`), Hanime (`v14.13`), Rule34Video (`v14.13`), Hanime1 (`v14.20`), 3xchina (`v14.13`).
 
+74. **Custom SourceParseException Routing, Cloudflare Interstitial Interception, and SmartDns Embed Stream Resolver (Phase 41)**: Resolved "the site layout may have changed" errors and playback failure on Hanime1 and 3xchina:
+- Fixed `SourceParseException` custom message constructor to forward `message` directly to `super(message, cause)`, preventing custom guidance messages from being masked by default layout drift text.
+- Added `isCloudflareChallenge(document)` and Traditional Chinese empty-state detection (`沒有`, `查無`, `無結果`, `找不到`) in `GenericThemeSource`, prioritizing challenge detection before empty-state checks to guide users to solve challenges in WebView.
+- Replaced `java.net.InetAddress.getAllByName(host)` with `SmartDns.instance.lookup(host)` in `canResolveHost` and `isStreamReachable`, ensuring Indonesian ISP sinkholes (`103.10.223.15`) do not falsely discard working CDN/embed streams.
+- Replaced `throw SourceParseException` with graceful fallback `Video(watchUrl, "Stream (Open in WebView if blocked)", watchUrl, headers)` in `Hanime1.videoListParse` and `ThreeXChina.videoListParse`.
+- Stored relative paths `UrlUtils.getPath(href)` in `Hanime1.episodeListParse`.
+- Bumped extension versions monotonically: Hanime1 (`v14.21`), 3xchina (`v14.14`), Nekopoi (`v14.15`), Hanime (`v14.14`), Rule34Video (`v14.14`), Hentaimama (`v14.13`). Alternative rejected: Swallowing Cloudflare interstitials without user action or throwing layout drift errors on bot challenges.
+

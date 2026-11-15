@@ -33,7 +33,11 @@ class Hanime1 : GenericThemeSource(
         latestPath = "/search?sort=最新上市&page=%d",
         searchPath = "/search?query=%s&page=%d",
         selectors = SelectorsConfig(
-            item = ".search-result-items > div.video-item-container, .search-result-items > div:has(a[href*='watch?v=']), div.home-rows-videos-div",
+            item = "div.video-item-container, div[class*='video-item-container'], .search-result-items div:has(a[href*='watch?v=']), div.home-rows-videos-div",
+            itemAlternates = listOf(
+                ".search-result-items > div:not(.card):has(a[href*='watch?v='])",
+                "div:not(.card):has(a[href*='watch?v='])"
+            ),
             itemTitle = ".home-rows-videos-title, .video-item-title, h4, h5, .caption, a[title]",
             itemUrl = "a[href*='watch?v=']",
             itemThumbnail = "img[src], img[data-src]",
@@ -44,6 +48,9 @@ class Hanime1 : GenericThemeSource(
             detailsGenre = "div.video-tags-wrapper a, a[href*='search?genre='], a[href*='search?tag=']",
             detailsAuthor = "div.video-details-wrapper a[href*='search?brand='], #video-artist-name",
             episodeList = ".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']",
+            episodeListAlternates = listOf(
+                "a[href*='watch?v=']"
+            ),
             playerIframes = "video source[src], video[src], source[src], video#player, iframe[src]"
         ),
         quirks = QuirksConfig(
@@ -113,12 +120,17 @@ class Hanime1 : GenericThemeSource(
 
     public override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
+        if (isCloudflareChallenge(document)) {
+            throw SourceParseException(
+                "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+            )
+        }
         val playlistLinks = document.select(".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']")
         if (playlistLinks.isNotEmpty()) {
             return playlistLinks.mapIndexed { index, el ->
                 val ep = SEpisode.create()
                 val href = el.attr("href")
-                ep.url = UrlUtils.resolve(baseUrl, href)
+                ep.url = UrlUtils.getPath(href)
                 val title = el.selectFirst(".card-mobile-title, .video-item-title, h4, h5")?.text()
                     ?: el.attr("title").takeIf { it.isNotBlank() }
                     ?: el.text()
@@ -130,7 +142,7 @@ class Hanime1 : GenericThemeSource(
 
         // Single video fallback (current watch page)
         val ep = SEpisode.create().apply {
-            url = UrlUtils.resolve(baseUrl, response.request.url.toString())
+            url = UrlUtils.getPath(response.request.url.toString())
             name = document.selectFirst("#shareBtn-title, h1")?.text()?.let { HtmlText.clean(it) } ?: "Full Episode"
             episode_number = 1.0f
             val dateEl = document.selectFirst(".released-date, time, .upload-date")
@@ -195,11 +207,13 @@ class Hanime1 : GenericThemeSource(
         }
 
         if (candidateSources.isEmpty()) {
-            throw SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = "video#player",
-                urlPath = "No playable video streams reachable from Hanime1"
+            return listOf(
+                Video(
+                    url = watchUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = watchUrl,
+                    headers = videoHeaders
+                )
             )
         }
 
@@ -245,7 +259,7 @@ class Hanime1 : GenericThemeSource(
         return try {
             val uri = java.net.URI(streamUrl)
             val host = uri.host ?: return false
-            val addresses = java.net.InetAddress.getAllByName(host)
+            val addresses = app.kaziyami.network.SmartDns.instance.lookup(host)
             if (addresses.isEmpty() || addresses.any { it.isLoopbackAddress || it.hostAddress in app.kaziyami.network.SmartDns.SINKHOLE_IPS }) {
                 return false
             }

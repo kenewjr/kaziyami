@@ -328,10 +328,19 @@
   - [x] 40.7 Monotonic Version Bumps: Bumped all 6 active sources: `Hanime1` to v14.20 (code 20), `3xchina` to v14.13 (code 13), `Nekopoi` to v14.14 (code 14), `Hanime` to v14.13 (code 13), `Rule34Video` to v14.13 (code 13), `Hentaimama` to v14.12 (code 12).
   - [x] 40.8 Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 41: Custom SourceParseException Routing, Cloudflare Interstitial Interception, and SmartDns Embed Stream Resolver (Release v1.4.7)**:
+  - [x] 41.1 SourceParseException Constructor: Refactored `SourceParseException` to preserve custom user-facing messages directly in `super(message, cause)`, preventing diagnostic text from being swallowed into `"the site layout may have changed"`.
+  - [x] 41.2 Cloudflare Challenge Interception: Added `isCloudflareChallenge(document)` and Traditional Chinese empty state checks (`沒有`, `查無`, `無結果`, `找不到`) in `GenericThemeSource`, prioritizing challenge detection before empty-state handling to direct users to solve challenges in WebView.
+  - [x] 41.3 SmartDns Stream Resolution: Routed `canResolveHost` and `isStreamReachable` through `SmartDns.instance.lookup(host)` instead of direct `InetAddress.getAllByName(host)`, allowing DoH fallback so Indonesian ISP sinkholes (`103.10.223.15`) do not discard working CDN and video embed hosts.
+  - [x] 41.4 Hanime1 & 3xchina Stream Fallback: Replaced `throw SourceParseException` with graceful WebView fallback `Video(watchUrl, "Stream (Open in WebView if blocked)", watchUrl, headers)` in `Hanime1.videoListParse` and `ThreeXChina.videoListParse`.
+  - [x] 41.5 Hanime1 Episode Paths: Normalized episode URLs to relative paths `UrlUtils.getPath(href)` in `Hanime1.episodeListParse`.
+  - [x] 41.6 Monotonic Version Bumps: Bumped all 6 active sources: `Hanime1` to v14.21 (code 21), `3xchina` to v14.14 (code 14), `Nekopoi` to v14.15 (code 15), `Hanime` to v14.14 (code 14), `Rule34Video` to v14.14 (code 14), `Hentaimama` to v14.13 (code 13).
+  - [x] 41.7 Full Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 40 complete. 6 active production sources: `Hanime1` at v14.20 (code 20); `3xchina` at v14.13 (code 13); `Nekopoi` at v14.14 (code 14); `Hanime` at v14.13 (code 13); `Rule34Video` at v14.13 (code 13); `Hentaimama` at v14.12 (code 12). Release version `v1.4.6`.
+- **Overall Status**: Phase 41 complete. 6 active production sources: `Hanime1` at v14.21 (code 21); `3xchina` at v14.14 (code 14); `Nekopoi` at v14.15 (code 15); `Hanime` at v14.14 (code 14); `Rule34Video` at v14.14 (code 14); `Hentaimama` at v14.13 (code 13). Release version `v1.4.7`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit and remote push.
 

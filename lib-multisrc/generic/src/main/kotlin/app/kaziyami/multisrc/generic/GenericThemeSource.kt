@@ -212,6 +212,11 @@ open class GenericThemeSource(
         val (_, elements) = selectFirstMatching(document, "popular_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
+            if (isCloudflareChallenge(document)) {
+                throw SourceParseException(
+                    "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+                )
+            }
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
@@ -280,6 +285,11 @@ open class GenericThemeSource(
         val (_, elements) = selectFirstMatching(document, "latest_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
+            if (isCloudflareChallenge(document)) {
+                throw SourceParseException(
+                    "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+                )
+            }
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
@@ -320,6 +330,11 @@ open class GenericThemeSource(
         val (_, elements) = selectFirstMatching(document, "search_item", config.selectors.itemCandidates)
 
         if (elements.isEmpty()) {
+            if (isCloudflareChallenge(document)) {
+                throw SourceParseException(
+                    "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+                )
+            }
             if (isEmptyState(document)) {
                 return AnimesPage(emptyList(), false)
             }
@@ -353,6 +368,11 @@ open class GenericThemeSource(
     public override fun animeDetailsParse(response: Response): SAnime = super.animeDetailsParse(response)
 
     public override fun animeDetailsParse(document: Document): SAnime {
+        if (isCloudflareChallenge(document)) {
+            throw SourceParseException(
+                "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+            )
+        }
         val anime = SAnime.create()
         val titleEl = config.selectors.detailsTitleCandidates.asSequence()
             .mapNotNull { document.selectFirst(it) }
@@ -435,6 +455,11 @@ open class GenericThemeSource(
         val (_, elements) = selectFirstMatching(document, "episode_list", config.selectors.episodeListCandidates)
 
         if (elements.isEmpty()) {
+            if (isCloudflareChallenge(document)) {
+                throw SourceParseException(
+                    "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
+                )
+            }
             if (isEmptyState(document)) {
                 return emptyList()
             }
@@ -599,10 +624,24 @@ open class GenericThemeSource(
         return fresh
     }
 
+    fun isCloudflareChallenge(document: Document): Boolean {
+        val title = document.title().lowercase()
+        val text = document.text().lowercase()
+        return title.contains("just a moment") ||
+            title.contains("attention required") ||
+            text.contains("challenge-platform") ||
+            text.contains("cf-chl-widget") ||
+            text.contains("cf-turnstile") ||
+            text.contains("enable javascript and cookies") ||
+            text.contains("verify you are human") ||
+            text.contains("verifying you are human")
+    }
+
     /**
      * Checks if a document contains explicit empty-state indicators rather than selector drift.
      */
     open fun isEmptyState(document: Document): Boolean {
+        if (isCloudflareChallenge(document)) return false
         val body = document.body() ?: return true
         val bodyText = body.text().lowercase().trim()
         if (bodyText.isEmpty()) return true
@@ -614,6 +653,10 @@ open class GenericThemeSource(
             bodyText.contains("tidak ada") ||
             bodyText.contains("ditemukan") ||
             bodyText.contains("0 results") ||
+            bodyText.contains("沒有") ||
+            bodyText.contains("查無") ||
+            bodyText.contains("無結果") ||
+            bodyText.contains("找不到") ||
             document.selectFirst(".empty, .not-found, .notfound, .no-results, .error-404, .search-empty") != null
     }
 

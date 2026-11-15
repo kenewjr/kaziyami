@@ -6,23 +6,32 @@ package app.kaziyami.core
  *
  * Guarantees that no sensitive tokens, cookies, or full query strings leak into UI notifications or crash logs.
  */
-class SourceParseException(
-    val source: String,
-    val pageType: String,
-    val selectorName: String,
-    val urlPath: String,
-    cause: Throwable? = null
-) : RuntimeException(
-    "Kaziyami: $source could not read the $pageType; the site layout may have changed",
-    cause
-) {
-    constructor(message: String, cause: Throwable? = null) : this(
-        source = "Kaziyami",
-        pageType = "video streams",
-        selectorName = "video#player",
-        urlPath = message,
-        cause = cause
-    )
+class SourceParseException : RuntimeException {
+    val source: String
+    val pageType: String
+    val selectorName: String
+    val urlPath: String
+
+    constructor(
+        source: String,
+        pageType: String,
+        selectorName: String,
+        urlPath: String,
+        cause: Throwable? = null
+    ) : super("Kaziyami: $source could not read the $pageType; the site layout may have changed", cause) {
+        this.source = source
+        this.pageType = pageType
+        this.selectorName = selectorName
+        this.urlPath = urlPath
+    }
+
+    constructor(message: String, cause: Throwable? = null) : super(message, cause) {
+        this.source = "Kaziyami"
+        this.pageType = "custom"
+        this.selectorName = ""
+        this.urlPath = message
+    }
+
     /**
      * Sanitized diagnostic message for developer logs (free of query tokens and cookies).
      */

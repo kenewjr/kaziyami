@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7] - 2026-11-15
+
+### Fixed & Enhanced
+- **SourceParseException Message Preservation**:
+  - Refactored `SourceParseException` custom message constructor to call `super(message, cause)` directly, ensuring clear user guidance (such as Cloudflare prompts) is shown instead of being overridden by generic "layout may have changed" warnings.
+- **Cloudflare Challenge Interception**:
+  - Added `isCloudflareChallenge(document)` and Traditional Chinese empty state keywords (`沒有`, `查無`, `無結果`, `找不到`) in `GenericThemeSource`. Prioritized challenge detection before empty-state handling to cleanly guide users to open in WebView.
+- **SmartDns Stream Resolution**:
+  - Routed `canResolveHost` and `isStreamReachable` through `SmartDns.instance.lookup(host)`, preventing Indonesian ISP sinkholes (`103.10.223.15`) from falsely discarding working CDN/stream hosts.
+- **Hanime1 & 3xchina Stream Fallback**:
+  - Replaced `throw SourceParseException` with graceful WebView fallback `Video(watchUrl, "Stream (Open in WebView if blocked)", watchUrl, headers)` in `Hanime1.videoListParse` and `ThreeXChina.videoListParse`.
+- **Hanime1 Episode URL Normalization**:
+  - Stored clean relative path `UrlUtils.getPath(href)` in `Hanime1.episodeListParse`.
+- **Monotonic Version Bumps**:
+  - Bumped all 6 active sources: Hanime1 (`v14.21`), 3xchina (`v14.14`), Nekopoi (`v14.15`), Hanime (`v14.14`), Rule34Video (`v14.14`), Hentaimama (`v14.13`).
+
 ## [1.4.6] - 2026-11-15
 
 ### Fixed & Enhanced

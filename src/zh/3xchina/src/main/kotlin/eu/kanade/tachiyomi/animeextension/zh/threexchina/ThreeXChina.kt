@@ -140,11 +140,14 @@ class ThreeXChina : RetroTubeTheme(
         }
 
         if (candidateUrls.isEmpty()) {
-            throw SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = ".responsive-player iframe",
-                urlPath = "No playable video streams reachable from 3xchina"
+            val watchUrl = UrlUtils.resolve(baseUrl, response.request.url.toString())
+            return listOf(
+                Video(
+                    url = watchUrl,
+                    quality = "Stream (Open in WebView if blocked)",
+                    videoUrl = watchUrl,
+                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
+                )
             )
         }
 

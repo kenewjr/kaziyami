@@ -67,8 +67,47 @@ class Hanime1Test {
 
         assertThat(eps).hasSize(2)
         assertThat(eps[0].name).isEqualTo("第 1 集")
-        assertThat(eps[0].url).isEqualTo("https://hanime1.me/watch?v=10101")
+        assertThat(eps[0].url).isEqualTo("/watch?v=10101")
         assertThat(eps[1].name).isEqualTo("第 2 集")
+    }
+
+    @Test
+    fun popularAnimeParse_detectsCloudflareChallenge() {
+        val cfHtml = "<html><head><title>Just a moment...</title></head><body><div class='cf-turnstile'></div></body></html>"
+        val req = Request.Builder().url("https://hanime1.me/").build()
+        val body = cfHtml.toResponseBody("text/html; charset=utf-8".toMediaType())
+        val resp = Response.Builder()
+            .request(req)
+            .protocol(Protocol.HTTP_1_1)
+            .code(403)
+            .message("Forbidden")
+            .body(body)
+            .build()
+
+        org.junit.jupiter.api.assertThrows<app.kaziyami.core.SourceParseException> {
+            source.popularAnimeParse(resp)
+        }.also { ex ->
+            assertThat(ex.message).contains("Cloudflare")
+            assertThat(ex.message).contains("WebView")
+        }
+    }
+
+    @Test
+    fun searchAnimeParse_handlesChineseEmptyState() {
+        val emptyHtml = "<html><head><title>搜尋結果</title></head><body><div>查無結果，沒有相關影片</div></body></html>"
+        val req = Request.Builder().url("https://hanime1.me/search?query=xyz").build()
+        val body = emptyHtml.toResponseBody("text/html; charset=utf-8".toMediaType())
+        val resp = Response.Builder()
+            .request(req)
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(body)
+            .build()
+
+        val page = source.searchAnimeParse(resp)
+        assertThat(page.animes).isEmpty()
+        assertThat(page.hasNextPage).isFalse()
     }
 
     @Test
