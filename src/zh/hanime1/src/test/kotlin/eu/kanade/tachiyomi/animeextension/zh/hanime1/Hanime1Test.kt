@@ -95,7 +95,7 @@ class Hanime1Test {
     }
 
     @Test
-    fun episodeListParse_extractsRelatedEpisodes() {
+    fun episodeListParse_extractsPlaylistEpisodesAndIgnoresRelatedVideos() {
         val resp = mockResponse("https://hanime1.me/watch?v=10101", "details.html")
         val eps = source.episodeListParse(resp)
 
@@ -103,6 +103,34 @@ class Hanime1Test {
         assertThat(eps[0].name).isEqualTo("第 1 集")
         assertThat(eps[0].url).isEqualTo("/watch?v=10101")
         assertThat(eps[1].name).isEqualTo("第 2 集")
+        assertThat(eps.none { it.name.contains("推薦影片") }).isTrue()
+    }
+
+    @Test
+    fun episodeListParse_singleVideoFallbackWhenNoPlaylist() {
+        val html = """
+            <!DOCTYPE html>
+            <html>
+            <head><title>單獨影片 - Hanime1</title></head>
+            <body>
+            <h1 id="shareBtn-title">單獨作品 第一夜</h1>
+            <div class="video-details-wrapper"><h4>單獨作品 第一夜</h4></div>
+            <div class="related-watch-wrap">
+                <a href="https://hanime1.me/watch?v=99999">推薦影片 A</a>
+                <a href="https://hanime1.me/watch?v=88888">推薦影片 B</a>
+            </div>
+            </body>
+            </html>
+        """.trimIndent()
+        val req = Request.Builder().url("https://hanime1.me/watch?v=55555").build()
+        val body = html.toResponseBody("text/html; charset=utf-8".toMediaType())
+        val resp = Response.Builder().request(req).protocol(Protocol.HTTP_1_1).code(200).message("OK").body(body).build()
+
+        val eps = source.episodeListParse(resp)
+        assertThat(eps).hasSize(1)
+        assertThat(eps[0].name).isEqualTo("單獨作品 第一夜")
+        assertThat(eps[0].url).isEqualTo("/watch?v=55555")
+        assertThat(eps.none { it.name.contains("推薦影片") }).isTrue()
     }
 
     @Test

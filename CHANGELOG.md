@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.10] - 2026-11-15
+
+### Fixed & Enhanced
+- **Hanime1 Episode List Scoping & Recommendation Grid Removal**:
+  - Removed `.related-watch-wrap a[href*='watch?v=']` from `episodeList` selector and `episodeListParse`.
+  - Scoped playlist extraction strictly to authentic playlist containers (`.video-playlist-wrapper a[href*='watch?v=']`, `#playlist-scroll a[href*='watch?v=']`) with relative URL path deduplication.
+  - Ensured standalone video releases cleanly fall back to a single episode for the active watch page, eliminating 20+ unrelated recommendation/search videos from polluting the episode list.
+- **Monotonic Version Bump**:
+  - Bumped Hanime1 to `v14.24` (`extVersionCode = 24`).
+
 ## [1.4.9] - 2026-11-15
 
 ### Fixed & Enhanced

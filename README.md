@@ -97,7 +97,7 @@ All 6 active adult sources are configured with permanent 64-bit Source IDs locke
 | **Kaziyami: Hentaimama** | English (`en`) | `v14.15` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
 | **Kaziyami: Hanime** | English (`en`) | `v14.16` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p/480p), WebView fallback |
 | **Kaziyami: Rule34Video** | English (`en`) | `v14.16` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
-| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.23` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams (1080p, 720p, 480p), WebView Turnstile fallback |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.24` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams (1080p, 720p, 480p), WebView Turnstile fallback |
 | **Kaziyami: 3xchina** | Chinese (`zh`) | `v14.16` | WordPress (RetroTube) | `https://3xchina.page` | Direct iframes / Streamtape, VOE, DoodStream, WebView fallback |
 
 > [!NOTE]

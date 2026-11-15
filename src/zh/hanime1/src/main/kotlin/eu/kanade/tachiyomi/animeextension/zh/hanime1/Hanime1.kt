@@ -47,10 +47,8 @@ class Hanime1 : GenericThemeSource(
             detailsDescription = "div[class=video-details-wrapper] .video-caption-text, meta[name=description], .description",
             detailsGenre = "div.video-tags-wrapper a, a[href*='search?genre='], a[href*='search?tag=']",
             detailsAuthor = "div.video-details-wrapper a[href*='search?brand='], #video-artist-name",
-            episodeList = ".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']",
-            episodeListAlternates = listOf(
-                "a[href*='watch?v=']"
-            ),
+            episodeList = ".video-playlist-wrapper a[href*='watch?v='], #playlist-scroll a[href*='watch?v=']",
+            episodeListAlternates = emptyList(),
             playerIframes = "video source[src], video[src], source[src], video#player, iframe[src]"
         ),
         quirks = QuirksConfig(
@@ -133,7 +131,8 @@ class Hanime1 : GenericThemeSource(
                 "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
             )
         }
-        val playlistLinks = document.select(".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']")
+        val playlistLinks = document.select(".video-playlist-wrapper a[href*='watch?v='], #playlist-scroll a[href*='watch?v=']")
+            .distinctBy { UrlUtils.getPath(it.attr("href")) }
         if (playlistLinks.isNotEmpty()) {
             return playlistLinks.mapIndexed { index, el ->
                 val ep = SEpisode.create()
@@ -151,7 +150,7 @@ class Hanime1 : GenericThemeSource(
         // Single video fallback (current watch page)
         val ep = SEpisode.create().apply {
             url = UrlUtils.getPath(response.request.url.toString())
-            name = document.selectFirst("#shareBtn-title, h1")?.text()?.let { HtmlText.clean(it) } ?: "Full Episode"
+            name = document.selectFirst("#shareBtn-title, h1, .video-details-wrapper h4")?.text()?.let { HtmlText.clean(it) } ?: "Full Episode"
             episode_number = 1.0f
             val dateEl = document.selectFirst(".released-date, time, .upload-date")
             if (dateEl != null) {
