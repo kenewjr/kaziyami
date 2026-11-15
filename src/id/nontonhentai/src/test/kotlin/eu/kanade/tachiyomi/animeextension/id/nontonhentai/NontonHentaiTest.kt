@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.id.nontonhentai
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.Protocol
 import okhttp3.Request
@@ -136,5 +137,15 @@ class NontonHentaiTest {
         assertTrue(NontonHentai.GENRES.size > 50)
         assertTrue(NontonHentai.GENRES.any { it.slug == "milf" })
         assertTrue(NontonHentai.GENRES.any { it.slug == "ahegao" })
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Status") })
+        assertTrue(headers.any { it.contains("Genre") })
+        assertTrue(headers.size >= 3)
     }
 }

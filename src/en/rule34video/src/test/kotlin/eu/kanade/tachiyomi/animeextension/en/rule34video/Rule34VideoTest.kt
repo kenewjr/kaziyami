@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.rule34video
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -126,5 +128,14 @@ class Rule34VideoTest {
         // 7. Keyword search page 2
         val reqSearch2 = source.searchAnimeRequest(2, "peach", filterList)
         assertEquals("https://rule34video.com/search/peach/?from_videos=2", reqSearch2.url.toString())
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Genre") || it.contains("Tag") })
+        assertTrue(headers.size >= 2)
     }
 }

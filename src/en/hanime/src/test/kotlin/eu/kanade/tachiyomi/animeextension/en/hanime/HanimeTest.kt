@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.hanime
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import okhttp3.Protocol
 import okhttp3.Request
@@ -137,5 +138,14 @@ class HanimeTest {
         // Genre + Search Query
         val reqWithQuery = source.searchAnimeRequest(1, "ramune", filterList)
         assertEquals("https://hanime.tv/browse/tags/big%20boobs?page=1&q=ramune", reqWithQuery.url.toString())
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Genre") })
+        assertTrue(headers.size >= 2)
     }
 }

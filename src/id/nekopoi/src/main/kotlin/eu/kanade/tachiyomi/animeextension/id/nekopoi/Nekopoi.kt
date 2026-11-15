@@ -69,6 +69,9 @@ class Nekopoi : GenericThemeSource(
             genre.isNotEmpty() -> {
                 if (page == 1) "/$genre/" else "/$genre/page/$page/"
             }
+            sort == "latest" -> {
+                if (page == 1) "/" else "/page/$page/"
+            }
             sort.isNotEmpty() -> {
                 "/category/$sort/page/$page/"
             }
@@ -239,9 +242,13 @@ class Nekopoi : GenericThemeSource(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Nekopoi Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             NekopoiSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Kategori (Category)"),
             NekopoiCategoryFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tema"),
             NekopoiGenreFilter()
         )
     }
@@ -272,7 +279,8 @@ class Nekopoi : GenericThemeSource(
         data class Option(val name: String, val slug: String)
 
         val SORTS = arrayOf(
-            Option("Latest Updates", ""),
+            Option("Default (Popular Hentai)", ""),
+            Option("Latest Updates", "latest"),
             Option("Popular Hentai", "hentai"),
             Option("3D Hentai", "3d-hentai"),
             Option("Jav Cosplay", "jav-cosplay")

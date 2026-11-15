@@ -173,4 +173,13 @@ class Hanime1Test {
         assertThat(filtered).hasSize(1)
         assertThat(filtered[0].title).isEqualTo("夜勤病棟 第一話")
     }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertThat(headers.any { it.contains("排序") || it.contains("Sort") }).isTrue()
+        assertThat(headers.any { it.contains("類型") || it.contains("Genre") }).isTrue()
+        assertThat(headers.size).isGreaterThanOrEqualTo(5)
+    }
 }

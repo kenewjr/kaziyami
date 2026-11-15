@@ -93,13 +93,13 @@ All 7 active adult sources are configured with permanent 64-bit Source IDs locke
 
 | Source Label | Language | Version | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|---|
-| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.12` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
-| **Kaziyami: NontonHentai** | Indonesian (`id`) | `v14.14` | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
-| **Kaziyami: Hentaimama** | English (`en`) | `v14.10` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
-| **Kaziyami: Hanime** | English (`en`) | `v14.11` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
-| **Kaziyami: RuleVid** | English (`en`) | `v14.11` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
-| **Kaziyami: Rule34Video** | English (`en`) | `v14.11` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
-| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.17` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.13` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p, Mp4Upload |
+| **Kaziyami: NontonHentai** | Indonesian (`id`) | `v14.15` | WordPress (AnimeStream) | `https://nontonhentai.net` | HentaiCop HLS/MP4, HepiDrive, GDPlayer, LocalStream |
+| **Kaziyami: Hentaimama** | English (`en`) | `v14.11` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
+| **Kaziyami: Hanime** | English (`en`) | `v14.12` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p), WebView fallback |
+| **Kaziyami: RuleVid** | English (`en`) | `v14.12` | Kernel Video Sharing (KVS) | `https://rulevid.com` | Direct CDN Progressive MP4 (3D SFM/Blender/MMD) |
+| **Kaziyami: Rule34Video** | English (`en`) | `v14.12` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |
+| **Kaziyami: Hanime1** | Chinese (`zh`) | `v14.18` | Custom Vue / Hembed | `https://hanime1.me` | Direct CDN MP4 / HLS streams, WebView Turnstile fallback |
 
 > [!NOTE]
 > **Discontinued & Retired Sources**: `3xchina` was retired following adult animated-only scope enforcement (live-action RetroTube cleanup). `IndoHentai` and `JAVSubbed` were discontinued due to permanent Indonesian ISP DNS sinkholes (`103.10.223.15:443`). Their permanent 64-bit IDs are preserved in `docs/SOURCE_IDS.md`.
@@ -130,6 +130,12 @@ Kaziyami extensions incorporate battle-tested networking hygiene to survive host
 
 ### Quality & Video Host Preferences
 - Each extension provides configurable preferences for preferred server hosts (e.g. prioritize StreamPoi or Streamtape) and default video resolution (1080p, 720p, 480p).
+
+### Sorting Order in Kototoro (Android vs Desktop PC)
+- **Top Bar Sort (⇅) vs Filter Dialog (⚙)**:
+  - Kototoro's top toolbar sort icon only toggles between **Popularity** and **Latest Updates** (hardcoded in Kototoro's `AniyomiAnimeRepository`).
+  - All extension-specific custom sort orders (e.g. **Most Viewed**, **Top Rated**, **Rating**, **Title A-Z**, **Duration**, **Upload Date**) are located inside the **Filter sheet** (the funnel/filter icon).
+  - Tap the **Filter** icon, select your desired chip in the **Urutan (Sorting Order)** section, and tap **Apply (Terapkan)**. The catalogue immediately updates with the requested sort.
 
 ---
 

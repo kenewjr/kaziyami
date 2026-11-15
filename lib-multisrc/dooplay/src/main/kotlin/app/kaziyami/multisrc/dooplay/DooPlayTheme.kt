@@ -229,8 +229,10 @@ open class DooPlayTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Press 'Reset' to clear all filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             DooPlaySortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Tipe (Type)"),
             DooPlayTypeFilter()
         )
     }

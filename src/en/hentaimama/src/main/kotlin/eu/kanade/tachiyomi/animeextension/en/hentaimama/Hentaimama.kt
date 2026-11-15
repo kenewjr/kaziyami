@@ -79,9 +79,13 @@ class Hentaimama : DooPlayTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Hentaimama Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             HentaimamaSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Kategori (Category)"),
             HentaimamaCategoryFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tema"),
             HentaimamaGenreFilter()
         )
     }

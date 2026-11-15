@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.id.nekopoi
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -145,5 +146,14 @@ class NekopoiTest {
         // 5. Query overrides filters
         val reqQuery = source.searchAnimeRequest(1, "kanojo", filterList)
         assertEquals("https://nekopoi.care/search/kanojo/page/1/", reqQuery.url.toString())
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Genre") })
+        assertTrue(headers.size >= 2)
     }
 }

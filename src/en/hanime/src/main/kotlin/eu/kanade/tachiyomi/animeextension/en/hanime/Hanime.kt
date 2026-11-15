@@ -525,8 +525,10 @@ class Hanime : GenericThemeSource(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Hanime Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             HanimeSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tema"),
             HanimeGenreFilter()
         )
     }

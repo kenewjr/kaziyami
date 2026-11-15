@@ -265,7 +265,7 @@ open class KvsTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Press 'Reset' to clear all filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             KvsSortFilter()
         )
     }

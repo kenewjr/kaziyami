@@ -61,8 +61,10 @@ class RuleVid : KvsTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("RuleVid Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             RuleVidSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tag"),
             RuleVidGenreFilter()
         )
     }

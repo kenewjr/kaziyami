@@ -276,11 +276,19 @@ class Hanime1 : GenericThemeSource(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Hanime1 繁體中文過濾器"),
+            AnimeFilter.Header("排序 (Sorting Order)"),
             Hanime1SortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("類型 (Genre)"),
             Hanime1GenreFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("時長 (Duration)"),
             Hanime1DurationFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("發布日期 (Release Date)"),
             Hanime1DateFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("製作廠商 (Studio / Brand)"),
             Hanime1BrandFilter(),
             AnimeFilter.Separator(),
             AnimeFilter.Header("標籤多選 (Multi-select Tags)"),

@@ -61,8 +61,10 @@ class Rule34Video : KvsTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Rule34Video Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             Rule34VideoSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tag"),
             Rule34VideoGenreFilter()
         )
     }

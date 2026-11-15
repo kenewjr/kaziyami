@@ -136,9 +136,13 @@ class NontonHentai : AnimeStreamTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("NontonHentai Filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             NontonHentaiSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Status Tayang (Status)"),
             NontonHentaiStatusFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Genre / Tema"),
             NontonHentaiGenreFilter()
         )
     }

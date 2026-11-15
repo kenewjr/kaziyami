@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.rulevid
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -143,6 +145,15 @@ class RuleVidTest {
         // 7. Keyword search page 2
         val reqSearch2 = source.searchAnimeRequest(2, "belle", filterList)
         assertEquals("https://rulevid.com/search/belle/?from_videos=2", reqSearch2.url.toString())
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Genre") || it.contains("Tag") })
+        assertTrue(headers.size >= 2)
     }
 }
 

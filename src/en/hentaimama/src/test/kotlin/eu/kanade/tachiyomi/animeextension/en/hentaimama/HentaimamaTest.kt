@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.hentaimama
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import okhttp3.Protocol
 import okhttp3.Request
@@ -175,5 +176,15 @@ class HentaimamaTest {
         sortFilter.state = 2
         val reqSort = source.searchAnimeRequest(1, "", filterList)
         assertEquals("https://hentaimama.io/tvshows/?order=views", reqSort.url.toString())
+    }
+
+    @Test
+    fun testKototoroFilterHeaderSeparation() {
+        val filters = source.getFilterList()
+        val headers = filters.filterIsInstance<AnimeFilter.Header>().map { it.name }
+        assertTrue(headers.any { it.contains("Urutan") || it.contains("Sort") })
+        assertTrue(headers.any { it.contains("Kategori") || it.contains("Category") })
+        assertTrue(headers.any { it.contains("Genre") })
+        assertTrue(headers.size >= 3)
     }
 }

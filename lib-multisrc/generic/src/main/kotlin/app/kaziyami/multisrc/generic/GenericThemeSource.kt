@@ -545,7 +545,7 @@ open class GenericThemeSource(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Press 'Reset' to clear all filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             GenericSortFilter()
         )
     }

@@ -140,8 +140,10 @@ open class AnimeStreamTheme(
 
     override fun getFilterList(): AnimeFilterList {
         return AnimeFilterList(
-            AnimeFilter.Header("Press 'Reset' to clear all filters"),
+            AnimeFilter.Header("Urutan (Sorting Order)"),
             AnimeStreamSortFilter(),
+            AnimeFilter.Separator(),
+            AnimeFilter.Header("Status"),
             AnimeStreamStatusFilter()
         )
     }
