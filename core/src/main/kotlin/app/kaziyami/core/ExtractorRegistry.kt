@@ -148,6 +148,63 @@ object ExtractorRegistry {
     }
 
     /**
+     * Resolves multiple candidate embed URLs to collect all available stream qualities
+     * across up to [maxWorkingHosts] working providers, deduplicated and sorted.
+     */
+    fun resolveQualities(
+        urls: List<String>,
+        preferredHost: String? = null,
+        referer: String = "",
+        client: OkHttpClient = OkHttpClient(),
+        maxWorkingHosts: Int = 4
+    ): List<Video> {
+        if (urls.isEmpty()) return emptyList()
+
+        val orderedUrls = if (!preferredHost.isNullOrBlank()) {
+            urls.sortedByDescending { it.contains(preferredHost, ignoreCase = true) }
+        } else {
+            urls
+        }
+
+        val allVideos = mutableListOf<Video>()
+        val unhandled = mutableListOf<String>()
+        var workingCount = 0
+
+        for (url in orderedUrls) {
+            val extractor = findExtractor(url)
+            if (extractor == null) {
+                val host = try { URI(url).host ?: url } catch (_: Exception) { url }
+                unhandled.add(host)
+                continue
+            }
+            try {
+                val videos = extractor.extract(url, referer, client)
+                if (videos.isNotEmpty()) {
+                    allVideos.addAll(videos)
+                    workingCount++
+                    if (workingCount >= maxWorkingHosts) {
+                        break
+                    }
+                }
+            } catch (e: Exception) {
+                val host = try { URI(url).host ?: url } catch (_: Exception) { url }
+                unhandled.add("$host (${e.message ?: "failed"})")
+            }
+        }
+
+        if (allVideos.isNotEmpty()) {
+            return deduplicateAndSort(allVideos, preferredHost = preferredHost)
+        }
+
+        if (unhandled.isNotEmpty() && urls.isNotEmpty()) {
+            throw IllegalStateException(
+                "Quality extraction failed across all candidates [${urls.size}]. Failed/unhandled: ${unhandled.joinToString(", ")}"
+            )
+        }
+        return emptyList()
+    }
+
+    /**
      * Extracts streams without throwing on missing extractor, returning empty list if unhandled.
      */
     fun extract(url: String, client: OkHttpClient): List<Video> {
@@ -183,6 +240,7 @@ object ExtractorRegistry {
                 if (preferredHost != null && q.contains(preferredHost.lowercase())) score += 1000
                 if (q.contains(preferredQuality.lowercase())) score += 500
                 when {
+                    q.contains("4k") || q.contains("2160") -> score += 120
                     q.contains("1080p") || q.contains("1080") -> score += 100
                     q.contains("720p") || q.contains("720") -> score += 70
                     q.contains("480p") || q.contains("480") -> score += 40

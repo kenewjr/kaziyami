@@ -346,10 +346,21 @@
   - [x] 42.6 Monotonic Version Bumps: Bumped all 6 active sources: `Hanime1` to v14.22 (code 22), `3xchina` to v14.15 (code 15), `Nekopoi` to v14.16 (code 16), `Hanime` to v14.15 (code 15), `Rule34Video` to v14.15 (code 15), `Hentaimama` to v14.14 (code 14).
   - [x] 42.7 Full Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 43: Player Multi-Quality Selection Expansion & Master HLS Parsing (Release v1.4.9)**:
+  - [x] 43.1 ExtractorRegistry.resolveQualities: Replaced early-stopping resolution with multi-provider collection across up to 4 working providers, eliminating early termination that dropped high-resolution streams.
+  - [x] 43.2 Native HlsExtractor Parser: Added `HlsExtractor` master playlist parser in `core`, extracting distinct variant quality streams (`1080p`, `720p`, `480p`, `360p`) with their individual URLs into selectable player options.
+  - [x] 43.3 Nekopoi Multi-Stream Quality Hints: Added container hints (`#480p`, `#720p`, `#1080p`) across stream tabs (`#nk-stream-1`, `#nk-stream-2`, `#nk-stream-3`) and updated `DoodExtractor` to respect resolution hints, producing distinct selectable streams (`PlayMogo 480p`, `PlayMogo 720p`, `StreamPoi 1080p`).
+  - [x] 43.4 Rule34Video Resolution Sourcing: Extracted authentic quality labels (`video_url_text`, `video_alt_url*_text`) across 4K, 1080p, 720p, 480p, 360p with 4K scoring in `deduplicateAndSort`.
+  - [x] 43.5 Hanime1 Multi-Resolution Synthesis: Synthesized sibling resolution candidates (`1080p`, `720p`, `480p`) from CDN assets and probed reachability before emitting candidate list.
+  - [x] 43.6 Hanime Handshake Prioritization & HLS Parsing: Prioritized API v11 cryptographic handshake to load all authenticated API resolution sources (`1080p`, `720p`, `480p`, `360p`), parsed HLS master streams, and sorted all streams by quality.
+  - [x] 43.7 ThreeXChina & Hentaimama: Switched stream resolution from `resolveSequential` to `resolveQualities`, enabling player quality switching across multiple mirrors and server tabs.
+  - [x] 43.8 Monotonic Version Bumps: Bumped all 6 active sources: `Hanime1` to v14.23 (code 23), `3xchina` to v14.16 (code 16), `Nekopoi` to v14.17 (code 17), `Hanime` to v14.16 (code 16), `Rule34Video` to v14.16 (code 16), `Hentaimama` to v14.15 (code 15).
+  - [x] 43.9 Full Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 42 complete. 6 active production sources: `Hanime1` at v14.22 (code 22); `3xchina` at v14.15 (code 15); `Nekopoi` at v14.16 (code 16); `Hanime` at v14.15 (code 15); `Rule34Video` at v14.15 (code 15); `Hentaimama` at v14.14 (code 14). Release version `v1.4.8`.
+- **Overall Status**: Phase 43 complete. 6 active production sources: `Hanime1` at v14.23 (code 23); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.17 (code 17); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.9`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit and remote push.
 

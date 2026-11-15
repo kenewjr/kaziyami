@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.9] - 2026-11-15
+
+### Fixed & Enhanced
+- **Player Multi-Quality Selection Expansion (All Sources)**:
+  - **ExtractorRegistry.resolveQualities**: Added multi-provider stream resolver collecting candidate qualities across up to 4 working providers, eliminating early termination that previously dropped 1080p and 720p streams.
+  - **HlsExtractor Master Playlist Parser**: Added native HLS master playlist parser extracting authentic variant quality playlists (`1080p`, `720p`, `480p`, `360p`) with their respective URLs into selectable player options.
+  - **Nekopoi Multi-Stream & Quality Hints**: Added container quality hints (`#480p`, `#720p`, `#1080p`) across stream tabs (`#nk-stream-1`, `#nk-stream-2`, `#nk-stream-3`) and wired `resolveQualities` to extract all servers (`PlayMogo 480p`, `PlayMogo 720p`, `StreamPoi 1080p/720p`), giving users full resolution choice in the player.
+  - **Rule34Video Resolution Sourcing**: Extracted authentic quality labels (`video_url_text`, `video_alt_url*_text`) for all available resolutions (4K, 1080p, 720p, 480p, 360p) with 4K scoring in `deduplicateAndSort`.
+  - **Hanime1 Multi-Resolution Synthesis & Reachability**: Synthesized sibling resolution candidates (`1080p`, `720p`, `480p`) from CDN assets and verified availability, ensuring player offers multiple working qualities.
+  - **Hanime Handshake & HLS Multi-Quality**: Prioritized cryptographic handshake to load all authenticated API resolution sources (`1080p`, `720p`, `480p`, `360p`), parsed HLS master streams, and sorted all streams by quality.
+  - **ThreeXChina & Hentaimama**: Switched stream resolution from `resolveSequential` to `resolveQualities`, enabling player quality switching across multiple mirrors and server tabs.
+- **Monotonic Version Bumps**:
+  - Bumped all 6 active sources: Hanime1 (`v14.23`), 3xchina (`v14.16`), Nekopoi (`v14.17`), Hanime (`v14.16`), Rule34Video (`v14.16`), Hentaimama (`v14.15`).
+
 ## [1.4.8] - 2026-11-15
 
 ### Fixed & Enhanced

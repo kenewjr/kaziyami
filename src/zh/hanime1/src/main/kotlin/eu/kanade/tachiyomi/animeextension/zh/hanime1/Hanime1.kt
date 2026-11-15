@@ -231,6 +231,23 @@ class Hanime1 : GenericThemeSource(
             )
         }
 
+        // Synthesize standard resolution variants if available
+        val additionalVariants = mutableListOf<Pair<String, String>>()
+        for ((streamUrl, _) in candidateSources) {
+            if (streamUrl.contains("_1080p.mp4", ignoreCase = true)) {
+                val u720 = streamUrl.replace("_1080p.mp4", "_720p.mp4", ignoreCase = true)
+                val u480 = streamUrl.replace("_1080p.mp4", "_480p.mp4", ignoreCase = true)
+                if (candidateSources.none { it.first == u720 }) additionalVariants.add(u720 to "720p")
+                if (candidateSources.none { it.first == u480 }) additionalVariants.add(u480 to "480p")
+            } else if (streamUrl.contains("_720p.mp4", ignoreCase = true)) {
+                val u1080 = streamUrl.replace("_720p.mp4", "_1080p.mp4", ignoreCase = true)
+                val u480 = streamUrl.replace("_720p.mp4", "_480p.mp4", ignoreCase = true)
+                if (candidateSources.none { it.first == u1080 }) additionalVariants.add(u1080 to "1080p")
+                if (candidateSources.none { it.first == u480 }) additionalVariants.add(u480 to "480p")
+            }
+        }
+        candidateSources.addAll(additionalVariants)
+
         // Deduplicate candidates by URL and sort by quality (1080p first)
         val sortedCandidates = candidateSources.distinctBy { it.first }.sortedWith(
             compareByDescending { (_, q) ->
@@ -274,7 +291,7 @@ class Hanime1 : GenericThemeSource(
             val uri = java.net.URI(streamUrl)
             val host = uri.host ?: return false
             val addresses = app.kaziyami.network.SmartDns.instance.lookup(host)
-            if (addresses.isEmpty() || addresses.any { it.isLoopbackAddress || it.hostAddress in app.kaziyami.network.SmartDns.SINKHOLE_IPS }) {
+            if (addresses.isEmpty() || addresses.any { it.isLoopbackAddress || it.hostAddress.orEmpty() in app.kaziyami.network.SmartDns.SINKHOLE_IPS }) {
                 return false
             }
 

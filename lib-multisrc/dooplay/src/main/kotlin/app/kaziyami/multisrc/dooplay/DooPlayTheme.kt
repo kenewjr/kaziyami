@@ -200,7 +200,7 @@ open class DooPlayTheme(
         val filteredUrls = candidateUrls.filter { isVideoCandidateUrl(it) }.distinct()
 
         val videos = try {
-            ExtractorRegistry.resolveSequential(
+            ExtractorRegistry.resolveQualities(
                 urls = filteredUrls,
                 preferredHost = preferredHost,
                 referer = referer,

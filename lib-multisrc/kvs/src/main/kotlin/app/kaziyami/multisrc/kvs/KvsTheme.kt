@@ -222,20 +222,31 @@ open class KvsTheme(
         val mainMatch = Regex("""video_url:\s*['"]([^'"]+)['"]""").find(html)
         if (mainMatch != null) {
             val url = UrlUtils.resolve(baseUrl, mainMatch.groupValues[1])
-            videos.add(Video(url, "360p (Default)", url, videoHeaders))
+            val qText = Regex("""video_url_text:\s*['"]([^'"]+)['"]""").find(html)?.groupValues?.get(1)?.trim().orEmpty()
+            val label = when {
+                qText.isNotBlank() -> qText
+                url.contains("1080p", ignoreCase = true) -> "1080p"
+                url.contains("720p", ignoreCase = true) -> "720p"
+                url.contains("480p", ignoreCase = true) -> "480p"
+                url.contains("360p", ignoreCase = true) -> "360p"
+                else -> "Default"
+            }
+            videos.add(Video(url, label, url, videoHeaders))
         }
 
         // 2. Alternate resolution streams
         val altSpecs = listOf(
-            Pair("480p", Regex("""video_alt_url:\s*['"]([^'"]+)['"]""")),
-            Pair("720p", Regex("""video_alt_url2:\s*['"]([^'"]+)['"]""")),
-            Pair("1080p", Regex("""video_alt_url3:\s*['"]([^'"]+)['"]""")),
-            Pair("4K", Regex("""video_alt_url4:\s*['"]([^'"]+)['"]"""))
+            Triple("video_alt_url", "video_alt_url_text", "480p"),
+            Triple("video_alt_url2", "video_alt_url2_text", "720p"),
+            Triple("video_alt_url3", "video_alt_url3_text", "1080p"),
+            Triple("video_alt_url4", "video_alt_url4_text", "4K")
         )
-        for ((label, regex) in altSpecs) {
-            val match = regex.find(html)
+        for ((urlKey, textKey, defaultQ) in altSpecs) {
+            val match = Regex("""$urlKey:\s*['"]([^'"]+)['"]""").find(html)
             if (match != null) {
                 val url = UrlUtils.resolve(baseUrl, match.groupValues[1])
+                val qText = Regex("""$textKey:\s*['"]([^'"]+)['"]""").find(html)?.groupValues?.get(1)?.trim().orEmpty()
+                val label = if (qText.isNotBlank()) qText else defaultQ
                 videos.add(Video(url, label, url, videoHeaders))
             }
         }

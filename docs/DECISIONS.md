@@ -112,3 +112,12 @@ Per user directives:
 - Wrapped `anime.url` access with exception handling in `ContentPolicy` to safely handle uninitialized properties during test fixture instantiation.
 - Bumped extension versions monotonically: Hanime1 (`v14.22`), 3xchina (`v14.15`), Nekopoi (`v14.16`), Hanime (`v14.15`), Rule34Video (`v14.15`), Hentaimama (`v14.14`). Alternative rejected: Returning HTML watch URLs to media players or allowing site blog announcements and sponsored games to pollute video feeds.
 
+76. **Full Player Multi-Quality Selection Expansion & Master HLS Parsing (Phase 43)**: Ensured player provides all available video resolutions (1080p, 720p, 480p, 360p, 4K) across all sources:
+- Replaced early-stopping resolution logic with `ExtractorRegistry.resolveQualities`, allowing collection of stream candidates across up to 4 working providers and containers instead of aborting after the first working stream.
+- Implemented native `HlsExtractor` master playlist parser in `core`, extracting distinct variant quality streams (`1080p`, `720p`, `480p`, `360p`) with their individual `.m3u8` URLs, allowing ExoPlayer in Kototoro and Aniyomi to cleanly display and switch between resolutions.
+- Added stream container quality hints (`#480p`, `#720p`, `#1080p`) in `GenericThemeSource` for multi-server themes (Nekopoi `#nk-stream-1`, `#nk-stream-2`, `#nk-stream-3`) and updated `DoodExtractor` to respect resolution hints, producing distinct selectable streams (`PlayMogo 480p`, `PlayMogo 720p`, `StreamPoi 1080p`).
+- Updated `KvsTheme` (Rule34Video) to extract authentic quality labels (`video_url_text`, `video_alt_url*_text`) across 4K, 1080p, 720p, 480p, 360p.
+- Synthesized sibling resolution candidates (`1080p`, `720p`, `480p`) for `Hanime1` and probed availability before emitting candidate list.
+- Prioritized API v11 cryptographic handshake in `Hanime` to load authenticated multi-resolution streams, and wired `resolveQualities` across `ThreeXChina` and `Hentaimama` (DooPlay).
+- Bumped all 6 extension versions monotonically: Hanime1 (`v14.23`), 3xchina (`v14.16`), Nekopoi (`v14.17`), Hanime (`v14.16`), Rule34Video (`v14.16`), Hentaimama (`v14.15`). Alternative rejected: Forcing users into a single fixed resolution or stopping stream extraction on the first embed host.
+

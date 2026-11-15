@@ -102,7 +102,9 @@ class DoodExtractor : VideoExtractor {
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val ua = BrowserProfile.resolve().userAgent
-        val embedUrl = if (!url.contains("/e/")) url.replace("/d/", "/e/") else url
+        val rawUrl = url.substringBefore("#")
+        val qualityHint = if (url.contains("#")) url.substringAfter("#") else ""
+        val embedUrl = if (!rawUrl.contains("/e/")) rawUrl.replace("/d/", "/e/") else rawUrl
         val reqBuilder = Request.Builder().url(embedUrl)
         val effectiveRef = if (referer.isNotBlank()) referer else "https://nekopoi.care/"
         reqBuilder.header("Referer", effectiveRef)
@@ -136,7 +138,14 @@ class DoodExtractor : VideoExtractor {
         if (!canResolveHost(finalUrl)) return emptyList()
         val headers = BrowserHeaders.mediaHeaders("https://${req.url.host}/")
         val hostName = if (url.contains("playmogo", ignoreCase = true) || url.contains("mogo", ignoreCase = true)) "PlayMogo" else "DoodStream"
-        return listOf(Video(embedUrl, "$hostName 720p", finalUrl, headers))
+        val q = when {
+            qualityHint.isNotBlank() -> qualityHint
+            url.contains("1080", ignoreCase = true) -> "1080p"
+            url.contains("480", ignoreCase = true) -> "480p"
+            url.contains("360", ignoreCase = true) -> "360p"
+            else -> "720p"
+        }
+        return listOf(Video(embedUrl, "$hostName $q", finalUrl, headers))
     }
 }
 
@@ -283,8 +292,12 @@ class StreamPoiExtractor : VideoExtractor {
         val hostName = "StreamPoi"
         val fileMatch = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
         if (fileMatch.find()) {
-            val masterUrl = fileMatch.group(1)
+            val masterUrl = fileMatch.group(1) ?: return emptyList()
             val headers = BrowserHeaders.mediaHeaders(url)
+            val hlsVideos = HlsExtractor.extract(masterUrl, headers, client, prefix = hostName)
+            if (hlsVideos.isNotEmpty()) {
+                return hlsVideos
+            }
             return listOf(
                 Video(url, "$hostName 1080p (HLS)", masterUrl, headers),
                 Video(url, "$hostName 720p (HLS)", masterUrl, headers)
@@ -292,8 +305,12 @@ class StreamPoiExtractor : VideoExtractor {
         }
         val directMatch = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
         if (directMatch.find()) {
-            val masterUrl = directMatch.group(1)
+            val masterUrl = directMatch.group(1) ?: return emptyList()
             val headers = BrowserHeaders.mediaHeaders(url)
+            val hlsVideos = HlsExtractor.extract(masterUrl, headers, client, prefix = hostName)
+            if (hlsVideos.isNotEmpty()) {
+                return hlsVideos
+            }
             return listOf(Video(url, "$hostName HD (HLS)", masterUrl, headers))
         }
 

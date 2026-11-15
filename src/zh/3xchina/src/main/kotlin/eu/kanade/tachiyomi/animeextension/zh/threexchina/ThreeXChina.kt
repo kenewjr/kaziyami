@@ -110,7 +110,7 @@ class ThreeXChina : RetroTubeTheme(
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
 
         val videos = try {
-            ExtractorRegistry.resolveSequential(
+            ExtractorRegistry.resolveQualities(
                 urls = candidateUrls,
                 preferredHost = preferredHost,
                 referer = referer,

@@ -517,7 +517,16 @@ open class GenericThemeSource(
                         element.attr("src")
                     }
                 }
-                if (src.isNotBlank() && isVideoCandidateUrl(src)) src else null
+                if (src.isNotBlank() && isVideoCandidateUrl(src)) {
+                    val parentId = element.parent()?.id().orEmpty().lowercase()
+                    val hint = when {
+                        parentId.contains("stream-1") || parentId.contains("server-1") -> "#480p"
+                        parentId.contains("stream-2") || parentId.contains("server-2") -> "#720p"
+                        parentId.contains("stream-3") || parentId.contains("server-3") -> "#1080p"
+                        else -> ""
+                    }
+                    if (hint.isNotEmpty() && !src.contains("#")) "$src$hint" else src
+                } else null
             }
         }.toMutableList()
 
@@ -531,7 +540,7 @@ open class GenericThemeSource(
         val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
         val referer = response.request.url.toString()
-        val videos = ExtractorRegistry.resolveSequential(
+        val videos = ExtractorRegistry.resolveQualities(
             urls = resolvedUrls,
             preferredHost = preferredHost,
             referer = referer,

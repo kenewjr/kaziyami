@@ -284,35 +284,52 @@ class Hanime : GenericThemeSource(
         val videoList = mutableListOf<Video>()
         val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime.tv/", headers)
 
-        // 1. Embedded HLS m3u8 streams
+        // 1. Primary Hanime API v11 cryptographic handshake (multi-quality 1080p, 720p, 480p, 360p)
+        val slug = response.request.url.toString().trimEnd('/').substringAfterLast('/')
+        if (slug.isNotBlank() && slug != "video" && slug != "hentai") {
+            videoList.addAll(fetchStreamSources(slug))
+        }
+
+        // 2. Embedded HLS m3u8 streams with variant playlist parsing
         val m3u8Matcher = M3U8_REGEX.matcher(unescapedBody)
         while (m3u8Matcher.find()) {
             val streamUrl = m3u8Matcher.group(1) ?: continue
-            videoList.add(
-                Video(
-                    url = streamUrl,
-                    quality = "HLS 720p/1080p",
-                    videoUrl = streamUrl,
-                    headers = videoHeaders
+            val hlsVideos = app.kaziyami.extractors.HlsExtractor.extract(streamUrl, videoHeaders, client, prefix = "Hanime")
+            if (hlsVideos.isNotEmpty()) {
+                videoList.addAll(hlsVideos)
+            } else {
+                videoList.add(
+                    Video(
+                        url = streamUrl,
+                        quality = "Hanime HLS 720p/1080p",
+                        videoUrl = streamUrl,
+                        headers = videoHeaders
+                    )
                 )
-            )
+            }
         }
 
-        // 2. Embedded MP4 streams
+        // 3. Embedded MP4 streams
         val mp4Matcher = MP4_REGEX.matcher(unescapedBody)
         while (mp4Matcher.find()) {
             val streamUrl = mp4Matcher.group(1) ?: continue
+            val q = when {
+                streamUrl.contains("1080p", ignoreCase = true) -> "1080p"
+                streamUrl.contains("720p", ignoreCase = true) -> "720p"
+                streamUrl.contains("480p", ignoreCase = true) -> "480p"
+                else -> "Direct MP4"
+            }
             videoList.add(
                 Video(
                     url = streamUrl,
-                    quality = "Direct MP4",
+                    quality = "Hanime $q",
                     videoUrl = streamUrl,
                     headers = videoHeaders
                 )
             )
         }
 
-        // 3. Extractor registry iframes
+        // 4. Extractor registry iframes
         val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
         val iframes = doc.select("iframe[src], iframe[data-src]").mapNotNull {
             val src = it.attr("data-src").ifEmpty { it.attr("src") }
@@ -320,15 +337,9 @@ class Hanime : GenericThemeSource(
         }
         videoList.addAll(ExtractorRegistry.extractAll(iframes, client))
 
-        // 4. Primary Hanime API v11 cryptographic handshake
-        if (videoList.isEmpty()) {
-            val slug = response.request.url.toString().trimEnd('/').substringAfterLast('/')
-            if (slug.isNotBlank() && slug != "video" && slug != "hentai") {
-                videoList.addAll(fetchStreamSources(slug))
-            }
-        }
-
-        val deduped = videoList.distinctBy { it.videoUrl }
+        val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
+        val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
+        val deduped = ExtractorRegistry.deduplicateAndSort(videoList, preferredQuality, preferredHost)
         if (deduped.isEmpty()) {
             val epUrl = response.request.url.toString()
             return listOf(
