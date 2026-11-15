@@ -25,10 +25,10 @@ class Nekopoi : GenericThemeSource(
         latestPath = "/page/%d/",
         searchPath = "/search/%s/page/%d/",
         selectors = SelectorsConfig(
-            item = ".nk-search-results > ul > li, .nk-search-results li, .nk-post-card, article.type-post, .result ul li, .post-item, .eropost",
+            item = ".nk-search-results > ul > li, .nk-search-results li, .nk-hentai-grid ul li, .nk-hentai-grid li, .nk-post-card, article.type-post, .result ul li, .post-item, .eropost",
             itemTitle = "h2, .nk-search-info h2, h2 a, .title a, a[title]",
             itemUrl = "a.nk-search-item, h2 a, .title a, a[href]",
-            itemThumbnail = ".nk-thumb-crop, .nk-post-thumb, .nk-search-thumb, img, [style*='background-image']",
+            itemThumbnail = "[style*='background-image'], [style*='background'], [style*='url'], .nk-thumb-crop, .nk-hentai-thumb, .nk-grid-thumb, .nk-search-thumb, img, .thumb img, [class*='thumb'] img, [original-title]",
             nextPage = "a.next, .pagination a.next, .nav-links a.next, a.next.page-numbers, .next.page-numbers",
             detailsTitle = "h1.entry-title, .title h1, h1",
             detailsThumbnail = "meta[property='og:image'], .imgdesc img, .thumb img, .entry-content img, [class*='thumb'] img",

@@ -74,16 +74,34 @@ class ThreeXChina : RetroTubeTheme(
         val document = response.asJsoup()
         val embedUrls = mutableListOf<String>()
 
-        // 1. Sourcetabs
-        document.select(".sourcetabs [data-src], .player-tabs [data-src]").forEach { tab ->
-            val src = tab.attr("data-src").trim()
+        // 1. Sourcetabs (common in RetroTube: <li data-src="url"> or <a data-src="url">)
+        document.select(".sourcetabs [data-src], .player-tabs [data-src], .sourcetabs a, .player-tabs a").forEach { tab ->
+            val src = tab.attr("data-src").ifEmpty { tab.attr("href") }.trim()
+            if (src.isNotEmpty() && !src.startsWith("#")) embedUrls.add(UrlUtils.resolve(baseUrl, src))
+        }
+
+        // 2. Direct iframes (handles both iframe and uppercase IFRAME, data-src, lazy-src)
+        document.select(".responsive-player iframe, .responsive-player IFRAME, iframe[src], iframe[data-src], iframe[data-lazy-src]").forEach { iframe ->
+            val src = iframe.attr("data-src").ifEmpty {
+                iframe.attr("data-lazy-src").ifEmpty {
+                    iframe.attr("src").ifEmpty { iframe.attr("SRC") }
+                }
+            }.trim()
+            if (src.isNotEmpty() && !src.startsWith("#")) embedUrls.add(UrlUtils.resolve(baseUrl, src))
+        }
+
+        // 3. Direct <video> or <source> elements
+        document.select("video source[src], video[src], video source[data-src], video[data-src]").forEach { el ->
+            val src = el.attr("data-src").ifEmpty { el.attr("src") }.trim()
             if (src.isNotEmpty()) embedUrls.add(UrlUtils.resolve(baseUrl, src))
         }
 
-        // 2. Direct iframes (handles both iframe and uppercase IFRAME)
-        document.select(".responsive-player iframe, .responsive-player IFRAME, iframe[src]").forEach { iframe ->
-            val src = iframe.attr("src").ifEmpty { iframe.attr("SRC") }.trim()
-            if (src.isNotEmpty()) embedUrls.add(UrlUtils.resolve(baseUrl, src))
+        // 4. JavaScript embedded stream links (mp4 / m3u8)
+        val html = document.html()
+        val streamMatcher = java.util.regex.Pattern.compile("""(?:source|file|videoUrl)\s*[:=]\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(html)
+        while (streamMatcher.find()) {
+            val stream = streamMatcher.group(1) ?: continue
+            embedUrls.add(stream)
         }
 
         val candidateUrls = embedUrls.filter { isVideoCandidateUrl(it) }.distinct()
@@ -104,18 +122,41 @@ class ThreeXChina : RetroTubeTheme(
             emptyList()
         }
 
-        if (videos.isEmpty()) {
-            val fallback = candidateUrls.firstOrNull() ?: response.request.url.toString()
+        if (videos.isNotEmpty()) {
+            return videos
+        }
+
+        // Fallback: only use candidateUrls that end with .mp4 or .m3u8, or known embed host
+        val directCandidate = candidateUrls.firstOrNull { it.contains(".mp4") || it.contains(".m3u8") }
+        if (directCandidate != null) {
             return listOf(
                 Video(
-                    url = fallback,
-                    quality = "Stream (Open in WebView if blocked)",
-                    videoUrl = fallback,
+                    url = directCandidate,
+                    quality = "3xchina Stream",
+                    videoUrl = directCandidate,
                     headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
                 )
             )
         }
-        return videos
+
+        if (candidateUrls.isEmpty()) {
+            throw SourceParseException(
+                source = name,
+                pageType = "video streams",
+                selectorName = ".responsive-player iframe",
+                urlPath = "No playable video streams reachable from 3xchina"
+            )
+        }
+
+        val fallback = candidateUrls.first()
+        return listOf(
+            Video(
+                url = fallback,
+                quality = "Stream (Open in WebView if blocked)",
+                videoUrl = fallback,
+                headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
+            )
+        )
     }
 
     override fun getFilterList(): AnimeFilterList {

@@ -20,11 +20,6 @@ SOURCES = [
         "fixture": os.path.join(ROOT_DIR, "src", "id", "nekopoi", "src", "test", "resources", "nekopoi", "popular.html"),
     },
     {
-        "slug": "nontonhentai",
-        "name": "NontonHentai",
-        "file": os.path.join(ROOT_DIR, "src", "id", "nontonhentai", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "id", "nontonhentai", "NontonHentai.kt"),
-    },
-    {
         "slug": "hentaimama",
         "name": "Hentaimama",
         "file": os.path.join(ROOT_DIR, "src", "en", "hentaimama", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "en", "hentaimama", "Hentaimama.kt"),
@@ -33,11 +28,6 @@ SOURCES = [
         "slug": "hanime",
         "name": "Hanime",
         "file": os.path.join(ROOT_DIR, "src", "en", "hanime", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "en", "hanime", "Hanime.kt"),
-    },
-    {
-        "slug": "rulevid",
-        "name": "RuleVid",
-        "file": os.path.join(ROOT_DIR, "src", "en", "rulevid", "src", "main", "kotlin", "eu", "kanade", "tachiyomi", "animeextension", "en", "rulevid", "RuleVid.kt"),
     },
     {
         "slug": "rule34video",
@@ -89,7 +79,7 @@ def verify_stream_hygiene():
         with open(path, "r", encoding="utf-8") as f:
             code = f.read()
 
-        if slug in ["rulevid", "rule34video"]:
+        if slug == "rule34video":
             if "cleanQuery.length == 1" not in code or "cleanQuery + cleanQuery" not in code:
                 errors.append(f"{slug}: Missing single-character search padding (cleanQuery.length == 1 -> cleanQuery + cleanQuery)")
 

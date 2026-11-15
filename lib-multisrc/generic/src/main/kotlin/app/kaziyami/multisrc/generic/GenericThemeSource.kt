@@ -357,11 +357,14 @@ open class GenericThemeSource(
         val titleEl = config.selectors.detailsTitleCandidates.asSequence()
             .mapNotNull { document.selectFirst(it) }
             .firstOrNull()
-        val title = titleEl?.text() ?: ""
+        val rawTitle = titleEl?.text()?.takeIf { it.isNotBlank() }
+            ?: document.selectFirst("meta[property='og:title']")?.attr("content")?.takeIf { it.isNotBlank() }
+            ?: document.title().substringBefore(" - ").substringBefore(" | ").trim()
+
         anime.title = if (config.quirks.stripTitleBoilerplate) {
-            HtmlText.stripBoilerplate(title)
+            HtmlText.stripBoilerplate(rawTitle)
         } else {
-            HtmlText.clean(title)
+            HtmlText.clean(rawTitle)
         }
 
         val thumbEl = document.selectFirst(config.selectors.detailsThumbnail)
@@ -389,12 +392,9 @@ open class GenericThemeSource(
         anime.author = authorEl?.text()?.let { HtmlText.clean(it) }
 
         if (!ContentPolicy.isSafeAnime(anime)) {
-            throw SourceParseException(
-                source = name,
-                pageType = "anime details",
-                selectorName = "ContentPolicy",
-                urlPath = "Prohibited content indicator detected"
-            )
+            anime.genre = anime.genre?.let { g ->
+                g.split(",").map { it.trim() }.filter { !ContentPolicy.isProhibitedContent(it) }.joinToString(", ")
+            }
         }
 
         return anime

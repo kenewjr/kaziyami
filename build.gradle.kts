@@ -131,10 +131,8 @@ val checkExtensionIcons by tasks.registering {
     doLast {
         val extensions = listOf(
             "src/id/nekopoi",
-            "src/id/nontonhentai",
             "src/en/hentaimama",
             "src/en/hanime",
-            "src/en/rulevid",
             "src/en/rule34video",
             "src/zh/hanime1",
             "src/zh/3xchina"

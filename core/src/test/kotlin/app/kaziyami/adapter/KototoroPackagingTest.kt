@@ -36,11 +36,11 @@ class KototoroPackagingTest {
         assertTrue(indexMinFile.exists(), "repo/index.min.json must exist for Kototoro repository distribution")
 
         val indexJson = json.parseToJsonElement(indexMinFile.readText()).jsonArray
-        assertEquals(7, indexJson.size, "Kototoro distribution must index exactly 7 active production sources")
+        assertEquals(6, indexJson.size, "Kototoro distribution must index exactly 6 active production sources")
 
         val expectedSources = setOf(
-            "Nekopoi", "NontonHentai", "Hentaimama", "Hanime",
-            "RuleVid", "Rule34Video", "Hanime1"
+            "Nekopoi", "Hentaimama", "Hanime",
+            "Rule34Video", "Hanime1", "3xchina"
         )
 
         val indexedNames = mutableSetOf<String>()
@@ -77,6 +77,6 @@ class KototoroPackagingTest {
             }
         }
 
-        assertEquals(expectedSources, indexedNames, "All 7 active sources must be indexed in Kototoro repository")
+        assertEquals(expectedSources, indexedNames, "All 6 active sources must be indexed in Kototoro repository")
     }
 }

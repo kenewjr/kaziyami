@@ -31,10 +31,8 @@ KNOWN_BASE_URLS = {
 
 SOURCES_DEF = [
     {"name": "Nekopoi", "lang": "id", "slug": "nekopoi", "url": "https://nekopoi.care"},
-    {"name": "NontonHentai", "lang": "id", "slug": "nontonhentai", "url": "https://nontonhentai.net"},
     {"name": "Hentaimama", "lang": "en", "slug": "hentaimama", "url": "https://hentaimama.io"},
     {"name": "Hanime", "lang": "en", "slug": "hanime", "url": "https://hanime.tv"},
-    {"name": "RuleVid", "lang": "en", "slug": "rulevid", "url": "https://rulevid.com"},
     {"name": "Rule34Video", "lang": "en", "slug": "rule34video", "url": "https://rule34video.com"},
     {"name": "Hanime1", "lang": "zh", "slug": "hanime1", "url": "https://hanime1.me"},
     {"name": "3xchina", "lang": "zh", "slug": "3xchina", "url": "https://3xchina.page"}
@@ -211,6 +209,36 @@ def generate_aniyomi_repo(fingerprint=None):
 
     # Prune older APKs (keep latest 3)
     prune_old_artifacts(APK_DIR, ".apk", keep=3)
+
+    # Sync repo/icon directory with all alias names (pkg.png, slug.png, apk.png)
+    icon_dir = os.path.join(REPO_DIR, "icon")
+    art_icon_dir = os.path.join(ROOT_DIR, "art", "icons")
+    os.makedirs(icon_dir, exist_ok=True)
+    for entry in repo_entries:
+        pkg = entry["pkg"]
+        apk = entry["apk"]
+        slug = pkg.split(".")[-1]
+        candidates = [
+            os.path.join(art_icon_dir, f"{pkg}.png"),
+            os.path.join(art_icon_dir, f"{slug}.png"),
+            os.path.join(icon_dir, f"{pkg}.png"),
+            os.path.join(icon_dir, f"{slug}.png"),
+        ]
+        found_bytes = None
+        for c in candidates:
+            if os.path.exists(c):
+                with open(c, "rb") as fp:
+                    found_bytes = fp.read()
+                break
+        if found_bytes:
+            targets = [
+                os.path.join(icon_dir, f"{pkg}.png"),
+                os.path.join(icon_dir, f"{slug}.png"),
+                os.path.join(icon_dir, apk.replace(".apk", ".png")),
+            ]
+            for t in targets:
+                with open(t, "wb") as fp:
+                    fp.write(found_bytes)
 
     # 1. repo/index.json
     with open(os.path.join(REPO_DIR, "index.json"), "w", encoding="utf-8") as f:

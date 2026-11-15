@@ -18,11 +18,11 @@ val id = (0..7).fold(0L) { acc, i -> (acc shl 8) or (bytes[i].toLong() and 0xFF)
 |---|---|---|---|---|
 | **Nekopoi** | `id` | Active | `7073589375897212735L` | `nekopoi/id/1` |
 | **IndoHentai** | `id` | Discontinued (ISP block) | `7369497329911250289L` | `indohentai/id/1` |
-| **NontonHentai** | `id` | Active | `7400791378172011716L` | `nontonhentai/id/1` |
+| **NontonHentai** | `id` | Retired | `7400791378172011716L` | `nontonhentai/id/1` |
 | **Hentaimama** | `en` | Active | `8058423919997530503L` | `hentaimama/en/1` |
 | **JAVSubbed** | `en` | Discontinued (ISP block) | `9192959167101688940L` | `javsubbed/en/1` |
 | **Hanime** | `en` | Active | `2150907185602526076L` | `hanime/en/1` |
-| **RuleVid** | `en` | Active | `3619818370138619659L` | `rulevid/en/1` |
+| **RuleVid** | `en` | Retired | `3619818370138619659L` | `rulevid/en/1` |
 | **Rule34Video** | `en` | Active | `9212790518101043860L` | `rule34video/en/1` |
 | **Hanime1** | `zh` | Active | `8940914386632787357L` | `hanime1/zh/1` |
 | **3xchina** | `zh` | Active | `6860252144607113410L` | `3xchina/zh/1` |

@@ -33,18 +33,18 @@ class Hanime1 : GenericThemeSource(
         latestPath = "/search?sort=最新上市&page=%d",
         searchPath = "/search?query=%s&page=%d",
         selectors = SelectorsConfig(
-            item = ".search-result-items > div, div[class^=video-item-container], div.home-rows-videos-div, .card",
+            item = ".search-result-items > div.video-item-container, .search-result-items > div:has(a[href*='watch?v=']), div.home-rows-videos-div",
             itemTitle = ".home-rows-videos-title, .video-item-title, h4, h5, .caption, a[title]",
             itemUrl = "a[href*='watch?v=']",
             itemThumbnail = "img[src], img[data-src]",
             nextPage = ".pagination a.next, a.next, a[rel=next]",
-            detailsTitle = "#shareBtn-title, h1, .video-details-wrapper h4",
+            detailsTitle = "#shareBtn-title, h1, h2, h3, h4, .video-details-wrapper h4, meta[property='og:title']",
             detailsThumbnail = "meta[property='og:image'], img.video-cover",
             detailsDescription = "div[class=video-details-wrapper] .video-caption-text, meta[name=description], .description",
             detailsGenre = "div.video-tags-wrapper a, a[href*='search?genre='], a[href*='search?tag=']",
             detailsAuthor = "div.video-details-wrapper a[href*='search?brand='], #video-artist-name",
             episodeList = ".video-playlist-wrapper a[href*='watch?v='], .related-watch-wrap a[href*='watch?v=']",
-            playerIframes = "video#player source[src], video#player, iframe[src]"
+            playerIframes = "video source[src], video[src], source[src], video#player, iframe[src]"
         ),
         quirks = QuirksConfig(
             customReferer = "https://hanime1.me/"
@@ -147,12 +147,13 @@ class Hanime1 : GenericThemeSource(
         val unescapedBody = body.replace("\\/", "/")
         val doc = org.jsoup.Jsoup.parse(unescapedBody, baseUrl)
 
-        val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders("https://hanime1.me/", headers)
+        val watchUrl = UrlUtils.resolve(baseUrl, response.request.url.toString())
+        val videoHeaders = app.kaziyami.network.BrowserHeaders.mediaHeaders(watchUrl, headers)
 
         val candidateSources = mutableListOf<Pair<String, String>>() // (url, quality)
 
-        // 1. Direct <video id="player"> or <source> elements (primary and most reliable)
-        val sources = doc.select("video#player source[src], video[src] source[src], video#player, video[src]")
+        // 1. Direct <video> or <source> elements (primary and most reliable)
+        val sources = doc.select("video source[src], video[src], source[src], video#player")
         for (srcEl in sources) {
             val src = srcEl.attr("src").trim()
             if (src.isNotBlank() && isDirectMediaCandidate(src)) {
@@ -223,12 +224,10 @@ class Hanime1 : GenericThemeSource(
         }
 
         if (probedVideos.isEmpty()) {
-            throw SourceParseException(
-                source = name,
-                pageType = "video streams",
-                selectorName = "video#player",
-                urlPath = "No playable video streams reachable from Hanime1 (all candidate streams returned 404 or unresolvable host)"
-            )
+            // Graceful fallback to all candidates so player can still play
+            return sortedCandidates.map { (streamUrl, q) ->
+                Video(streamUrl, "Hanime1 $q", streamUrl, videoHeaders)
+            }
         }
 
         return probedVideos
@@ -252,14 +251,14 @@ class Hanime1 : GenericThemeSource(
             }
 
             val probeClient = client.newBuilder()
-                .connectTimeout(2, TimeUnit.SECONDS)
-                .readTimeout(2, TimeUnit.SECONDS)
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
                 .build()
             val probeReq = Request.Builder()
                 .url(streamUrl)
                 .headers(headers)
                 .header("Range", "bytes=0-1024")
-                .head()
+                .get()
                 .build()
             probeClient.newCall(probeReq).execute().use { resp ->
                 if (resp.code == 404 || resp.code == 410) {

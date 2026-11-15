@@ -29,12 +29,6 @@ EXTENSIONS = [
         "multisrc": "lib-multisrc/generic"
     },
     {
-        "lang": "id",
-        "name": "NontonHentai",
-        "dir": "src/id/nontonhentai",
-        "multisrc": "lib-multisrc/animestream"
-    },
-    {
         "lang": "en",
         "name": "Hentaimama",
         "dir": "src/en/hentaimama",
@@ -45,12 +39,6 @@ EXTENSIONS = [
         "name": "Hanime",
         "dir": "src/en/hanime",
         "multisrc": "lib-multisrc/generic"
-    },
-    {
-        "lang": "en",
-        "name": "RuleVid",
-        "dir": "src/en/rulevid",
-        "multisrc": "lib-multisrc/kvs"
     },
     {
         "lang": "en",

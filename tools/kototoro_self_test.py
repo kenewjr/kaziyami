@@ -28,13 +28,6 @@ SOURCES_CONFIG = [
         "fixture_dir": os.path.join(ROOT_DIR, "src", "id", "nekopoi", "src", "test", "resources", "nekopoi"),
     },
     {
-        "slug": "nontonhentai",
-        "name": "NontonHentai",
-        "lang": "id",
-        "ext_class": "eu.kanade.tachiyomi.animeextension.id.nontonhentai.NontonHentai",
-        "fixture_dir": os.path.join(ROOT_DIR, "src", "id", "nontonhentai", "src", "test", "resources", "nontonhentai"),
-    },
-    {
         "slug": "hentaimama",
         "name": "Hentaimama",
         "lang": "en",
@@ -47,13 +40,6 @@ SOURCES_CONFIG = [
         "lang": "en",
         "ext_class": "eu.kanade.tachiyomi.animeextension.en.hanime.Hanime",
         "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "hanime", "src", "test", "resources", "hanime"),
-    },
-    {
-        "slug": "rulevid",
-        "name": "RuleVid",
-        "lang": "en",
-        "ext_class": "eu.kanade.tachiyomi.animeextension.en.rulevid.RuleVid",
-        "fixture_dir": os.path.join(ROOT_DIR, "src", "en", "rulevid", "src", "test", "resources", "rulevid"),
     },
     {
         "slug": "rule34video",

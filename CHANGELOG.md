@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2026-11-15
+
+### Fixed & Enhanced
+- **Source Retirement (NontonHentai & RuleVid)**:
+  - Decommissioned `NontonHentai` and `RuleVid` per user request. Permanent 64-bit source IDs (`7400791378172011716L` and `3619818370138619659L`) preserved in `docs/SOURCE_IDS.md` marked `Retired`. Removed from `settings.gradle.kts`, `build.gradle.kts`, `tools/build_apks.py`, repo index, and CI runners. Catalog consolidated to 6 active production sources.
+- **Hanime1 Pinned Item Scoping**:
+  - Scoped search result selectors strictly to `.search-result-items > div.video-item-container, .search-result-items > div:has(a[href*='watch?v=']), div.home-rows-videos-div`, preventing header promo/recommendation cards from appearing as the first result when filtering by genre.
+- **Nekopoi Genre Thumbnails**:
+  - Updated `LazyImage` to recursively inspect child style tags (`background-image`) and extract thumbnail images from tooltip `original-title` attributes. Scoped item thumbnail selectors to match `.nk-thumb-crop`, `.nk-hentai-thumb`, and `.nk-grid-thumb` before empty wrappers.
+- **3xchina Playback & Hygiene**:
+  - Added script `.mp4`/`.m3u8` regex extraction and uppercase `SRC` / `data-src` iframe detection; eliminated HTML page URL fallback to prevent player `Content-Type: text/html` crash.
+- **Hanime1 Details & Playback**:
+  - Added `<meta property="og:title">` fallback in `GenericThemeSource.animeDetailsParse`, sanitized prohibited keywords in genre tags instead of throwing `SourceParseException`, broadened video selectors, and added graceful fallback on probe timeouts.
+- **Icon Generation & Retrieval**:
+  - Created vector drawable `ic_launcher.xml` and glyph for `Rule34Video`. Synchronized all icon alias formats (`{pkg}.png`, `{slug}.png`, `{apk.replace('.apk', '.png')}`) in `repo/icon/` for Kototoro Android and Desktop icon fetching.
+- **Monotonic Version Bumps**:
+  - Bumped all 6 active sources: Hanime1 (`v14.20`), 3xchina (`v14.13`), Nekopoi (`v14.14`), Hanime (`v14.13`), Rule34Video (`v14.13`), Hentaimama (`v14.12`).
+
 ## [1.4.5] - 2026-11-15
 
 ### Fixed & Enhanced

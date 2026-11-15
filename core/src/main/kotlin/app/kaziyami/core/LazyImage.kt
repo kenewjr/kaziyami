@@ -19,6 +19,9 @@ object LazyImage {
         "data-url",
         "data-cfsrc",
         "data-src-webp",
+        "data-thumb",
+        "data-lazyload",
+        "data-litespeed-src",
         "content",
         "src"
     )
@@ -50,7 +53,7 @@ object LazyImage {
             }
         }
 
-        // Check style="background-image: url(...)"
+        // Check style="background-image: url(...)" or style="background: url(...)"
         val style = element.attr("style")
         if (style.isNotEmpty()) {
             val matcher = BG_IMG_PATTERN.matcher(style)
@@ -60,6 +63,27 @@ object LazyImage {
                     return UrlUtils.resolve(baseUrl, url)
                 }
             }
+        }
+
+        // Check original-title or data-original-title tooltip attribute (e.g. Nekopoi series tooltips)
+        val origTitle = element.attr("original-title").ifEmpty {
+            element.attr("data-original-title").ifEmpty {
+                element.selectFirst("[original-title]")?.attr("original-title").orEmpty()
+            }
+        }
+        if (origTitle.isNotEmpty() && origTitle.contains("<img")) {
+            val parsedImg = org.jsoup.Jsoup.parseBodyFragment(origTitle).selectFirst("img")
+            if (parsedImg != null) {
+                val u = extract(parsedImg, baseUrl)
+                if (u.isNotEmpty()) return u
+            }
+        }
+
+        // Check child element with background-image style if current element is a wrapper
+        val childBg = element.selectFirst("[style*='url'], [style*='background']")
+        if (childBg != null && childBg != element) {
+            val childBgUrl = extract(childBg, baseUrl)
+            if (childBgUrl.isNotEmpty()) return childBgUrl
         }
 
         // Check noscript fallback tag

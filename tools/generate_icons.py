@@ -114,6 +114,17 @@ def is_glyph_pixel(name, dx, dy):
         in_x_diag2 = (abs(dy + dx - 12) <= 3.5 and 0 <= dx <= 24 and -16 <= dy <= 16)
         return in_3_top or in_3_mid or in_3_bot or in_3_spine or in_x_diag1 or in_x_diag2
 
+    elif name == "rule34video":
+        # '34' Badge
+        in_3_top = (-24 <= dx <= -6 and -20 <= dy <= -12)
+        in_3_mid = (-16 <= dx <= -6 and -4 <= dy <= 4)
+        in_3_bot = (-24 <= dx <= -6 and 12 <= dy <= 20)
+        in_3_spine = (-10 <= dx <= -4 and ((-20 <= dy <= -4) or (0 <= dy <= 20)))
+        in_4_stem = (12 <= dx <= 18 and -20 <= dy <= 20)
+        in_4_bar = (0 <= dx <= 22 and 4 <= dy <= 11)
+        in_4_diag = (abs(dy - dx + 10) <= 3.5 and 0 <= dx <= 16 and -16 <= dy <= 6)
+        return in_3_top or in_3_mid or in_3_bot or in_3_spine or in_4_stem or in_4_bar or in_4_diag
+
     else:
         # Default / Kaziyami Crowned 'K'
         in_stem = (-18 <= dx <= -8 and -28 <= dy <= 28)
@@ -208,7 +219,7 @@ def main():
 
     for name, accent in EXT_COLORS.items():
         art_src = os.path.join(art_icons_dir, f"{name}.png")
-        if os.path.exists(art_src) and name != "kaziyami":
+        if os.path.exists(art_src) and name not in ["kaziyami", "rule34video"]:
             with open(art_src, "rb") as f:
                 png_bytes = f.read()
             source_type = "authentic"

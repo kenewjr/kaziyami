@@ -13,10 +13,8 @@ import sys
 
 EXTENSIONS = {
     "src/id/nekopoi": ["core", "lib-multisrc/generic", "src/id/nekopoi"],
-    "src/id/nontonhentai": ["core", "lib-multisrc/animestream", "lib-multisrc/generic", "src/id/nontonhentai"],
     "src/en/hentaimama": ["core", "lib-multisrc/dooplay", "lib-multisrc/generic", "src/en/hentaimama"],
     "src/en/hanime": ["core", "lib-multisrc/generic", "src/en/hanime"],
-    "src/en/rulevid": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rulevid"],
     "src/en/rule34video": ["core", "lib-multisrc/kvs", "lib-multisrc/generic", "src/en/rule34video"],
     "src/zh/hanime1": ["core", "lib-multisrc/generic", "src/zh/hanime1"],
     "src/zh/3xchina": ["core", "lib-multisrc/retrotube", "lib-multisrc/generic", "src/zh/3xchina"],
