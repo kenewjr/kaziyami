@@ -313,7 +313,7 @@
 ---
 
 ## Current Status
-- **Overall Status**: Phase 38 complete. 7 active production sources. `Hanime1` at v14.16 (code 16); `NontonHentai` at v14.13 (code 13); `Nekopoi` at v14.11 (code 11); `Hanime` at v14.10 (code 10); `RuleVid` at v14.10 (code 10); `Rule34Video` at v14.10 (code 10); `Hentaimama` at v14.9 (code 9). `3xchina` retired (live-action scope cleanup).
+- **Overall Status**: Phase 38 complete. 7 active production sources. `Hanime1` at v14.17 (code 17); `NontonHentai` at v14.14 (code 14); `Nekopoi` at v14.12 (code 12); `Hanime` at v14.11 (code 11); `RuleVid` at v14.11 (code 11); `Rule34Video` at v14.11 (code 11); `Hentaimama` at v14.10 (code 10). `3xchina` retired (live-action scope cleanup). Release version `v1.4.3`.
 - **Last Green Run**: `./gradlew check` (64 actionable tasks, all 7 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 7 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (7/7 sources 100% green).
 - **Open Items**: Ready for commit and remote push.
 

@@ -1,8 +1,8 @@
 val extName = "Hanime1"
 val extClass = "eu.kanade.tachiyomi.animeextension.zh.hanime1.Hanime1"
-val extVersionCode = 16
+val extVersionCode = 17
 val libVersion = "14"
-val extVersion = "14.16"
+val extVersion = "14.17"
 val isNsfw = true
 
 extra["extName"] = extName

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-11-15
+
+### Fixed & Overhauled
+- **RuleVid DETAILS & CHAPTERS Fix**:
+  - Implemented JSON-LD `VideoObject` as primary parser and filtered `<script>`/`<style>` elements from CSS description fallback to prevent regex in page scripts (`var BL = ...`) from triggering false `ContentPolicy` exceptions.
+  - Guaranteed single "Full Video" episode synthesized; resolved relative/absolute `anime.url`.
+- **Hanime1 Stream Extraction & Filter Overhaul**:
+  - Direct `<source>` extraction from `video#player` with HTTP HEAD/Range reachability probes; eliminated HTTP 404 stream failures and dropped expired/unresolvable streams (never returns HTML webpage URLs).
+  - Aligned search slugs (`3D動畫` -> `3DCG`), dropped "Cosplay", added multi-select CheckBox tag groups (`規格`, `劇情主題`, `角色關係`, `角色身分`, `外貌與體態`, `體位與情節`), set default sort to `本日排行`, and omitted empty `query=` parameter.
+- **Dead Embed Host Probing**:
+  - Hardened `canResolveHost` in `VideoExtractors` to reject loopback/sinkhole IPs (`127.0.0.1`, `0.0.0.0`, `103.10.223.15`), and checked host resolvability in `DoodExtractor` before appending candidate streams.
+- **Scope Cleanup**:
+  - Retired `3xchina` (live-action RetroTube) to strictly enforce adult animated (2D/3D) scope; preserved permanent 64-bit ID in `docs/SOURCE_IDS.md` marked "Retired" and tested.
+- **In-Extension Age Gate Decommissioning**:
+  - Removed manual in-extension age gate switch ("I am 18 or older", key `age_gate_confirmed`) across all sources; adult visibility handled natively by host application shells (`tachiyomi.animeextension.nsfw=1`).
+- **Kototoro Distribution & Compiler Cleanliness**:
+  - Updated `KototoroPackagingTest` to assert authentic APK repository schema and 0 host classes; unified JVM target (Java release 11, Kotlin jvmTarget 11, JDK 17 toolchain); enabled `allWarningsAsErrors = (project.name == "core")` with 0 warnings.
+- **Monotonic Version Bumps**:
+  - Bumped all 7 active extensions: Hanime1 (`v14.17`), NontonHentai (`v14.14`), Nekopoi (`v14.12`), Hanime (`v14.11`), RuleVid (`v14.11`), Rule34Video (`v14.11`), Hentaimama (`v14.10`).
+
 ## [14.15] - 2026-11-15
 
 ### Added & Optimized
