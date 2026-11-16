@@ -365,10 +365,16 @@
   - [x] 44.5 Monotonic Version Bump: Bumped `Hanime1` to v14.24 (code 24).
   - [x] 44.6 Full Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 45: Complete Elimination of Hanime1 Next Watch / Recommendation Scroll from Chapters (Release v1.4.11)**:
+  - [x] 45.1 Single Video Episode Invariant: All `/watch?v=...` URLs on `hanime1.me` are standalone video uploads. Purged `#playlist-scroll` and `.video-playlist-wrapper` from `episodeList` and `episodeListParse`.
+  - [x] 45.2 Exact Video Playback Guarantee: `episodeListParse` always synthesizes strictly 1 `SEpisode` matching the clicked video request URL with authentic title, eliminating 35 junk chapters (`03:17 thumb_up 99% 33.5萬次`) and preventing the player from playing unrelated recommended videos.
+  - [x] 45.3 Monotonic Version Bump: Bumped `Hanime1` to v14.25 (code 25).
+  - [x] 45.4 Full Verification: Executed full verification suite: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes across 6 APKs), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 44 complete. 6 active production sources: `Hanime1` at v14.24 (code 24); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.17 (code 17); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.10`.
+- **Overall Status**: Phase 45 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.17 (code 17); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.11`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit and remote push.
 

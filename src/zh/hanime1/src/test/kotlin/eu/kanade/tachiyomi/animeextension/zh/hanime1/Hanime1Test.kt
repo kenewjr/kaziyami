@@ -95,15 +95,15 @@ class Hanime1Test {
     }
 
     @Test
-    fun episodeListParse_extractsPlaylistEpisodesAndIgnoresRelatedVideos() {
+    fun episodeListParse_extractsSingleEpisodeForCurrentVideoAndIgnoresRecommendations() {
         val resp = mockResponse("https://hanime1.me/watch?v=10101", "details.html")
         val eps = source.episodeListParse(resp)
 
-        assertThat(eps).hasSize(2)
-        assertThat(eps[0].name).isEqualTo("第 1 集")
+        assertThat(eps).hasSize(1)
+        assertThat(eps[0].name).isEqualTo("夜勤病棟 第一話")
         assertThat(eps[0].url).isEqualTo("/watch?v=10101")
-        assertThat(eps[1].name).isEqualTo("第 2 集")
-        assertThat(eps.none { it.name.contains("推薦影片") }).isTrue()
+        assertThat(eps[0].episode_number).isEqualTo(1.0f)
+        assertThat(eps.none { it.name.contains("推薦影片") || it.name.contains("thumb_up") }).isTrue()
     }
 
     @Test

@@ -47,7 +47,7 @@ class Hanime1 : GenericThemeSource(
             detailsDescription = "div[class=video-details-wrapper] .video-caption-text, meta[name=description], .description",
             detailsGenre = "div.video-tags-wrapper a, a[href*='search?genre='], a[href*='search?tag=']",
             detailsAuthor = "div.video-details-wrapper a[href*='search?brand='], #video-artist-name",
-            episodeList = ".video-playlist-wrapper a[href*='watch?v='], #playlist-scroll a[href*='watch?v=']",
+            episodeList = "",
             episodeListAlternates = emptyList(),
             playerIframes = "video source[src], video[src], source[src], video#player, iframe[src]"
         ),
@@ -131,26 +131,16 @@ class Hanime1 : GenericThemeSource(
                 "Kaziyami: $name dilindungi verifikasi Cloudflare. Buka di WebView (⋮) untuk menyelesaikan verifikasi, lalu coba lagi."
             )
         }
-        val playlistLinks = document.select(".video-playlist-wrapper a[href*='watch?v='], #playlist-scroll a[href*='watch?v=']")
-            .distinctBy { UrlUtils.getPath(it.attr("href")) }
-        if (playlistLinks.isNotEmpty()) {
-            return playlistLinks.mapIndexed { index, el ->
-                val ep = SEpisode.create()
-                val href = el.attr("href")
-                ep.url = UrlUtils.getPath(href)
-                val title = el.selectFirst(".card-mobile-title, .video-item-title, h4, h5")?.text()
-                    ?: el.attr("title").takeIf { it.isNotBlank() }
-                    ?: el.text()
-                ep.name = HtmlText.clean(title).ifEmpty { "Episode ${index + 1}" }
-                ep.episode_number = (index + 1).toFloat()
-                ep
-            }
-        }
 
-        // Single video fallback (current watch page)
+        // Each /watch?v= is an individual video release. Recommendations and next watch grids
+        // must never be scraped as episodes, ensuring the user always plays the exact selected video.
+        val rawTitle = document.selectFirst("#shareBtn-title, h1, .video-details-wrapper h4")?.text()
+            ?: document.title().substringBefore(" - ").substringBefore(" | ").trim()
+        val cleanTitle = HtmlText.clean(rawTitle).ifEmpty { "Full Video" }
+
         val ep = SEpisode.create().apply {
             url = UrlUtils.getPath(response.request.url.toString())
-            name = document.selectFirst("#shareBtn-title, h1, .video-details-wrapper h4")?.text()?.let { HtmlText.clean(it) } ?: "Full Episode"
+            name = cleanTitle
             episode_number = 1.0f
             val dateEl = document.selectFirst(".released-date, time, .upload-date")
             if (dateEl != null) {

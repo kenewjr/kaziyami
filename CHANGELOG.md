@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.11] - 2026-11-16
+
+### Fixed & Enhanced
+- **Hanime1 Standalone Video Episode Synthesis & Next Watch Elimination**:
+  - Root cause resolved: In Hanime1, all `/watch?v=...` pages are single-video posts; `#playlist-scroll` and `.video-playlist-wrapper` represent the site's 35-card recommendation ("Next Watch") scroll bar, which previous releases parsed as chapters with junk titles (`03:17 thumb_up 99% 33.5萬次`), causing players to play random recommended videos instead of the selected title.
+  - Purged `#playlist-scroll` and `.video-playlist-wrapper` from `episodeList` and `episodeListParse`.
+  - Guaranteed `episodeListParse` always returns exactly 1 `SEpisode` for the current `/watch?v=...` URL with the authentic video title, ensuring the player always plays the exact video selected.
+- **Monotonic Version Bump**:
+  - Bumped Hanime1 to `v14.25` (`extVersionCode = 25`).
+
 ## [1.4.10] - 2026-11-15
 
 ### Fixed & Enhanced
