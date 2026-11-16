@@ -174,6 +174,21 @@ class NekopoiTest {
         // 5. Query overrides filters
         val reqQuery = source.searchAnimeRequest(1, "kanojo", filterList)
         assertEquals("https://nekopoi.care/search/kanojo/page/1/", reqQuery.url.toString())
+
+        // 6. Sort = Latest Updates paginates under /category/hentai/page/%d/
+        val freshFilters = source.getFilterList()
+        val sortFilter = freshFilters.filterIsInstance<Nekopoi.NekopoiSortFilter>().first()
+        sortFilter.state = 1 // Latest Updates
+        val reqLatest1 = source.searchAnimeRequest(1, "", freshFilters)
+        val reqLatest2 = source.searchAnimeRequest(2, "", freshFilters)
+        assertEquals("https://nekopoi.care/category/hentai/page/1/", reqLatest1.url.toString())
+        assertEquals("https://nekopoi.care/category/hentai/page/2/", reqLatest2.url.toString())
+
+        // 7. Sort = Latest Updates with Category = 3D Hentai
+        val freshCatFilter = freshFilters.filterIsInstance<Nekopoi.NekopoiCategoryFilter>().first()
+        freshCatFilter.state = 2 // 3D Hentai
+        val reqLatest3D = source.searchAnimeRequest(1, "", freshFilters)
+        assertEquals("https://nekopoi.care/category/3d-hentai/page/1/", reqLatest3D.url.toString())
     }
 
     @Test

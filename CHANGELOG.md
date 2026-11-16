@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.12] - 2026-11-16
+
+### Fixed & Enhanced
+- **Nekopoi Latest Updates Route & Pagination Fix**:
+  - Root cause resolved: In `Nekopoi.searchAnimeRequest`, sorting by "Latest Updates" (`sort == "latest"`) mapped to `"/"` (the WordPress homepage root). The homepage only contains 5 featured slider cards and no `a.next` pagination link, causing Kototoro to show only 5 items and immediately stop with "No more pages".
+  - Routed "Latest Updates" cleanly to `/category/$targetCategory/page/$page/` (defaulting to `/category/hentai/page/$page/` or the user's selected category filter).
+  - Ensured smooth infinite scroll pagination across all pages for Latest Updates releases.
+  - Replaced `String.format` with direct `.replace("%s", encoded).replace("%d", page.toString())` in `searchAnimeRequest` to eliminate any possible `IllegalFormatConversionException`.
+- **Monotonic Version Bump**:
+  - Bumped Nekopoi to `v14.18` (`extVersionCode = 18`). Unchanged extensions remain at their current versions.
+
 ## [1.4.11] - 2026-11-16
 
 ### Fixed & Enhanced

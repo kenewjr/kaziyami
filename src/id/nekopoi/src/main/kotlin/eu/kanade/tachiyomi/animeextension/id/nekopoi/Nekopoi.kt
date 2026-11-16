@@ -58,32 +58,22 @@ class Nekopoi : GenericThemeSource(
             }
         }.orEmpty()
 
+        val targetCategory = when {
+            sort.isNotEmpty() && sort != "latest" -> sort
+            category.isNotEmpty() -> category
+            else -> "hentai"
+        }
+
         val path = when {
             cleanQuery.isNotEmpty() -> {
                 val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
-                String.format(config.searchPath, encoded, page)
+                config.searchPath.replace("%s", encoded).replace("%d", page.toString())
             }
             genre.isNotEmpty() -> {
                 if (page == 1) "/$genre/" else "/$genre/page/$page/"
             }
-            sort == "latest" -> {
-                if (page == 1) "/" else "/page/$page/"
-            }
-            sort.isNotEmpty() -> {
-                "/category/$sort/page/$page/"
-            }
-            category.isNotEmpty() -> {
-                "/category/$category/page/$page/"
-            }
             else -> {
-                val defaultCat = filters.filterIsInstance<NekopoiCategoryFilter>().firstOrNull()?.let {
-                    when (it.values[it.state]) {
-                        "3D Hentai" -> "3d-hentai"
-                        "Jav Cosplay" -> "jav-cosplay"
-                        else -> "hentai"
-                    }
-                } ?: "hentai"
-                "/category/$defaultCat/page/$page/"
+                "/category/$targetCategory/page/$page/"
             }
         }
         val url = UrlUtils.resolve(baseUrl, path)
