@@ -378,10 +378,18 @@
   - [x] 46.4 Monotonic Version Bump: Bumped `Nekopoi` to v14.18 (code 18).
   - [x] 46.5 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 47: Nekopoi Live Latest Updates Default & Authentic .eropost Feed (Release v1.4.13)**:
+  - [x] 47.1 Authentic Live Feed Alignment: Set Latest Updates as default sort in `SORTS[0]` and routed default and latest queries to the live front-page feed `if (page == 1) "/" else "/page/$page/"`.
+  - [x] 47.2 .eropost Selector Prioritization: Prioritized `.eropost` in `selectors.item` before `article.type-post`, preventing `selectFirstMatching` from stopping on the 5 featured slider cards and capturing all 10-15 live releases per page.
+  - [x] 47.3 Kototoro & Aniyomi Consistency: Overrode `popularAnimeRequest` and `latestUpdatesRequest` to point to the live front-page feed.
+  - [x] 47.4 Diagnostics Resolution: Added explicit `: String` in `StreamPoiExtractor` and safe call `?.` in `HlsExtractorTest.kt`.
+  - [x] 47.5 Monotonic Version Bump: Bumped `Nekopoi` to v14.19 (code 19).
+  - [x] 47.6 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 46 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.18 (code 18); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.12`.
+- **Overall Status**: Phase 47 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.19 (code 19); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.13`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit, tag, and push.
 

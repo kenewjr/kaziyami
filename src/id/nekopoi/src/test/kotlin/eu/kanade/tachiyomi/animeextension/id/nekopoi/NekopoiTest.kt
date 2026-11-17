@@ -79,6 +79,36 @@ class NekopoiTest {
     }
 
     @Test
+    fun parsePopularAnime_eropostLayout() {
+        val html = """
+            <div id="content">
+                <div class="eropost">
+                    <div class="thumb">
+                        <a href="https://nekopoi.care/hentai/overflow-episode-8/">
+                            <div class="nk-thumb-crop" style="background-image: url('https://nekopoi.care/thumbs/overflow8.jpg')"></div>
+                        </a>
+                    </div>
+                    <div class="eroinfo">
+                        <h2><a href="https://nekopoi.care/hentai/overflow-episode-8/" title="Overflow Episode 8 Subtitle Indonesia">Overflow Episode 8 Subtitle Indonesia</a></h2>
+                    </div>
+                </div>
+                <div class="pagination">
+                    <a class="next page-numbers" href="https://nekopoi.care/page/2/">Next »</a>
+                </div>
+            </div>
+        """.trimIndent()
+        val response = mockResponse("https://nekopoi.care/", html)
+        val page = source.popularAnimeParse(response)
+
+        assertEquals(1, page.animes.size)
+        val first = page.animes[0]
+        assertEquals("Overflow Episode 8 Subtitle Indonesia", first.title)
+        assertEquals("/hentai/overflow-episode-8/", first.url)
+        assertEquals("https://nekopoi.care/thumbs/overflow8.jpg", first.thumbnail_url)
+        assertTrue(page.hasNextPage)
+    }
+
+    @Test
     fun parseAnimeDetails() {
         val html = loadFixture("details.html")
         val response = mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", html)
@@ -152,9 +182,11 @@ class NekopoiTest {
         assertTrue(genreFilter.values.contains("Romance"))
         assertTrue(genreFilter.values.contains("Milf") || genreFilter.values.contains("MILF"))
 
-        // 1. Default request
+        // 1. Default request routes to live homepage feed
         val reqDefault = source.searchAnimeRequest(1, "", filterList)
-        assertEquals("https://nekopoi.care/category/hentai/page/1/", reqDefault.url.toString())
+        assertEquals("https://nekopoi.care/", reqDefault.url.toString())
+        val reqDefaultPage2 = source.searchAnimeRequest(2, "", filterList)
+        assertEquals("https://nekopoi.care/page/2/", reqDefaultPage2.url.toString())
 
         // 2. Category = 3D Hentai
         catFilter.state = 2
@@ -175,20 +207,26 @@ class NekopoiTest {
         val reqQuery = source.searchAnimeRequest(1, "kanojo", filterList)
         assertEquals("https://nekopoi.care/search/kanojo/page/1/", reqQuery.url.toString())
 
-        // 6. Sort = Latest Updates paginates under /category/hentai/page/%d/
+        // 6. Sort = Latest Updates paginates under / and /page/%d/
         val freshFilters = source.getFilterList()
         val sortFilter = freshFilters.filterIsInstance<Nekopoi.NekopoiSortFilter>().first()
         sortFilter.state = 1 // Latest Updates
         val reqLatest1 = source.searchAnimeRequest(1, "", freshFilters)
         val reqLatest2 = source.searchAnimeRequest(2, "", freshFilters)
-        assertEquals("https://nekopoi.care/category/hentai/page/1/", reqLatest1.url.toString())
-        assertEquals("https://nekopoi.care/category/hentai/page/2/", reqLatest2.url.toString())
+        assertEquals("https://nekopoi.care/", reqLatest1.url.toString())
+        assertEquals("https://nekopoi.care/page/2/", reqLatest2.url.toString())
 
         // 7. Sort = Latest Updates with Category = 3D Hentai
         val freshCatFilter = freshFilters.filterIsInstance<Nekopoi.NekopoiCategoryFilter>().first()
         freshCatFilter.state = 2 // 3D Hentai
         val reqLatest3D = source.searchAnimeRequest(1, "", freshFilters)
         assertEquals("https://nekopoi.care/category/3d-hentai/page/1/", reqLatest3D.url.toString())
+
+        // 8. popularAnimeRequest and latestUpdatesRequest default to live feed
+        assertEquals("https://nekopoi.care/", source.popularAnimeRequest(1).url.toString())
+        assertEquals("https://nekopoi.care/page/2/", source.popularAnimeRequest(2).url.toString())
+        assertEquals("https://nekopoi.care/", source.latestUpdatesRequest(1).url.toString())
+        assertEquals("https://nekopoi.care/page/2/", source.latestUpdatesRequest(2).url.toString())
     }
 
     @Test

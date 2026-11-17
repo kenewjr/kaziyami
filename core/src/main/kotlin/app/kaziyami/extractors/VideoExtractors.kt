@@ -292,7 +292,7 @@ class StreamPoiExtractor : VideoExtractor {
         val hostName = "StreamPoi"
         val fileMatch = Pattern.compile("(?:sources:\\s*\\[\\{['\"]?file['\"]?|['\"]?file['\"]?):\\s*['\"]([^'\"]+)['\"]").matcher(unpacked)
         if (fileMatch.find()) {
-            val masterUrl = fileMatch.group(1) ?: return emptyList()
+            val masterUrl: String = fileMatch.group(1) ?: return emptyList()
             val headers = BrowserHeaders.mediaHeaders(url)
             val hlsVideos = HlsExtractor.extract(masterUrl, headers, client, prefix = hostName)
             if (hlsVideos.isNotEmpty()) {
@@ -305,7 +305,7 @@ class StreamPoiExtractor : VideoExtractor {
         }
         val directMatch = Pattern.compile("['\"]?file['\"]?:\\s*['\"]([^'\"]+\\.m3u8[^'\"]*)['\"]").matcher(unpacked)
         if (directMatch.find()) {
-            val masterUrl = directMatch.group(1) ?: return emptyList()
+            val masterUrl: String = directMatch.group(1) ?: return emptyList()
             val headers = BrowserHeaders.mediaHeaders(url)
             val hlsVideos = HlsExtractor.extract(masterUrl, headers, client, prefix = hostName)
             if (hlsVideos.isNotEmpty()) {

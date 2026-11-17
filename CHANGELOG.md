@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.13] - 2026-11-18
+
+### Fixed & Enhanced
+- **Nekopoi Live Latest Updates Default & Authentic .eropost Feed**:
+  - Root cause resolved: Previous release routed Latest Updates to `/category/hentai/page/%d/` which is an old category archive that did not match the actual live website releases. Additionally, `selectors.item` listed `article.type-post` before `.eropost`, causing `selectFirstMatching` to lock onto the 5 featured slider cards at the top of the homepage and drop the real latest releases.
+  - Set "Latest Updates" as the default catalogue in `SORTS[0]` (`Option("Default (Latest Updates)", "")`), matching user expectations on opening Nekopoi in Kototoro.
+  - Overrode `popularAnimeRequest` and `latestUpdatesRequest` to fetch the real live front-page feed (`if (page == 1) "/" else "/page/$page/"`).
+  - Prioritized `.eropost` in `selectors.item` so all 10-15 live latest releases below the slider are extracted with full infinite-scroll pagination (`/page/2/`, `/page/3/`).
+  - Added `: String` type annotation in `StreamPoiExtractor` and safe call `?.` in `HlsExtractorTest.kt` to resolve Kotlin compiler / IDE language server diagnostics.
+- **Monotonic Version Bump**:
+  - Bumped Nekopoi to `v14.19` (`extVersionCode = 19`). Unchanged extensions remain at their current versions.
+
 ## [1.4.12] - 2026-11-16
 
 ### Fixed & Enhanced

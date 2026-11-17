@@ -46,11 +46,11 @@ class HlsExtractorTest {
 
         assertEquals(3, videos.size)
         assertEquals("StreamPoi 1080p", videos[0].quality)
-        assertTrue(videos[0].videoUrl.orEmpty().endsWith("/hls/1080p/index.m3u8"))
+        assertTrue(videos[0].videoUrl?.endsWith("/hls/1080p/index.m3u8") == true)
         assertEquals("StreamPoi 720p", videos[1].quality)
-        assertTrue(videos[1].videoUrl.orEmpty().endsWith("/hls/720p/index.m3u8"))
+        assertTrue(videos[1].videoUrl?.endsWith("/hls/720p/index.m3u8") == true)
         assertEquals("StreamPoi 480p", videos[2].quality)
-        assertTrue(videos[2].videoUrl.orEmpty().endsWith("/hls/480p/index.m3u8"))
+        assertTrue(videos[2].videoUrl?.endsWith("/hls/480p/index.m3u8") == true)
     }
 
     @Test

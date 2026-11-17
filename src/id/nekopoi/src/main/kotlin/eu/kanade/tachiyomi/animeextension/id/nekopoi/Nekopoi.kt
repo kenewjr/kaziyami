@@ -18,11 +18,11 @@ class Nekopoi : GenericThemeSource(
         lang = "id",
         baseUrl = "https://nekopoi.care",
         mirrors = listOf("https://nekopoi.app", "https://nekopoi.me"),
-        popularPath = "/category/hentai/page/%d/",
-        latestPath = "/category/hentai/page/%d/",
+        popularPath = "/page/%d/",
+        latestPath = "/page/%d/",
         searchPath = "/search/%s/page/%d/",
         selectors = SelectorsConfig(
-            item = ".nk-search-results > ul > li, .nk-search-results li, .nk-hentai-grid ul li, .nk-hentai-grid li, article.type-post, .result ul li, .post-item, .eropost",
+            item = ".eropost, .nk-search-results > ul > li, .nk-search-results li, .nk-hentai-grid ul li, .nk-hentai-grid li, .result ul li, article.type-post, .post-item",
             itemTitle = "h2, .nk-search-info h2, h2 a, .title a, a[title]",
             itemUrl = "a.nk-search-item, h2 a, .title a, a[href]",
             itemThumbnail = ".nk-search-thumb, .nk-hentai-thumb, .nk-thumb-crop, [style*='background-image'], [style*='background'], [style*='url'], img, .thumb img, [class*='thumb'] img, [original-title]",
@@ -45,6 +45,16 @@ class Nekopoi : GenericThemeSource(
     )
 ) {
 
+    override fun popularAnimeRequest(page: Int): Request {
+        val path = if (page == 1) "/" else "/page/$page/"
+        return GET(UrlUtils.resolve(baseUrl, path), headers)
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        val path = if (page == 1) "/" else "/page/$page/"
+        return GET(UrlUtils.resolve(baseUrl, path), headers)
+    }
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.trim()
         val genre = filters.filterIsInstance<NekopoiGenreFilter>().firstOrNull()?.toSlug().orEmpty()
@@ -61,7 +71,7 @@ class Nekopoi : GenericThemeSource(
         val targetCategory = when {
             sort.isNotEmpty() && sort != "latest" -> sort
             category.isNotEmpty() -> category
-            else -> "hentai"
+            else -> ""
         }
 
         val path = when {
@@ -72,8 +82,11 @@ class Nekopoi : GenericThemeSource(
             genre.isNotEmpty() -> {
                 if (page == 1) "/$genre/" else "/$genre/page/$page/"
             }
-            else -> {
+            targetCategory.isNotEmpty() -> {
                 "/category/$targetCategory/page/$page/"
+            }
+            else -> {
+                if (page == 1) "/" else "/page/$page/"
             }
         }
         val url = UrlUtils.resolve(baseUrl, path)
@@ -119,7 +132,7 @@ class Nekopoi : GenericThemeSource(
         data class Option(val name: String, val slug: String)
 
         val SORTS = arrayOf(
-            Option("Default (Popular Hentai)", ""),
+            Option("Default (Latest Updates)", ""),
             Option("Latest Updates", "latest"),
             Option("Popular Hentai", "hentai"),
             Option("3D Hentai", "3d-hentai"),
