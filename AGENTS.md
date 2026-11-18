@@ -10,7 +10,7 @@ Mandatory instruction document for AI assistants and automated coding agents mod
    - Never remove alternate selectors, fallback stream extractors, or caching mechanisms without explicit instructions.
    - All improvements and modifications must be additive and bolster resilience.
 2. **Permanent Source ID Lock (`docs/SOURCE_IDS.md`)**:
-   - The 64-bit hash IDs of all 8 active sources (`Nekopoi`, `NontonHentai`, `Hanime`, `Hentaimama`, `RuleVid`, `Rule34Video`, `Hanime1`, `3xchina`) and 2 discontinued sources (`IndoHentai`, `JAVSubbed`) are permanent.
+   - The 64-bit hash IDs of all 6 active sources (`Nekopoi`, `Hanime1`, `3xchina`, `Hanime`, `Rule34Video`, `Hentaimama`) and 4 retired/discontinued sources (`NontonHentai`, `RuleVid`, `IndoHentai`, `JAVSubbed`) are permanent.
    - The internal source name `AnimeSource.name` MUST remain the raw site name (e.g., `Nekopoi`, `3xchina`, `Hanime1`), NEVER prefixed with `Kaziyami:`.
    - Modifying source IDs corrupts bookmarks and watch history in the host application database.
 3. **Display Label Naming Conventions**:
@@ -114,3 +114,19 @@ Before modifying code, follow this sequence:
    - High-latency backends (WordPress queries taking 10-17s) exceed Kototoro's 20s step timeout if two pages are fetched sequentially. In `getSearchAnime` and `fetchSearchAnime`, return page 1 immediately when `page1.animes.isNotEmpty()`.
 6. **Independent Version Bumping**:
    - Only increment `extVersionCode` and `extVersion` for extensions that have actual code changes or bug fixes. Unmodified extensions must remain at their existing versions to prevent false update prompts in host UIs.
+7. **Static Sidebar Widget vs Chronological Feed Isolation (Nekopoi)**:
+   - WordPress/tube themes often feature a static 5-item sidebar or popular widget (e.g., `.nk-hentai-grid`) on every page.
+   - Never include static sidebar widgets in `selectors.item`. Matching sidebar items causes page 1 and page 2 to return identical URLs, leading Kototoro deduplication to see 0 new items on page 2 and immediately stop infinite pagination ("No more pages"). Always prioritize genuine post cards (`.nk-post-card`).
+8. **Recommendation / Next Watch Scroll vs Episode Isolation (Hanime1)**:
+   - Standalone single-video portals (such as `hanime1.me`) place horizontal recommendation scrolls (`#playlist-scroll`, `.video-playlist-wrapper`) below the player.
+   - Never parse recommendation/related video containers as episodes or playlists. Doing so populates the episode list with 20-35 unrelated video titles with view/like ratio strings (`03:17 thumb_up 99% 33.5萬次`), causing players to launch random recommended videos instead of the user's requested video. Synthesize strictly 1 `SEpisode` for the current `/watch?v=...` URL.
+9. **Gateway Failover & Dean Edwards Packed HLS Extraction (3xchina / HgCloud)**:
+   - Obfuscated video embed loaders (such as `hgcloud.to`, `dhcplay.com`) serve JavaScript rotators without inline media. Map video embed IDs to backend streaming mirrors (`hanerix.com`, `vibuxer.com`, etc.) and unpack Dean Edwards p.a.c.k.e.r scripts to extract `master.m3u8`.
+   - Use `HlsExtractor` to expand master HLS playlists into selectable player qualities (1080p, 720p).
+   - Always wrap OkHttp response execution on nested embed pages with `.use { ... }` to prevent socket and connection leaks in the pool.
+10. **Multi-Filter Parameter Composition**:
+    - Avoid mutually exclusive `when` branches in `searchAnimeRequest` that discard user sort preferences when category or tag filters are active. Compose query paths and parameters (`/category/$cat/?filter=$sort`).
+11. **Relative Path Storage for Library Migration**:
+    - Always store clean relative paths `UrlUtils.getPath(url)` for both `anime.url` and `episode.url`. Absolute URLs hardcode host domains and break user libraries when switching to mirror domains (`3xchina.net`, etc.).
+12. **GitHub Raw CDN Update Delay**:
+    - GitHub Pages raw CDN (`raw.githubusercontent.com`) caches index and metadata for ~3-5 minutes. Instruct users to pull-to-refresh the repository in Kototoro after this cache window expires.
