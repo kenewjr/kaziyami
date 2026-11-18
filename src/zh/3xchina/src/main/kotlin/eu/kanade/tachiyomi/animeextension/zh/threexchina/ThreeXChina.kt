@@ -104,7 +104,26 @@ class ThreeXChina : RetroTubeTheme(
             embedUrls.add(stream)
         }
 
-        val candidateUrls = embedUrls.filter { isVideoCandidateUrl(it) }.distinct()
+        // 5. Unpack internal embed pages if any
+        val resolvedEmbedUrls = mutableListOf<String>()
+        for (embedUrl in embedUrls) {
+            if (embedUrl.startsWith(baseUrl) && (embedUrl.contains("/embed/") || embedUrl.contains("/play/"))) {
+                try {
+                    val subResp = client.newCall(GET(embedUrl, headers)).execute()
+                    val subDoc = subResp.asJsoup()
+                    subDoc.select("iframe[src], iframe[data-src], video source[src], video[src]").forEach { el ->
+                        val nestedSrc = el.attr("data-src").ifEmpty { el.attr("src") }.trim()
+                        if (nestedSrc.isNotEmpty() && !nestedSrc.startsWith("#")) {
+                            resolvedEmbedUrls.add(UrlUtils.resolve(baseUrl, nestedSrc))
+                        }
+                    }
+                } catch (_: Exception) {}
+            } else {
+                resolvedEmbedUrls.add(embedUrl)
+            }
+        }
+
+        val candidateUrls = resolvedEmbedUrls.filter { isVideoCandidateUrl(it) }.distinct()
         val referer = response.request.url.toString()
         val preferredQuality = preferences.getString("preferred_quality", "1080p") ?: "1080p"
         val preferredHost = preferences.getString("preferred_host", "")?.takeIf { it.isNotBlank() }
@@ -126,7 +145,7 @@ class ThreeXChina : RetroTubeTheme(
             return videos
         }
 
-        // Fallback: only use candidateUrls that end with .mp4 or .m3u8, or known embed host
+        // Fallback: only use candidateUrls that directly point to valid video files (.mp4 or .m3u8)
         val directCandidate = candidateUrls.firstOrNull { it.contains(".mp4") || it.contains(".m3u8") }
         if (directCandidate != null) {
             return listOf(
@@ -139,26 +158,8 @@ class ThreeXChina : RetroTubeTheme(
             )
         }
 
-        if (candidateUrls.isEmpty()) {
-            throw SourceParseException(
-                "Kaziyami: $name video stream tidak ditemukan atau dilindungi Cloudflare. Buka di WebView (⋮) untuk memutar."
-            )
-        }
-
-        val fallback = candidateUrls.first()
-        if (fallback.contains(".mp4") || fallback.contains(".m3u8") || fallback.contains("embed") || fallback.contains("play")) {
-            return listOf(
-                Video(
-                    url = fallback,
-                    quality = "3xchina Stream",
-                    videoUrl = fallback,
-                    headers = app.kaziyami.network.BrowserHeaders.mediaHeaders(referer, headers)
-                )
-            )
-        }
-
         throw SourceParseException(
-            "Kaziyami: $name video stream tidak ditemukan atau dilindungi Cloudflare. Buka di WebView (⋮) untuk memutar."
+            "Kaziyami: $name video stream tidak ditemukan atau dilindungi verifikasi. Buka di WebView (⋮) untuk memutar."
         )
     }
 

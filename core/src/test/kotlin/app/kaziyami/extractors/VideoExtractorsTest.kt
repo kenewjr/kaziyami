@@ -214,5 +214,17 @@ class VideoExtractorsTest {
         assertEquals("https://jZdDKEFw9oEu0.premilkyway.com/hls2/master.m3u8", videos[0].videoUrl)
         assertTrue(videos[0].quality.contains("1080p"))
     }
+
+    @Test
+    fun hgCloudExtractorGatewayLoaderReturnsEmptyWhenNoStreams() {
+        val ext = HgCloudExtractor()
+        val gatewayLoader = """
+            <!DOCTYPE html><html><head><script src="/main.js?v=1.1.9"></script></head><body>Loading...</body></html>
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(gatewayLoader))
+
+        val videos = ext.extract(server.url("/e/nonexistent").toString(), "https://3xchina.page/", client)
+        assertTrue(videos.isEmpty())
+    }
 }
 

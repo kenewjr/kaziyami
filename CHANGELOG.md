@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.14] - 2026-11-18
+
+### Fixed & Enhanced
+- **3xchina Video Stream Extraction & Playback Fix**:
+  - Root cause resolved: In `ThreeXChina.videoListParse`, a legacy fallback returned HTML embed page URLs (`videoUrl = fallback` if URL contained `"embed"` or `"play"`). When `ExtractorRegistry` failed to extract streams from gateway loader pages (`hgcloud.to`, `dhcplay.com`), this fallback fed HTML webpages into ExoPlayer, causing player crash with "An error occurred" (`UnrecognizedInputFormatException`).
+  - Added multi-mirror backend gateway rotation in `HgCloudExtractor`: gateway loader domains (`hgcloud.to`, `dhcplay.com`, `hglink.to`) serving client-side JS rotators are transparently failover-routed to backend streaming mirrors (`hanerix.com`, `vibuxer.com`, `hgplaycdn.com`, `hglamioz.com`, `niramirus.com`, `playnixes.com`, `medixiru.com`) to extract Dean Edwards packed master HLS streams (`master.m3u8`).
+  - Integrated `HlsExtractor` to expand extracted master playlists into all available quality variants (1080p, 720p).
+  - Unwrapped internal embed/player pages on `3xchina.page` (`/embed/`, `/play/`) to extract nested iframes and direct media sources before resolving qualities.
+  - Eliminated the fallback that returned HTML embed URLs as video streams; only genuine media streams (`.mp4`, `.m3u8`) are accepted. When all extractions fail, the extension cleanly throws `SourceParseException` guiding users to WebView playback without player crash.
+- **Monotonic Version Bump**:
+  - Bumped 3xchina to `v14.17` (`extVersionCode = 17`). All other extensions remain at their current versions.
+
 ## [1.4.13] - 2026-11-18
 
 ### Fixed & Enhanced

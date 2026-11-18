@@ -386,10 +386,18 @@
   - [x] 47.5 Monotonic Version Bump: Bumped `Nekopoi` to v14.19 (code 19).
   - [x] 47.6 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 48: 3xchina Video Stream Extraction & HgCloud Mirror Rotation (Release v1.4.14)**:
+  - [x] 48.1 HgCloud Multi-Mirror Gateway Rotation: Added gateway rotation in `HgCloudExtractor` routing loader pages (`hgcloud.to`, `dhcplay.com`) to backend streaming mirrors (`hanerix.com`, `vibuxer.com`, `hgplaycdn.com`, `hglamioz.com`, etc.) to extract Dean Edwards packed master HLS streams (`master.m3u8`).
+  - [x] 48.2 Native HLS Master Playlist Extraction: Integrated `HlsExtractor` to expand master HLS playlists into distinct selectable player qualities (1080p, 720p).
+  - [x] 48.3 ThreeXChina Nested Embed Unwrapping: Resolved nested iframes and direct media sources from internal embed routes (`/embed/`, `/play/`) on `3xchina.page`.
+  - [x] 48.4 Elimination of HTML Stream Fallback: Removed the fallback returning HTML URLs to media player; direct candidates strictly require `.mp4` or `.m3u8`. Unextractable embeds cleanly throw `SourceParseException` guiding users to WebView playback.
+  - [x] 48.5 Monotonic Version Bump: Bumped `3xchina` to v14.17 (code 17).
+  - [x] 48.6 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 47 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.16 (code 16); `Nekopoi` at v14.19 (code 19); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.13`.
+- **Overall Status**: Phase 48 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.17 (code 17); `Nekopoi` at v14.19 (code 19); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.14`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit, tag, and push.
 

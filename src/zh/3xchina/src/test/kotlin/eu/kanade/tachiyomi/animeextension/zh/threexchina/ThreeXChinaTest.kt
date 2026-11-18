@@ -78,6 +78,28 @@ class ThreeXChinaTest {
     }
 
     @Test
+    fun videoListParse_throwsOnUnextractableEmbed() {
+        val html = """
+            <div class="responsive-player">
+                <iframe src="https://unknown-host.example/embed/123"></iframe>
+            </div>
+        """.trimIndent()
+        val request = Request.Builder().url("https://3xchina.page/ama-628/").build()
+        val body = html.toResponseBody("text/html; charset=utf-8".toMediaType())
+        val resp = Response.Builder()
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(body)
+            .build()
+
+        org.junit.jupiter.api.assertThrows<app.kaziyami.core.SourceParseException> {
+            source.videoListParse(resp)
+        }
+    }
+
+    @Test
     fun searchAnimeRequest_composesSortingAndCategory() {
         val filters = source.getFilterList()
         val sortFilter = filters.filterIsInstance<ThreeXChina.ThreeXChinaSortFilter>().first()

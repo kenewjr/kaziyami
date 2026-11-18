@@ -482,19 +482,59 @@ class HgCloudExtractor : VideoExtractor {
         Pattern.CASE_INSENSITIVE
     )
 
+    private val backendDomains = listOf(
+        "hanerix.com",
+        "vibuxer.com",
+        "hgplaycdn.com",
+        "hglamioz.com",
+        "niramirus.com",
+        "playnixes.com",
+        "medixiru.com"
+    )
+
     override fun canExtract(url: String): Boolean = hostRegex.matcher(url).find()
 
     override fun extract(url: String, referer: String, client: OkHttpClient): List<Video> {
         val effectiveRef = if (referer.isNotBlank()) referer else "https://3xchina.page/"
         val profile = BrowserProfile.resolve()
+
+        // 1. Direct attempt on target URL
+        val initialVideos = extractFromUrl(url, effectiveRef, profile, client)
+        if (initialVideos.isNotEmpty()) {
+            return initialVideos
+        }
+
+        // 2. Gateway fallback: if gateway URL returned loader without streams, try backend mirrors
+        val uri = try { java.net.URI(url) } catch (_: Exception) { null }
+        val path = uri?.path.orEmpty()
+        if (path.contains("/e/")) {
+            for (backendDomain in backendDomains) {
+                if (uri?.host.orEmpty().contains(backendDomain, ignoreCase = true)) continue
+                val backendUrl = "https://$backendDomain$path"
+                val backendVideos = extractFromUrl(backendUrl, effectiveRef, profile, client)
+                if (backendVideos.isNotEmpty()) {
+                    return backendVideos
+                }
+            }
+        }
+
+        return emptyList()
+    }
+
+    private fun extractFromUrl(
+        targetUrl: String,
+        effectiveRef: String,
+        profile: BrowserProfile,
+        client: OkHttpClient
+    ): List<Video> {
         val browserHeaders = BrowserHeaders.headersFor(
-            url = url,
+            url = targetUrl,
             referer = effectiveRef,
             type = BrowserHeaders.HeaderType.NAVIGATE,
             profile = profile
         )
         val req = Request.Builder()
-            .url(url)
+            .url(targetUrl)
             .headers(browserHeaders)
             .build()
 
@@ -506,12 +546,14 @@ class HgCloudExtractor : VideoExtractor {
 
         val finalUrl = resp.request.url.toString()
         val html = resp.use { it.body?.string().orEmpty() }
-        if (html.isBlank()) return emptyList()
+        if (html.isBlank() || (html.length < 2000 && html.contains("main.js") && !html.contains("eval("))) {
+            return emptyList()
+        }
 
         val unpacked = unpack(html)
         val videoHeaders = BrowserHeaders.mediaHeaders(finalUrl)
 
-        val videos = mutableListOf<Video>()
+        val streamCandidates = mutableListOf<String>()
 
         // 1. sources: [{file:"...", ...}]
         val sourcesPattern = Pattern.compile("""['"]?sources['"]?\s*:\s*\[(.*?)]""", Pattern.DOTALL)
@@ -523,32 +565,50 @@ class HgCloudExtractor : VideoExtractor {
             while (fileMatcher.find()) {
                 val streamUrl = fileMatcher.group(1) ?: ""
                 if (streamUrl.isNotBlank() && canResolveHost(streamUrl) && (streamUrl.contains(".m3u8") || streamUrl.contains(".mp4"))) {
-                    videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+                    streamCandidates.add(streamUrl)
                 }
             }
         }
 
         // 2. Direct file: "..." or direct .m3u8 link
-        if (videos.isEmpty()) {
+        if (streamCandidates.isEmpty()) {
             val directPattern = Pattern.compile("""['"]?file['"]?\s*:\s*['"]([^'"]+\.(?:m3u8|mp4)[^'"]*)['"]""")
             val directMatcher = directPattern.matcher(unpacked)
             while (directMatcher.find()) {
                 val streamUrl = directMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
-                    videos.add(Video(url, "HgCloud 1080p (HLS)", streamUrl, videoHeaders))
+                    streamCandidates.add(streamUrl)
                 }
             }
         }
 
         // 3. Fallback regex for raw m3u8 in unpacked content
-        if (videos.isEmpty()) {
+        if (streamCandidates.isEmpty()) {
             val rawM3u8Pattern = Pattern.compile("""(https?://[^\s"'<>]+\.m3u8[^\s"'<>]*)""")
             val rawMatcher = rawM3u8Pattern.matcher(unpacked)
             while (rawMatcher.find()) {
                 val streamUrl = rawMatcher.group(1) ?: ""
                 if (canResolveHost(streamUrl)) {
-                    videos.add(Video(url, "HgCloud HD (HLS)", streamUrl, videoHeaders))
+                    streamCandidates.add(streamUrl)
                 }
+            }
+        }
+
+        val videos = mutableListOf<Video>()
+        for (streamUrl in streamCandidates.distinct()) {
+            if (streamUrl.contains(".m3u8")) {
+                val hlsVideos = try {
+                    HlsExtractor.extract(streamUrl, videoHeaders, client, prefix = name)
+                } catch (_: Exception) {
+                    emptyList()
+                }
+                if (hlsVideos.isNotEmpty()) {
+                    videos.addAll(hlsVideos)
+                } else {
+                    videos.add(Video(targetUrl, "$name 1080p (HLS)", streamUrl, videoHeaders))
+                }
+            } else {
+                videos.add(Video(targetUrl, "$name Stream", streamUrl, videoHeaders))
             }
         }
 
