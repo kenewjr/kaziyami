@@ -66,7 +66,7 @@ class ThreeXChinaTest {
 
         assertThat(eps).hasSize(1)
         assertThat(eps[0].name).isEqualTo("Full Video")
-        assertThat(eps[0].url).isEqualTo("https://3xchina.page/ama-628/")
+        assertThat(eps[0].url).isEqualTo("/ama-628/")
     }
 
     @Test
@@ -105,14 +105,22 @@ class ThreeXChinaTest {
         val sortFilter = filters.filterIsInstance<ThreeXChina.ThreeXChinaSortFilter>().first()
         val catFilter = filters.filterIsInstance<ThreeXChina.ThreeXChinaCategoryFilter>().first()
 
-        sortFilter.state = 1 // most-viewed
+        sortFilter.state = 1 // latest
         catFilter.state = 1 // chinese-av
 
         val reqQuery = source.searchAnimeRequest(1, "ama", filters)
         assertThat(reqQuery.url.queryParameter("s")).isEqualTo("ama")
+        assertThat(reqQuery.url.queryParameter("filter")).isEqualTo("latest")
 
         val reqFilter = source.searchAnimeRequest(1, "", filters)
         assertThat(reqFilter.url.encodedPath).isEqualTo("/category/chinese-av/")
+        assertThat(reqFilter.url.queryParameter("filter")).isEqualTo("latest")
+    }
+
+    @Test
+    fun searchAnimeRequest_padsSingleCharacterQuery() {
+        val req = source.searchAnimeRequest(1, "a", source.getFilterList())
+        assertThat(req.url.queryParameter("s")).isEqualTo("aa")
     }
 
     @Test

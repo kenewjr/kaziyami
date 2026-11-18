@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.zh.threexchina
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -27,7 +28,7 @@ class ThreeXChina : RetroTubeTheme(
         item = "article.loop-video, article.thumb-block, article.post",
         itemTitle = "header.entry-header a[title], .post-thumbnail a[title], a[title], h2 a",
         itemUrl = "header.entry-header a[href], .post-thumbnail a[href], a[href]",
-        itemThumbnail = ".post-thumbnail img, img",
+        itemThumbnail = ".post-thumbnail img, .post-thumbnail [style*='background-image'], [style*='background-image'], img",
         nextPage = ".pagination a.next, .nav-links a.next, a.next",
         detailsTitle = "h1.entry-title, h1",
         detailsThumbnail = ".video-player img, meta[property='og:image'], .post-thumbnail img",
@@ -41,15 +42,23 @@ class ThreeXChina : RetroTubeTheme(
     )
 ) {
 
+    public override fun episodeListParse(response: Response): List<SEpisode> {
+        val episodes = super.episodeListParse(response)
+        return episodes.map { ep ->
+            ep.apply { url = UrlUtils.getPath(url) }
+        }
+    }
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.trim()
+        val safeQuery = if (cleanQuery.length == 1) "$cleanQuery$cleanQuery" else cleanQuery
         val category = filters.filterIsInstance<ThreeXChinaCategoryFilter>().firstOrNull()?.toSlug().orEmpty()
         val tag = filters.filterIsInstance<ThreeXChinaTagFilter>().firstOrNull()?.toSlug().orEmpty()
         val sort = filters.filterIsInstance<ThreeXChinaSortFilter>().firstOrNull()?.toSlug().orEmpty()
 
-        val path = when {
-            cleanQuery.isNotBlank() -> {
-                val encoded = URLEncoder.encode(cleanQuery, "UTF-8")
+        val basePath = when {
+            safeQuery.isNotBlank() -> {
+                val encoded = URLEncoder.encode(safeQuery, "UTF-8")
                 if (page > 1) "/page/$page/?s=$encoded" else "/?s=$encoded"
             }
             tag.isNotEmpty() -> {
@@ -66,7 +75,13 @@ class ThreeXChina : RetroTubeTheme(
             }
         }
 
-        val url = UrlUtils.resolve(baseUrl, path)
+        val finalPath = if (sort.isNotEmpty() && !basePath.contains("filter=")) {
+            if (basePath.contains("?")) "$basePath&filter=$sort" else "${basePath.trimEnd('/')}/?filter=$sort"
+        } else {
+            basePath
+        }
+
+        val url = UrlUtils.resolve(baseUrl, finalPath)
         return GET(url, headers)
     }
 
@@ -98,23 +113,26 @@ class ThreeXChina : RetroTubeTheme(
 
         // 4. JavaScript embedded stream links (mp4 / m3u8)
         val html = document.html()
-        val streamMatcher = java.util.regex.Pattern.compile("""(?:source|file|videoUrl)\s*[:=]\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(html)
+        val streamMatcher = java.util.regex.Pattern.compile("""(?:source|file|videoUrl|hls|src|url)\s*[:=]\s*['"](https?://[^'"]+\.(?:mp4|m3u8)[^'"]*)['"]""", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(html)
         while (streamMatcher.find()) {
             val stream = streamMatcher.group(1) ?: continue
             embedUrls.add(stream)
         }
 
-        // 5. Unpack internal embed pages if any
+        // 5. Unpack internal embed pages if any (closed safely to prevent socket leaks)
         val resolvedEmbedUrls = mutableListOf<String>()
         for (embedUrl in embedUrls) {
             if (embedUrl.startsWith(baseUrl) && (embedUrl.contains("/embed/") || embedUrl.contains("/play/"))) {
                 try {
-                    val subResp = client.newCall(GET(embedUrl, headers)).execute()
-                    val subDoc = subResp.asJsoup()
-                    subDoc.select("iframe[src], iframe[data-src], video source[src], video[src]").forEach { el ->
-                        val nestedSrc = el.attr("data-src").ifEmpty { el.attr("src") }.trim()
-                        if (nestedSrc.isNotEmpty() && !nestedSrc.startsWith("#")) {
-                            resolvedEmbedUrls.add(UrlUtils.resolve(baseUrl, nestedSrc))
+                    client.newCall(GET(embedUrl, headers)).execute().use { subResp ->
+                        val subDoc = subResp.asJsoup()
+                        subDoc.select("iframe[src], iframe[data-src], iframe[data-lazy-src], video source[src], video[src]").forEach { el ->
+                            val nestedSrc = el.attr("data-src").ifEmpty {
+                                el.attr("data-lazy-src").ifEmpty { el.attr("src") }
+                            }.trim()
+                            if (nestedSrc.isNotEmpty() && !nestedSrc.startsWith("#")) {
+                                resolvedEmbedUrls.add(UrlUtils.resolve(baseUrl, nestedSrc))
+                            }
                         }
                     }
                 } catch (_: Exception) {}

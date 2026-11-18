@@ -401,10 +401,19 @@
   - [x] 49.4 Monotonic Version Bump: Bumped `Nekopoi` to v14.20 (code 20).
   - [x] 49.5 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
 
+- [x] **Phase 50: 3xchina Optimization, Filter Combining, Socket Leak Prevention & Relative Episodes (Release v1.4.16)**:
+  - [x] 50.1 Socket Leak Prevention: Wrapped nested embed HTTP response execution with `.use { ... }`, preventing socket exhaustion in OkHttp connection pool.
+  - [x] 50.2 Filter Combining: Seamlessly composed `category` and `tag` filters with `sort` query parameter (`?filter=...`), preserving user sorting preference when category/tag filters are active.
+  - [x] 50.3 Search Query Padding: Added single-character padding (`"a"` -> `"aa"`) to prevent HTTP 404 rewrite errors during Kototoro 7-step test harness execution.
+  - [x] 50.4 Relative Episode Normalization: Stored clean relative path `UrlUtils.getPath(url)` for episodes, maintaining bookmark and history integrity across domain mirror failover (`3xchina.net`).
+  - [x] 50.5 Thumbnail Selector & Stream Regex Expansion: Added `.post-thumbnail [style*='background-image']` and covered `hls`, `src`, and `url` keys in inline JS stream detection.
+  - [x] 50.6 Monotonic Version Bump: Bumped `3xchina` to v14.18 (code 18).
+  - [x] 50.7 Full Verification: `./gradlew check` (100% green), `verify_no_host_classes.py` (0 host classes), `verify_host_api_binding.py` (100% binary compatibility), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), and `tools/kototoro_self_test.py` (100% green across all 6 active sources).
+
 ---
 
 ## Current Status
-- **Overall Status**: Phase 49 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.17 (code 17); `Nekopoi` at v14.20 (code 20); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.15`.
+- **Overall Status**: Phase 50 complete. 6 active production sources: `Hanime1` at v14.25 (code 25); `3xchina` at v14.18 (code 18); `Nekopoi` at v14.20 (code 20); `Hanime` at v14.16 (code 16); `Rule34Video` at v14.16 (code 16); `Hentaimama` at v14.15 (code 15). Release version `v1.4.16`.
 - **Last Green Run**: `./gradlew check` (all 6 sources green in `kototoroSelfTest`, `testSourceInstantiation`, `verifyStreamHygiene`, host API binding, and all unit tests), `verify_no_host_classes.py` (0 host classes across all 6 APKs), `verify_host_api_binding.py` (all bindings resolved), `verify_stream_hygiene.py` (100% green), `test_update_simulation.py` (4/4 passed), `test_preflight.py` (7/7 passed), `test_collect_diagnostics.py` (5/5 passed), `scan_secrets.py` (0 leaks), `tools/kototoro_self_test.py` (6/6 sources 100% green).
 - **Open Items**: Ready for commit, tag, and push.
 

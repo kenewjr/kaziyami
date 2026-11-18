@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.16] - 2026-11-19
+
+### Fixed & Enhanced
+- **3xchina Optimization, Filter Combining, Socket Leak Prevention & Relative Episodes**:
+  - Closed nested embed HTTP response streams using `.use { ... }`, preventing socket and connection pool leaks on unextractable or slow embed hosts.
+  - Multi-filter combination: seamlessly composed `category` and `tag` filters with `sort` (`?filter=...`), preventing user sort selections from being dropped when filtering by category or tag.
+  - Single-character query padding: padded single-character search terms (`"a"` -> `"aa"`), eliminating HTTP 404 rewrite errors during Kototoro 7-step test harness execution.
+  - Relative episode URL normalization: stored clean relative path `UrlUtils.getPath(url)` for episodes in `episodeListParse`, ensuring bookmark and watch history continuity across domain mirror migrations (`3xchina.net`).
+  - Added CSS background image and lazyload selectors to `itemThumbnail` (`.post-thumbnail [style*='background-image']`, `[style*='background-image']`).
+  - Broadened inline JavaScript stream detection to cover `hls`, `src`, and `url` keys in addition to `source`, `file`, and `videoUrl`.
+- **Monotonic Version Bump**:
+  - Bumped 3xchina to `v14.18` (`extVersionCode = 18`). All other extensions remain at their current versions.
+
 ## [1.4.15] - 2026-11-18
 
 ### Fixed & Enhanced
