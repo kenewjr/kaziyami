@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.15] - 2026-11-18
+
+### Fixed & Enhanced
+- **Nekopoi Live Feed .nk-post-card Selector Alignment & Infinite Pagination Fix**:
+  - Root cause resolved: In `Nekopoi.selectors.item`, `.nk-hentai-grid ul li` was listed while the actual episode cards (`.nk-post-card`) were missing. On `nekopoi.care`, `.nk-hentai-grid` is a static 5-item sidebar widget. Jsoup matched only these 5 sidebar items on page 1, and on page 2 matched the identical 5 sidebar items again. Because page 2 yielded 0 new unique URLs, Kototoro immediately terminated infinite scroll with "No more pages".
+  - Purged `.nk-hentai-grid` from `selectors.item`.
+  - Prioritized `.nk-post-card` at the front of `selectors.item`, extracting all 13-15 genuine latest episode releases per page from `#nk-episode-grid`.
+  - Updated `itemTitle`, `itemUrl`, and `itemThumbnail` to cleanly parse `.nk-post-card` elements (supporting `h2 a`, `.nk-post-meta`, and `.nk-thumb-crop` background images).
+  - Ensured smooth continuous infinite scroll pagination across all pages (`/page/2/`, `/page/3/`, etc.). Site announcements and non-hentai blog posts remain strictly excluded by `ContentPolicy`.
+- **Monotonic Version Bump**:
+  - Bumped Nekopoi to `v14.20` (`extVersionCode = 20`). All other extensions remain at their current versions.
+
 ## [1.4.14] - 2026-11-18
 
 ### Fixed & Enhanced

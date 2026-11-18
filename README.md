@@ -93,7 +93,7 @@ All 6 active adult sources are configured with permanent 64-bit Source IDs locke
 
 | Source Label | Language | Version | Engine / CMS | Base URL | Primary Stream Providers |
 |---|---|---|---|---|---|
-| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.19` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p/480p, Mp4Upload |
+| **Kaziyami: Nekopoi** | Indonesian (`id`) | `v14.20` | WordPress (ThemeNekopoi) | `https://nekopoi.care` | StreamPoi HLS (1080p/720p/480p), PlayMogo 720p/480p, Mp4Upload |
 | **Kaziyami: Hentaimama** | English (`en`) | `v14.15` | WordPress (DooPlay) | `https://hentaimama.io` | Direct progressive MP4 (GDVid), DooPlay AJAX streams |
 | **Kaziyami: Hanime** | English (`en`) | `v14.16` | Astro / Vue SSR | `https://hanime.tv` | Direct HLS (`master.m3u8` 1080p/720p/480p), WebView fallback |
 | **Kaziyami: Rule34Video** | English (`en`) | `v14.16` | Kernel Video Sharing (KVS) | `https://rule34video.com` | Direct CDN MP4 (360p, 480p, 720p, 1080p, 4K) |

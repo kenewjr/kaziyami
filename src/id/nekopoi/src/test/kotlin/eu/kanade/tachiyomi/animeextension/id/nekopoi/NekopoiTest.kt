@@ -109,6 +109,43 @@ class NekopoiTest {
     }
 
     @Test
+    fun parsePopularAnime_capturesPostCardsAndIgnoresSidebarHentaiGrid() {
+        val html = """
+            <div id="content">
+                <div class="nk-hentai-grid">
+                    <ul>
+                        <li><a href="https://nekopoi.care/hentai/sidebar-1/"><div class="title">Sidebar 1</div></a></li>
+                    </ul>
+                </div>
+                <div id="nk-episode-grid">
+                    <div class="nk-post-card">
+                        <div class="nk-post-thumb"><div class="nk-thumb-crop" style="background-image: url('https://nekopoi.care/thumb1.jpg')"></div></div>
+                        <div class="nk-post-meta">
+                            <h2><a href="https://nekopoi.care/release-1/">Release 1</a></h2>
+                        </div>
+                    </div>
+                    <div class="nk-post-card">
+                        <div class="nk-post-thumb"><div class="nk-thumb-crop" style="background-image: url('https://nekopoi.care/thumb2.jpg')"></div></div>
+                        <div class="nk-post-meta">
+                            <h2><a href="https://nekopoi.care/release-2/">Release 2</a></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="pagination">
+                    <a class="next page-numbers" href="https://nekopoi.care/page/2/">Next</a>
+                </div>
+            </div>
+        """.trimIndent()
+        val response = mockResponse("https://nekopoi.care/", html)
+        val page = source.popularAnimeParse(response)
+
+        assertEquals(2, page.animes.size)
+        assertEquals("Release 1", page.animes[0].title)
+        assertEquals("Release 2", page.animes[1].title)
+        assertTrue(page.hasNextPage)
+    }
+
+    @Test
     fun parseAnimeDetails() {
         val html = loadFixture("details.html")
         val response = mockResponse("https://nekopoi.care/hentai/kanojo-x-kanojo/", html)
